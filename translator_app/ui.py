@@ -5,7 +5,7 @@ import ctypes
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication, QKeyEvent, QPixmap, QTextCursor
+from PySide6.QtGui import QGuiApplication, QKeyEvent, QKeySequence, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMessageBox,
+    QMenu,
     QPushButton,
     QSplitter,
     QTabWidget,
@@ -407,13 +408,27 @@ QSplitter::handle {
 QMenu {
     background: #121821;
     border: 1px solid #303b4d;
+    border-radius: 10px;
     color: #eef3f8;
+    font-family: "Calibri";
+    font-size: 14px;
+    padding: 6px;
 }
 QMenu::item {
-    padding: 7px 28px 7px 20px;
+    padding: 8px 34px 8px 14px;
+    min-width: 210px;
+    border-radius: 6px;
 }
 QMenu::item:selected {
     background: #1b415a;
+}
+QMenu::item:disabled {
+    color: #657386;
+}
+QMenu::separator {
+    height: 1px;
+    background: #253142;
+    margin: 5px 8px;
 }
 """
 
@@ -426,7 +441,40 @@ QTabBar::tab:selected {
 APP_STYLESHEET = DARK_STYLESHEET
 
 
-class SubmitTextEdit(QTextEdit):
+class CleanTextEdit(QTextEdit):
+    def contextMenuEvent(self, event) -> None:
+        menu = QMenu(self)
+        is_read_only = self.isReadOnly()
+        cursor = self.textCursor()
+        has_selection = cursor.hasSelection()
+        has_text = bool(self.toPlainText())
+        has_clipboard_text = bool(QGuiApplication.clipboard().text())
+
+        self._add_menu_action(menu, "Undo", "Ctrl+Z", self.undo, not is_read_only and self.document().isUndoAvailable())
+        self._add_menu_action(menu, "Redo", "Ctrl+Y", self.redo, not is_read_only and self.document().isRedoAvailable())
+        menu.addSeparator()
+        self._add_menu_action(menu, "Cut", "Ctrl+X", self.cut, not is_read_only and has_selection)
+        self._add_menu_action(menu, "Copy", "Ctrl+C", self.copy, has_selection)
+        self._add_menu_action(menu, "Paste", "Ctrl+V", self.paste, not is_read_only and has_clipboard_text)
+        self._add_menu_action(menu, "Delete", "Del", self._delete_selection, not is_read_only and has_selection)
+        menu.addSeparator()
+        self._add_menu_action(menu, "Select All", "Ctrl+A", self.selectAll, has_text)
+        menu.exec(event.globalPos())
+
+    def _add_menu_action(self, menu: QMenu, label: str, shortcut: str, callback, enabled: bool) -> None:
+        action = menu.addAction(label)
+        action.setShortcut(QKeySequence(shortcut))
+        action.setShortcutVisibleInContextMenu(True)
+        action.setEnabled(enabled)
+        action.triggered.connect(lambda _checked=False, cb=callback: cb())
+
+    def _delete_selection(self) -> None:
+        cursor = self.textCursor()
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+
+
+class SubmitTextEdit(CleanTextEdit):
     submitRequested = Signal()
     clearRequested = Signal()
 
@@ -480,7 +528,7 @@ class TranslationPopup(QWidget):
             self.language_buttons[language.code] = button
             header_row.addWidget(button)
 
-        self.text_box = QTextEdit()
+        self.text_box = CleanTextEdit()
         self.text_box.setReadOnly(True)
         self.text_box.setAcceptRichText(False)
 
@@ -618,7 +666,7 @@ class MainTranslatorWindow(QWidget):
         self.auto_translate_timer.timeout.connect(self.emit_auto_translate_requested)
         self.last_submitted_text = ""
 
-        self.translation_text = QTextEdit()
+        self.translation_text = CleanTextEdit()
         self.translation_text.setReadOnly(True)
         self.translation_text.setAcceptRichText(False)
 
@@ -829,10 +877,10 @@ class HistoryDialog(QDialog):
         self.list_widget.setMinimumWidth(260)
         self.list_widget.currentItemChanged.connect(lambda _current, _previous: self.show_selected_record())
 
-        self.source_box = QTextEdit()
+        self.source_box = CleanTextEdit()
         self.source_box.setReadOnly(True)
         self.source_box.setAcceptRichText(False)
-        self.translation_box = QTextEdit()
+        self.translation_box = CleanTextEdit()
         self.translation_box.setReadOnly(True)
         self.translation_box.setAcceptRichText(False)
 
