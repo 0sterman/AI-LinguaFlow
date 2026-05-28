@@ -1,23 +1,24 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QDate, Qt, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
+    QDateEdit,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QSplitter,
     QTabWidget,
     QTextEdit,
-    QListWidget,
-    QListWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -200,11 +201,37 @@ class TranslationPopup(QWidget):
 
 
 class HistoryDialog(QDialog):
+    filtersChanged = Signal(str, object, object)
+
     def __init__(self, records: list[HistoryRecord], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("История переводов")
-        self.resize(820, 520)
-        self.records_by_id = {record.id: record for record in records}
+        self.resize(900, 560)
+        self.records_by_id: dict[int, HistoryRecord] = {}
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Поиск")
+        self.search_input.textChanged.connect(self.emit_filters_changed)
+
+        self.date_from_input = QDateEdit()
+        self.date_from_input.setCalendarPopup(True)
+        self.date_from_input.setDisplayFormat("dd.MM.yyyy")
+        self.date_from_input.setSpecialValueText("С")
+        self.date_from_input.setMinimumDate(QDate(2000, 1, 1))
+        self.date_from_input.setDate(self.date_from_input.minimumDate())
+        self.date_from_input.dateChanged.connect(self.emit_filters_changed)
+
+        self.date_to_input = QDateEdit()
+        self.date_to_input.setCalendarPopup(True)
+        self.date_to_input.setDisplayFormat("dd.MM.yyyy")
+        self.date_to_input.setSpecialValueText("По")
+        self.date_to_input.setMinimumDate(QDate(2000, 1, 1))
+        self.date_to_input.setMaximumDate(QDate.currentDate().addYears(5))
+        self.date_to_input.setDate(self.date_to_input.minimumDate())
+        self.date_to_input.dateChanged.connect(self.emit_filters_changed)
+
+        self.reset_filters_button = QPushButton("Сброс")
+        self.reset_filters_button.clicked.connect(self.reset_filters)
 
         self.list_widget = QListWidget()
         self.list_widget.setMinimumWidth(260)
@@ -216,11 +243,6 @@ class HistoryDialog(QDialog):
         self.translation_box = QTextEdit()
         self.translation_box.setReadOnly(True)
         self.translation_box.setAcceptRichText(False)
-
-        for record in records:
-            item = QListWidgetItem(self._record_title(record))
-            item.setData(Qt.ItemDataRole.UserRole, record.id)
-            self.list_widget.addItem(item)
 
         text_splitter = QSplitter(Qt.Orientation.Vertical)
         text_splitter.addWidget(self._labeled_text("Оригинал", self.source_box))
@@ -238,6 +260,14 @@ class HistoryDialog(QDialog):
         self.close_button = QPushButton("Закрыть")
         self.close_button.clicked.connect(self.accept)
 
+        filter_row = QHBoxLayout()
+        filter_row.addWidget(self.search_input, 1)
+        filter_row.addWidget(QLabel("С"))
+        filter_row.addWidget(self.date_from_input)
+        filter_row.addWidget(QLabel("По"))
+        filter_row.addWidget(self.date_to_input)
+        filter_row.addWidget(self.reset_filters_button)
+
         bottom_row = QHBoxLayout()
         bottom_row.addWidget(self.copy_source_button)
         bottom_row.addWidget(self.copy_translation_button)
@@ -246,13 +276,23 @@ class HistoryDialog(QDialog):
         bottom_row.addWidget(self.close_button)
 
         root = QVBoxLayout(self)
+        root.addLayout(filter_row)
         root.addWidget(splitter, 1)
         root.addLayout(bottom_row)
+        self.set_records(records)
+
+    def set_records(self, records: list[HistoryRecord]) -> None:
+        self.records_by_id = {record.id: record for record in records}
+        self.list_widget.clear()
+        for record in records:
+            item = QListWidgetItem(self._record_title(record))
+            item.setData(Qt.ItemDataRole.UserRole, record.id)
+            self.list_widget.addItem(item)
 
         if self.list_widget.count():
             self.list_widget.setCurrentRow(0)
         else:
-            self.source_box.setPlainText("История переводов пока пустая.")
+            self.source_box.setPlainText("Ничего не найдено.")
             self.translation_box.clear()
 
     def selected_record(self) -> HistoryRecord | None:
@@ -268,11 +308,34 @@ class HistoryDialog(QDialog):
         self.source_box.setPlainText(record.source_text)
         self.translation_box.setPlainText(record.translated_text)
 
+    def emit_filters_changed(self) -> None:
+        self.filtersChanged.emit(
+            self.search_input.text(),
+            self.selected_date_from(),
+            self.selected_date_to(),
+        )
+
+    def reset_filters(self) -> None:
+        self.search_input.clear()
+        self.date_from_input.setDate(self.date_from_input.minimumDate())
+        self.date_to_input.setDate(self.date_to_input.minimumDate())
+        self.emit_filters_changed()
+
+    def selected_date_from(self) -> str | None:
+        if self.date_from_input.date() == self.date_from_input.minimumDate():
+            return None
+        return self.date_from_input.date().toString("yyyy-MM-dd")
+
+    def selected_date_to(self) -> str | None:
+        if self.date_to_input.date() == self.date_to_input.minimumDate():
+            return None
+        return self.date_to_input.date().toString("yyyy-MM-dd")
+
     def _record_title(self, record: HistoryRecord) -> str:
         preview = " ".join(record.translated_text.split())
         if len(preview) > 58:
             preview = f"{preview[:55]}..."
-        return f"{record.target_language.upper()} | {record.provider} | {preview}"
+        return f"{record.local_date_label}  |  {record.target_language.upper()}  |  {preview}"
 
     def _labeled_text(self, label: str, text_edit: QTextEdit) -> QWidget:
         widget = QWidget()

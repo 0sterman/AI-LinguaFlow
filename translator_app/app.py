@@ -219,6 +219,7 @@ class TranslatorApplication(QObject):
 
     def open_history(self) -> None:
         dialog = HistoryDialog(self.history_store.recent())
+        dialog.filtersChanged.connect(lambda query, date_from, date_to: self.filter_history(dialog, query, date_from, date_to))
         dialog.copy_source_button.clicked.connect(
             lambda: self.copy_history_text(dialog, copy_translation=False)
         )
@@ -227,6 +228,15 @@ class TranslatorApplication(QObject):
         )
         dialog.clear_button.clicked.connect(lambda: self.clear_history(dialog))
         dialog.exec()
+
+    def filter_history(
+        self,
+        dialog: HistoryDialog,
+        query: str,
+        date_from: str | None,
+        date_to: str | None,
+    ) -> None:
+        dialog.set_records(self.history_store.search(query=query, date_from=date_from, date_to=date_to))
 
     def copy_history_text(self, dialog: HistoryDialog, copy_translation: bool) -> None:
         record = dialog.selected_record()

@@ -21,6 +21,17 @@ class HistoryRecord:
     provider: str
     model: str
 
+    @property
+    def local_date_label(self) -> str:
+        try:
+            parsed = datetime.fromisoformat(self.created_at)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            local_time = parsed.astimezone()
+            return local_time.strftime("%d.%m.%Y %H:%M")
+        except ValueError:
+            return self.created_at[:16]
+
 
 class HistoryStore:
     def __init__(self, path: Path = HISTORY_PATH, max_records: int = 500) -> None:
@@ -79,6 +90,45 @@ class HistoryStore:
             ).fetchall()
         return [HistoryRecord(*row) for row in rows]
 
+    def search(
+        self,
+        query: str = "",
+        date_from: str | None = None,
+        date_to: str | None = None,
+        limit: int = 100,
+    ) -> list[HistoryRecord]:
+        clauses: list[str] = []
+        params: list[str | int] = []
+
+        cleaned_query = query.strip()
+        if cleaned_query:
+            clauses.append("(source_text LIKE ? OR translated_text LIKE ?)")
+            like_query = f"%{cleaned_query}%"
+            params.extend([like_query, like_query])
+
+        if date_from:
+            clauses.append("created_at >= ?")
+            params.append(_date_start_iso(date_from))
+
+        if date_to:
+            clauses.append("created_at <= ?")
+            params.append(_date_end_iso(date_to))
+
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(limit)
+        with self._connect() as connection:
+            rows = connection.execute(
+                f"""
+                SELECT id, created_at, source_text, translated_text, target_language, provider, model
+                FROM translations
+                {where_sql}
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                params,
+            ).fetchall()
+        return [HistoryRecord(*row) for row in rows]
+
     def clear(self) -> None:
         with self._connect() as connection:
             connection.execute("DELETE FROM translations")
@@ -102,3 +152,17 @@ class HistoryStore:
                 )
                 """
             )
+
+
+def _date_start_iso(date_text: str) -> str:
+    parsed = datetime.strptime(date_text, "%Y-%m-%d")
+    local_tz = datetime.now().astimezone().tzinfo
+    local_start = parsed.replace(tzinfo=local_tz)
+    return local_start.astimezone(timezone.utc).isoformat(timespec="seconds")
+
+
+def _date_end_iso(date_text: str) -> str:
+    parsed = datetime.strptime(date_text, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+    local_tz = datetime.now().astimezone().tzinfo
+    local_end = parsed.replace(tzinfo=local_tz)
+    return local_end.astimezone(timezone.utc).isoformat(timespec="seconds")

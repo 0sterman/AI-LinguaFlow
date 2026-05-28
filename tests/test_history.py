@@ -31,3 +31,25 @@ def test_history_store_clear_removes_records(tmp_path) -> None:
     store.clear()
 
     assert store.recent() == []
+
+
+def test_history_store_search_matches_source_and_translation(tmp_path) -> None:
+    store = HistoryStore(tmp_path / "history.sqlite3", max_records=10)
+    store.add("Hello world", "Привет мир", "ru", "openai", "gpt-5-mini")
+    store.add("Good morning", "Доброе утро", "ru", "openai", "gpt-5-mini")
+
+    assert [record.source_text for record in store.search("утро")] == ["Good morning"]
+    assert [record.source_text for record in store.search("world")] == ["Hello world"]
+
+
+def test_history_store_search_filters_by_date_range(tmp_path) -> None:
+    store = HistoryStore(tmp_path / "history.sqlite3", max_records=10)
+    store.add("old", "старый", "ru", "openai", "gpt-5-mini")
+    store.add("new", "новый", "ru", "openai", "gpt-5-mini")
+
+    with store._connect() as connection:
+        connection.execute("UPDATE translations SET created_at = ? WHERE source_text = ?", ("2024-01-01T12:00:00+00:00", "old"))
+        connection.execute("UPDATE translations SET created_at = ? WHERE source_text = ?", ("2026-05-28T12:00:00+00:00", "new"))
+
+    records = store.search(date_from="2026-01-01", date_to="2026-12-31")
+    assert [record.source_text for record in records] == ["new"]
