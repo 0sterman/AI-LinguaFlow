@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from html import escape
 from PySide6.QtCore import QDate, QTimer, Qt, Signal
 import ctypes
 import sys
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -29,6 +31,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from translator_app import __version__
 from translator_app.config import AppConfig, DEFAULT_MODELS, MODEL_OPTIONS
 from translator_app.history import HistoryRecord
 from translator_app.i18n import t
@@ -189,6 +192,131 @@ def star_rating(value: int) -> str:
 
 APP_DISPLAY_NAME = "LinguaFlow AI"
 APP_WINDOW_TITLE = "Oster - LinguaFlow AI - Popup Translator"
+
+ABOUT_COPY = {
+    "ru": {
+        "title": "О программе",
+        "intro": (
+            "LinguaFlow AI - Windows-переводчик для быстрого popup-перевода выделенного текста "
+            "через Ctrl+C+C и обычного ручного перевода между выбранными языками."
+        ),
+        "rights_title": "Права и бренд",
+        "rights": [
+            "Copyright © 2026 Roman Ostroumov / OSTER. Все права защищены, если отдельная LICENSE не говорит иначе.",
+            "Название LinguaFlow AI, OSTER-стиль, логотип, иконки, визуальные материалы, интерфейс, исходный код, сборки и документация защищены правами владельца.",
+            "Публичный репозиторий сам по себе не означает разрешение копировать, продавать, распространять, переименовывать или использовать бренд/логотип без письменного разрешения владельца.",
+        ],
+        "privacy_title": "Приватность и данные",
+        "privacy": [
+            "API-ключи хранятся через Windows Credential Manager, когда это доступно, либо читаются из переменных окружения.",
+            "История переводов хранится локально на этом компьютере. Текст отправляется только выбранному AI-провайдеру для выполнения текущего перевода.",
+            "Не вставляйте конфиденциальные данные, если правила вашей компании или договора запрещают отправку текста внешнему AI-провайдеру.",
+        ],
+        "disclaimer_title": "Дисклеймеры",
+        "disclaimer": [
+            "AI-переводы могут быть неточными, неполными или неподходящими по стилю. Важные юридические, медицинские, финансовые, миграционные и технические тексты нужно проверять вручную.",
+            "Пользователь сам отвечает за выбранного провайдера, модель, API-ключ, расходы токенов и соблюдение условий OpenAI, Google, Anthropic или другого сервиса.",
+            "LinguaFlow AI не является официальным продуктом OpenAI, Google, Anthropic или Microsoft. Названия сторонних сервисов принадлежат их владельцам.",
+        ],
+    },
+    "en": {
+        "title": "About",
+        "intro": (
+            "LinguaFlow AI is a Windows translator for fast selected-text popup translation "
+            "with Ctrl+C+C and normal manual translation between chosen languages."
+        ),
+        "rights_title": "Rights and Brand",
+        "rights": [
+            "Copyright © 2026 Roman Ostroumov / OSTER. All rights reserved unless a separate LICENSE states otherwise.",
+            "The LinguaFlow AI name, OSTER style, logo, icons, visual assets, interface, source code, builds, and documentation are protected by the owner's rights.",
+            "A public repository does not by itself grant permission to copy, sell, redistribute, rename, or use the brand/logo without the owner's written permission.",
+        ],
+        "privacy_title": "Privacy and Data",
+        "privacy": [
+            "API keys are stored through Windows Credential Manager when available, or read from environment variables.",
+            "Translation history is stored locally on this computer. Text is sent only to the selected AI provider for the current translation request.",
+            "Do not paste confidential data if your company policy or contracts prohibit sending text to an external AI provider.",
+        ],
+        "disclaimer_title": "Disclaimers",
+        "disclaimer": [
+            "AI translations can be inaccurate, incomplete, or stylistically unsuitable. Important legal, medical, financial, immigration, and technical texts should be reviewed manually.",
+            "The user is responsible for the chosen provider, model, API key, token costs, and compliance with OpenAI, Google, Anthropic, or other service terms.",
+            "LinguaFlow AI is not an official product of OpenAI, Google, Anthropic, or Microsoft. Third-party service names belong to their owners.",
+        ],
+    },
+    "de": {
+        "title": "Über das Programm",
+        "intro": (
+            "LinguaFlow AI ist ein Windows-Übersetzer für schnelle Popup-Übersetzung markierter Texte "
+            "mit Ctrl+C+C und normale manuelle Übersetzung zwischen ausgewählten Sprachen."
+        ),
+        "rights_title": "Rechte und Marke",
+        "rights": [
+            "Copyright © 2026 Roman Ostroumov / OSTER. Alle Rechte vorbehalten, sofern keine separate LICENSE etwas anderes regelt.",
+            "Name LinguaFlow AI, OSTER-Stil, Logo, Icons, visuelle Materialien, Oberfläche, Quellcode, Builds und Dokumentation sind durch Rechte des Eigentümers geschützt.",
+            "Ein öffentliches Repository erlaubt nicht automatisch das Kopieren, Verkaufen, Weiterverbreiten, Umbenennen oder Nutzen von Marke/Logo ohne schriftliche Erlaubnis des Eigentümers.",
+        ],
+        "privacy_title": "Datenschutz und Daten",
+        "privacy": [
+            "API-Schlüssel werden nach Möglichkeit über Windows Credential Manager gespeichert oder aus Umgebungsvariablen gelesen.",
+            "Der Übersetzungsverlauf wird lokal auf diesem Computer gespeichert. Text wird nur für die aktuelle Übersetzung an den ausgewählten AI-Anbieter gesendet.",
+            "Fügen Sie keine vertraulichen Daten ein, wenn Richtlinien oder Verträge das Senden an externe AI-Anbieter verbieten.",
+        ],
+        "disclaimer_title": "Haftungsausschlüsse",
+        "disclaimer": [
+            "AI-Übersetzungen können ungenau, unvollständig oder stilistisch ungeeignet sein. Wichtige juristische, medizinische, finanzielle, migrationsbezogene und technische Texte sollten manuell geprüft werden.",
+            "Der Nutzer ist verantwortlich für Anbieter, Modell, API-Schlüssel, Token-Kosten und die Einhaltung der Bedingungen von OpenAI, Google, Anthropic oder anderen Diensten.",
+            "LinguaFlow AI ist kein offizielles Produkt von OpenAI, Google, Anthropic oder Microsoft. Namen von Drittanbieterdiensten gehören ihren Eigentümern.",
+        ],
+    },
+    "es": {
+        "title": "Acerca de",
+        "intro": (
+            "LinguaFlow AI es un traductor para Windows con traducción emergente rápida de texto seleccionado "
+            "mediante Ctrl+C+C y traducción manual normal entre idiomas elegidos."
+        ),
+        "rights_title": "Derechos y marca",
+        "rights": [
+            "Copyright © 2026 Roman Ostroumov / OSTER. Todos los derechos reservados salvo que una LICENSE separada indique lo contrario.",
+            "El nombre LinguaFlow AI, el estilo OSTER, el logotipo, los iconos, materiales visuales, interfaz, código fuente, compilaciones y documentación están protegidos por los derechos del propietario.",
+            "Un repositorio público no concede por sí solo permiso para copiar, vender, redistribuir, renombrar o usar la marca/logotipo sin permiso escrito del propietario.",
+        ],
+        "privacy_title": "Privacidad y datos",
+        "privacy": [
+            "Las claves API se guardan mediante Windows Credential Manager cuando está disponible, o se leen desde variables de entorno.",
+            "El historial de traducciones se guarda localmente en este ordenador. El texto se envía solo al proveedor de AI seleccionado para la traducción actual.",
+            "No pegues datos confidenciales si las políticas de tu empresa o contratos prohíben enviar texto a un proveedor externo de AI.",
+        ],
+        "disclaimer_title": "Avisos",
+        "disclaimer": [
+            "Las traducciones con AI pueden ser inexactas, incompletas o inadecuadas en estilo. Textos legales, médicos, financieros, migratorios y técnicos importantes deben revisarse manualmente.",
+            "El usuario es responsable del proveedor, modelo, clave API, costes de tokens y cumplimiento de los términos de OpenAI, Google, Anthropic u otros servicios.",
+            "LinguaFlow AI no es un producto oficial de OpenAI, Google, Anthropic ni Microsoft. Los nombres de servicios de terceros pertenecen a sus propietarios.",
+        ],
+    },
+    "zh": {
+        "title": "关于",
+        "intro": "LinguaFlow AI 是一款 Windows 翻译器，支持通过 Ctrl+C+C 快速弹窗翻译所选文本，也支持在所选语言之间进行普通手动翻译。",
+        "rights_title": "权利和品牌",
+        "rights": [
+            "Copyright © 2026 Roman Ostroumov / OSTER。除非单独的 LICENSE 另有说明，否则保留所有权利。",
+            "LinguaFlow AI 名称、OSTER 风格、标志、图标、视觉素材、界面、源代码、构建文件和文档均受所有者权利保护。",
+            "公开仓库本身并不表示允许在未经所有者书面许可的情况下复制、销售、再分发、改名或使用品牌/标志。",
+        ],
+        "privacy_title": "隐私和数据",
+        "privacy": [
+            "API 密钥会在可用时通过 Windows Credential Manager 保存，或从环境变量读取。",
+            "翻译历史保存在本机。文本只会为了当前翻译请求发送给所选 AI 提供商。",
+            "如果公司政策或合同禁止向外部 AI 提供商发送文本，请不要粘贴机密数据。",
+        ],
+        "disclaimer_title": "免责声明",
+        "disclaimer": [
+            "AI 翻译可能不准确、不完整或风格不合适。重要的法律、医疗、金融、移民和技术文本应人工复核。",
+            "用户自行负责所选提供商、模型、API 密钥、token 成本，以及遵守 OpenAI、Google、Anthropic 或其他服务条款。",
+            "LinguaFlow AI 不是 OpenAI、Google、Anthropic 或 Microsoft 的官方产品。第三方服务名称属于其各自所有者。",
+        ],
+    },
+}
 VK_RCONTROL = 0xA3
 
 
@@ -1100,6 +1228,9 @@ class SettingsDialog(QDialog):
         theme_index = max(0, self.theme_input.findData(config.theme))
         self.theme_input.setCurrentIndex(theme_index)
 
+        self.about_browser = QTextBrowser()
+        self.about_browser.setOpenExternalLinks(False)
+
         self.info_button = QPushButton("?")
         self.info_button.setObjectName("InfoButton")
         self.info_button.setFixedSize(34, 34)
@@ -1111,6 +1242,7 @@ class SettingsDialog(QDialog):
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_general_tab(), "")
         self.tabs.addTab(self._build_api_tab(), "")
+        self.tabs.addTab(self._build_about_tab(), "")
 
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         self.buttons.accepted.connect(self.accept)
@@ -1125,6 +1257,7 @@ class SettingsDialog(QDialog):
         layout.setSpacing(12)
         layout.addWidget(self.tabs)
         layout.addWidget(self.buttons)
+        self.theme_input.currentIndexChanged.connect(lambda _index=0: self.about_browser.setHtml(self._about_html()))
         self.apply_locale(config.primary_language)
 
     def _build_general_tab(self) -> QWidget:
@@ -1185,6 +1318,14 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
         layout.addWidget(self.model_inputs[provider], 1)
+        return widget
+
+    def _build_about_tab(self) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(14, 14, 14, 14)
+        self.about_browser.setFrameShape(QFrame.Shape.NoFrame)
+        layout.addWidget(self.about_browser, 1)
         return widget
 
     def show_model_info(self) -> None:
@@ -1265,11 +1406,48 @@ class SettingsDialog(QDialog):
             "</table>"
         )
 
+    def _about_html(self) -> str:
+        language_code = self.ui_language if self.ui_language in ABOUT_COPY else "en"
+        copy = ABOUT_COPY.get(language_code, ABOUT_COPY["en"])
+        theme = self.theme
+        dark = theme == "dark" or theme == "system"
+        page_background = "#101620" if dark else "#f6f8fb"
+        text_color = "#eef3f8" if dark else "#07111c"
+        muted_text = "#c8d3df" if dark else "#263241"
+        accent = "#8fd8ff" if dark else "#0b6fa7"
+        panel_background = "#151b24" if dark else "#ffffff"
+        border_color = "#2b3545" if dark else "#c7d3e0"
+
+        def items(name: str) -> str:
+            return "".join(f"<li>{escape(item)}</li>" for item in copy[name])
+
+        return (
+            "<style>"
+            f"body{{font-family:Calibri,sans-serif;color:{text_color};background:{page_background};font-size:14px;margin:0;}}"
+            f".card{{background:{panel_background};border:1px solid {border_color};border-radius:12px;padding:18px 20px;}}"
+            "h1{font-size:26px;margin:0 0 4px 0;font-weight:800;}"
+            f".version{{color:{accent};font-weight:700;margin-bottom:14px;}}"
+            f".intro{{color:{muted_text};font-size:15px;line-height:1.35;margin:0 0 18px 0;}}"
+            f"h2{{color:{accent};font-size:17px;margin:18px 0 8px 0;font-weight:800;}}"
+            f"ul{{margin:0 0 4px 19px;padding:0;color:{muted_text};line-height:1.38;}}"
+            "li{margin:5px 0;}"
+            "</style>"
+            "<div class='card'>"
+            f"<h1>{escape(APP_DISPLAY_NAME)}</h1>"
+            f"<div class='version'>Version {escape(__version__)} · {escape(APP_WINDOW_TITLE)}</div>"
+            f"<p class='intro'>{escape(copy['intro'])}</p>"
+            f"<h2>{escape(copy['rights_title'])}</h2><ul>{items('rights')}</ul>"
+            f"<h2>{escape(copy['privacy_title'])}</h2><ul>{items('privacy')}</ul>"
+            f"<h2>{escape(copy['disclaimer_title'])}</h2><ul>{items('disclaimer')}</ul>"
+            "</div>"
+        )
+
     def apply_locale(self, language_code: str) -> None:
         self.ui_language = language_code
         self.setWindowTitle(t(language_code, "settings_title"))
         self.tabs.setTabText(0, t(language_code, "general"))
         self.tabs.setTabText(1, t(language_code, "api"))
+        self.tabs.setTabText(2, t(language_code, "about"))
         self.provider_label.setText(t(language_code, "provider"))
         self.primary_language_label.setText(t(language_code, "primary_language"))
         self.theme_label.setText(t(language_code, "theme"))
@@ -1281,6 +1459,7 @@ class SettingsDialog(QDialog):
         self.api_header_label.setText(t(language_code, "api_keys_models"))
         self.recommendations_label.setText(t(language_code, "recommendations"))
         self.info_button.setToolTip(t(language_code, "info_tooltip"))
+        self.about_browser.setHtml(self._about_html())
         save_button = self.buttons.button(QDialogButtonBox.StandardButton.Save)
         cancel_button = self.buttons.button(QDialogButtonBox.StandardButton.Cancel)
         if save_button:
