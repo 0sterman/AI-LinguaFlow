@@ -2,7 +2,7 @@
 
 ## Project
 
-AI-LinguaFlow is a Windows translator with two primary workflows: a normal manual translator window for chosen source/target languages, and a fast `Ctrl+C+C` popup workflow for selected text. It translates through the selected AI provider and keeps local translation history.
+AI-LinguaFlow is a Windows translator whose main workflow is fast selected-text translation through a `Ctrl+C+C` popup. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
 
 Repository: `0sterman/AI-LinguaFlow`
 
