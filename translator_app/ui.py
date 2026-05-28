@@ -151,11 +151,19 @@ QPushButton#HistoryButton:hover {
     background: #183247;
 }
 QPushButton#InfoButton {
-    border-radius: 13px;
-    border: 1px solid #6ccaff;
-    background: #172838;
-    color: #dff6ff;
-    font-weight: 700;
+    border-radius: 14px;
+    border: 1px solid #74d2ff;
+    background: #1f78ad;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 0;
+    min-width: 28px;
+    min-height: 28px;
+}
+QPushButton#InfoButton:hover {
+    background: #2a91cf;
+    border-color: #a4e5ff;
 }
 QPushButton#PrimaryButton {
     background: #1e78ad;
@@ -627,10 +635,10 @@ class SettingsDialog(QDialog):
         self.desktop_shortcut_checkbox = QCheckBox("Desktop shortcut")
         self.desktop_shortcut_checkbox.setChecked(config.desktop_shortcut)
 
-        self.info_button = QPushButton("i")
+        self.info_button = QPushButton("?")
         self.info_button.setObjectName("InfoButton")
-        self.info_button.setFixedSize(26, 26)
-        self.info_button.setToolTip("Recommended models")
+        self.info_button.setFixedSize(28, 28)
+        self.info_button.setToolTip("Recommended models and cost tips")
         self.info_button.clicked.connect(self.show_model_info)
 
         tabs = QTabWidget()
