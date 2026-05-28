@@ -199,7 +199,7 @@ DARK_STYLESHEET = """
 QWidget {
     background: #0f131a;
     color: #eef3f8;
-    font-family: "Segoe UI Variable", "Segoe UI";
+    font-family: "Calibri";
     font-size: 13px;
 }
 QDialog {
@@ -1125,7 +1125,7 @@ class SettingsDialog(QDialog):
                 )
         return (
             "<style>"
-            f"body{{font-family:'Segoe UI',sans-serif;color:{text_color};background:{page_background};font-size:12px;margin:8px;}}"
+            f"body{{font-family:Calibri,sans-serif;color:{text_color};background:{page_background};font-size:12px;margin:8px;}}"
             "h2{font-size:20px;margin:0 0 10px 0;}"
             "table{border-collapse:collapse;width:100%;table-layout:fixed;}"
             f"th,td{{border:1px solid {border_color};padding:5px 7px;vertical-align:top;line-height:1.25;color:{muted_text};}}"
