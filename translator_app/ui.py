@@ -349,15 +349,19 @@ QPushButton#HistoryButton:hover {
     background: #183247;
 }
 QPushButton#InfoButton {
-    border-radius: 14px;
+    border-radius: 17px;
     border: 1px solid #74d2ff;
     background: #1f78ad;
     color: #ffffff;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
-    padding: 0;
-    min-width: 28px;
-    min-height: 28px;
+    padding: 0px;
+    margin: 0px;
+    min-width: 34px;
+    max-width: 34px;
+    min-height: 34px;
+    max-height: 34px;
+    text-align: center;
 }
 QPushButton#InfoButton:hover {
     background: #2a91cf;
@@ -1112,11 +1116,18 @@ class SettingsDialog(QDialog):
             form.addRow(key_label, key_row)
             form.addRow(model_label, self._model_row(provider))
         layout.addLayout(form)
+
         recommendations_box = QVBoxLayout()
         recommendations_box.setSpacing(5)
+        recommendations_box.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         recommendations_box.addWidget(self.recommendations_label, alignment=Qt.AlignmentFlag.AlignCenter)
         recommendations_box.addWidget(self.info_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(recommendations_box)
+
+        recommendations_row = QHBoxLayout()
+        recommendations_row.addStretch(1)
+        recommendations_row.addLayout(recommendations_box)
+        recommendations_row.addStretch(1)
+        layout.addLayout(recommendations_row)
         layout.addStretch(1)
         return widget
 
