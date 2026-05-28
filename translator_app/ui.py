@@ -133,31 +133,51 @@ MODEL_DESCRIPTIONS = {
     },
 }
 
-MODEL_SPEED_CATEGORY = {
-    "gpt-5-mini": "fast",
-    "gpt-5-nano": "very_fast",
-    "gpt-4.1-mini": "fast",
-    "gpt-4.1-nano": "very_fast",
-    "gpt-4o-mini": "fast",
-    "gemini-2.5-flash-lite": "very_fast",
-    "gemini-2.5-flash": "fast",
-    "gemini-2.0-flash-lite": "very_fast",
-    "gemini-2.0-flash": "fast",
-    "gemini-1.5-flash": "fast",
-    "claude-3-5-haiku-latest": "fast",
-    "claude-3-5-haiku-20241022": "fast",
-    "claude-3-haiku-20240307": "very_fast",
-    "claude-3-7-sonnet-latest": "medium",
-    "claude-sonnet-4-20250514": "medium",
+MODEL_SPEED_RATINGS = {
+    "gpt-5-mini": 4,
+    "gpt-5-nano": 5,
+    "gpt-4.1-mini": 4,
+    "gpt-4.1-nano": 5,
+    "gpt-4o-mini": 4,
+    "gemini-2.5-flash-lite": 5,
+    "gemini-2.5-flash": 4,
+    "gemini-2.0-flash-lite": 5,
+    "gemini-2.0-flash": 4,
+    "gemini-1.5-flash": 4,
+    "claude-3-5-haiku-latest": 4,
+    "claude-3-5-haiku-20241022": 4,
+    "claude-3-haiku-20240307": 5,
+    "claude-3-7-sonnet-latest": 3,
+    "claude-sonnet-4-20250514": 3,
 }
 
-MODEL_SPEED_LABELS = {
-    "ru": {"very_fast": "Очень высокая", "fast": "Высокая", "medium": "Средняя"},
-    "en": {"very_fast": "Very fast", "fast": "Fast", "medium": "Medium"},
-    "de": {"very_fast": "Sehr schnell", "fast": "Schnell", "medium": "Mittel"},
-    "es": {"very_fast": "Muy rápida", "fast": "Rápida", "medium": "Media"},
-    "zh": {"very_fast": "很快", "fast": "快", "medium": "中等"},
+MODEL_COST_RATINGS = {
+    "gpt-5-mini": 2,
+    "gpt-5-nano": 1,
+    "gpt-4.1-mini": 2,
+    "gpt-4.1-nano": 1,
+    "gpt-4o-mini": 2,
+    "gemini-2.5-flash-lite": 1,
+    "gemini-2.5-flash": 2,
+    "gemini-2.0-flash-lite": 1,
+    "gemini-2.0-flash": 2,
+    "gemini-1.5-flash": 2,
+    "claude-3-5-haiku-latest": 2,
+    "claude-3-5-haiku-20241022": 2,
+    "claude-3-haiku-20240307": 2,
+    "claude-3-7-sonnet-latest": 4,
+    "claude-sonnet-4-20250514": 5,
 }
+
+
+def star_rating(value: int) -> str:
+    rating = max(1, min(5, value))
+    return (
+        "<span class='stars'>"
+        f"<span class='star-on'>{'★' * rating}</span>"
+        f"<span class='star-off'>{'☆' * (5 - rating)}</span>"
+        "</span>"
+    )
 
 APP_DISPLAY_NAME = "AI LinguaFlow"
 VK_RCONTROL = 0xA3
@@ -1076,7 +1096,6 @@ class SettingsDialog(QDialog):
     def _model_info_html(self) -> str:
         language_code = self.ui_language if self.ui_language in MODEL_DESCRIPTIONS else "en"
         descriptions = MODEL_DESCRIPTIONS.get(language_code, MODEL_DESCRIPTIONS["en"])
-        speed_labels = MODEL_SPEED_LABELS.get(language_code, MODEL_SPEED_LABELS["en"])
         theme = self.theme
         dark = theme == "dark" or theme == "system"
         page_background = "#101620" if dark else "#f6f8fb"
@@ -1087,12 +1106,14 @@ class SettingsDialog(QDialog):
         header_color = "#8fd8ff" if dark else "#0b5f90"
         code_background = "#172231" if dark else "#eaf1f7"
         code_color = "#f7fbff" if dark else "#07111c"
+        star_off_color = "#526174" if dark else "#a9b6c5"
         rows: list[str] = []
         provider_names = dict(PROVIDERS)
         for provider, model_names in MODEL_OPTIONS.items():
             for model_name in model_names:
-                use, cost = descriptions.get(model_name) or MODEL_DESCRIPTIONS["en"].get(model_name, ("", ""))
-                speed = speed_labels.get(MODEL_SPEED_CATEGORY.get(model_name, "fast"), "")
+                use, _cost_label = descriptions.get(model_name) or MODEL_DESCRIPTIONS["en"].get(model_name, ("", ""))
+                speed = star_rating(MODEL_SPEED_RATINGS.get(model_name, 4))
+                cost = star_rating(MODEL_COST_RATINGS.get(model_name, 2))
                 rows.append(
                     "<tr>"
                     f"<td>{provider_names.get(provider, provider)}</td>"
@@ -1110,6 +1131,9 @@ class SettingsDialog(QDialog):
             f"th,td{{border:1px solid {border_color};padding:5px 7px;vertical-align:top;line-height:1.25;color:{muted_text};}}"
             f"th{{background:{header_background};color:{header_color};text-align:left;font-weight:700;}}"
             f"code{{color:{code_color};background:{code_background};font-weight:700;font-size:11px;padding:1px 3px;border-radius:4px;white-space:normal;}}"
+            ".stars{font-size:15px;letter-spacing:1px;white-space:nowrap;}"
+            ".star-on{color:#ffc857;font-weight:700;}"
+            f".star-off{{color:{star_off_color};font-weight:700;}}"
             "th:nth-child(1),td:nth-child(1){width:16%;}"
             "th:nth-child(2),td:nth-child(2){width:26%;}"
             "th:nth-child(3),td:nth-child(3){width:34%;}"
