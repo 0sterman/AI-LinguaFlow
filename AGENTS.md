@@ -56,7 +56,7 @@ dist\WindowsTranslator\WindowsTranslator.exe
 - `translator_app/history.py`: local SQLite translation history.
 - `translator_app/secure_store.py`: API key storage through Windows Credential Manager/keyring with environment fallback.
 - `translator_app/config.py`: user config under `%APPDATA%\WindowsTranslator`.
-- `translator_app/hotkey.py`: isolated `Ctrl+C+C` detection logic.
+- `translator_app/hotkey.py`: isolated `Ctrl+C+C` detection logic and Windows native key-state polling.
 - `translator_app/startup.py`: Windows startup and desktop shortcut integration.
 - `assets/app_icon.ico`: executable, tray, and shortcut icon based on the repository/avatar style.
 

@@ -4,7 +4,7 @@ AI-LinguaFlow is a small Windows translator built around a fast `Ctrl+C+C` workf
 
 Default behavior:
 
-- Use `Ctrl+C+C` as the main speed feature for translating selected text without leaving the current app.
+- Use `Ctrl+C+C` as the main speed feature for translating selected text without leaving the current app. On Windows this uses a native key-state listener so it works more reliably in browsers and other apps.
 - Open the app to translate manually from a selected source language to a selected target language.
 - In quick mode, the selected text translates to your primary language by default.
 - If the text already appears to be in your primary language, it translates to a fallback language.

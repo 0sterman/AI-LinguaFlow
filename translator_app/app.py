@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from translator_app.config import AppConfig, load_config, save_config
 from translator_app.history import HistoryStore
-from translator_app.hotkey import DoubleCtrlCDetector
+from translator_app.hotkey import CtrlCPollStateDetector, DoubleCtrlCDetector, WindowsKeyStateReader
 from translator_app.i18n import t
 from translator_app.languages import Language, default_target_language, get_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
@@ -45,6 +45,9 @@ class TranslatorApplication(QObject):
         self.key_store = ApiKeyStore()
         self.history_store = HistoryStore()
         self.detector = DoubleCtrlCDetector()
+        self.poll_detector = CtrlCPollStateDetector(DoubleCtrlCDetector())
+        self.hotkey_timer: QTimer | None = None
+        self.key_state_reader: WindowsKeyStateReader | None = None
         self.signals = AppSignals()
         self.keyboard_hook = None
         self.original_text = ""
@@ -133,6 +136,22 @@ class TranslatorApplication(QObject):
         self.main_window.activateWindow()
 
     def start_hotkey_listener(self) -> None:
+        if sys.platform.startswith("win"):
+            if self.hotkey_timer is not None and self.hotkey_timer.isActive():
+                return
+            try:
+                self.key_state_reader = WindowsKeyStateReader()
+            except Exception:
+                self.key_state_reader = None
+                self.popup.show_error("Не удалось включить Windows hotkey listener.")
+                return
+            self.poll_detector.reset()
+            self.hotkey_timer = QTimer(self)
+            self.hotkey_timer.setInterval(25)
+            self.hotkey_timer.timeout.connect(self.poll_hotkey_state)
+            self.hotkey_timer.start()
+            return
+
         try:
             import keyboard
         except ImportError:
@@ -154,7 +173,23 @@ class TranslatorApplication(QObject):
             self.keyboard_hook = None
             self.popup.show_error("Не удалось включить глобальный хоткей. Попробуйте запустить приложение от администратора.")
 
+    def poll_hotkey_state(self) -> None:
+        if self.key_state_reader is None:
+            return
+        if self.poll_detector.update(
+            self.key_state_reader.ctrl_down(),
+            self.key_state_reader.c_down(),
+            time.monotonic(),
+        ):
+            self.signals.hotkeyTriggered.emit()
+
     def stop_hotkey_listener(self) -> None:
+        if self.hotkey_timer is not None:
+            self.hotkey_timer.stop()
+            self.hotkey_timer.deleteLater()
+            self.hotkey_timer = None
+        self.key_state_reader = None
+        self.poll_detector.reset()
         if self.keyboard_hook is None:
             return
         try:
@@ -177,7 +212,7 @@ class TranslatorApplication(QObject):
     def on_hotkey_triggered(self) -> None:
         if not self.config.enabled:
             return
-        QTimer.singleShot(140, self.translate_clipboard)
+        QTimer.singleShot(220, self.translate_clipboard)
 
     def translate_clipboard(self) -> None:
         try:
