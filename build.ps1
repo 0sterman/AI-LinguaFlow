@@ -4,7 +4,7 @@ python -m PyInstaller `
   --noconfirm `
   --clean `
   --windowed `
-  --name WindowsTranslator `
+  --name "LinguaFlow AI" `
   --icon assets\app_icon.ico `
   --add-data "assets\app_icon.ico;assets" `
   --add-data "assets\app_icon.png;assets" `
@@ -12,4 +12,4 @@ python -m PyInstaller `
   --hidden-import keyring.backends.Windows `
   translator_app\__main__.py
 
-Write-Host "Built dist\WindowsTranslator\WindowsTranslator.exe"
+Write-Host "Built dist\LinguaFlow AI\LinguaFlow AI.exe"

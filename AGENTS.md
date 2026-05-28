@@ -44,7 +44,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 The built app is created at:
 
 ```text
-dist\WindowsTranslator\WindowsTranslator.exe
+dist\LinguaFlow AI\LinguaFlow AI.exe
 ```
 
 ## Architecture
@@ -150,7 +150,7 @@ Do not commit generated folders:
 - `__pycache__/`
 - local databases or `.env` files
 
-If `dist\WindowsTranslator` is locked during build, stop the running `WindowsTranslator` process and rebuild.
+If `dist\LinguaFlow AI` is locked during build, stop the running `LinguaFlow AI` process and rebuild.
 
 ## Current Known Limits
 

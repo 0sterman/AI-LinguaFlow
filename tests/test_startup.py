@@ -19,15 +19,15 @@ def test_desktop_shortcut_falls_back_to_home_desktop(monkeypatch, tmp_path) -> N
 def test_url_shortcut_contains_target_and_icon(tmp_path) -> None:
     shortcut = tmp_path / "LinguaFlow AI Translator.url"
 
-    startup._write_url_shortcut(shortcut, r"C:\App\WindowsTranslator.exe", r"C:\App\WindowsTranslator.exe")
+    startup._write_url_shortcut(shortcut, r"C:\App\LinguaFlow AI.exe", r"C:\App\LinguaFlow AI.exe")
 
     content = shortcut.read_text(encoding="utf-8")
-    assert "URL=file:///C:/App/WindowsTranslator.exe" in content
-    assert "IconFile=C:\\App\\WindowsTranslator.exe" in content
+    assert "URL=file:///C:/App/LinguaFlow AI.exe" in content
+    assert "IconFile=C:\\App\\LinguaFlow AI.exe" in content
 
 
 def test_current_launch_target_uses_executable_when_frozen(monkeypatch) -> None:
     monkeypatch.setattr(sys, "frozen", True, raising=False)
-    monkeypatch.setattr(sys, "executable", r"C:\App\WindowsTranslator.exe")
+    monkeypatch.setattr(sys, "executable", r"C:\App\LinguaFlow AI.exe")
 
-    assert startup.current_launch_target() == r"C:\App\WindowsTranslator.exe"
+    assert startup.current_launch_target() == r"C:\App\LinguaFlow AI.exe"

@@ -47,7 +47,7 @@ Environment variable fallbacks:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-The executable will be created under `dist\WindowsTranslator\WindowsTranslator.exe`.
+The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
 
 ## Notes
 
