@@ -37,17 +37,24 @@ class TranslationRequest:
     text: str
     target_language: Language
     model: str
+    source_language: Language | None = None
+
+
+def build_translation_input(request: TranslationRequest) -> str:
+    source = request.source_language.english_name if request.source_language else "Auto-detect"
+    return (
+        f"Source language: {source}\n"
+        f"Target language: {request.target_language.english_name}\n\n"
+        "Text to translate:\n"
+        f"{request.text}"
+    )
 
 
 def build_translation_payload(request: TranslationRequest) -> dict:
     return {
         "model": request.model,
         "instructions": TRANSLATION_INSTRUCTIONS,
-        "input": (
-            f"Target language: {request.target_language.english_name}\n\n"
-            "Text to translate:\n"
-            f"{request.text}"
-        ),
+        "input": build_translation_input(request),
     }
 
 
@@ -59,11 +66,7 @@ def build_gemini_payload(request: TranslationRequest) -> dict:
                 "role": "user",
                 "parts": [
                     {
-                        "text": (
-                            f"Target language: {request.target_language.english_name}\n\n"
-                            "Text to translate:\n"
-                            f"{request.text}"
-                        )
+                        "text": build_translation_input(request)
                     }
                 ],
             }
@@ -85,11 +88,7 @@ def build_anthropic_payload(request: TranslationRequest) -> dict:
         "messages": [
             {
                 "role": "user",
-                "content": (
-                    f"Target language: {request.target_language.english_name}\n\n"
-                    "Text to translate:\n"
-                    f"{request.text}"
-                ),
+                "content": build_translation_input(request),
             }
         ],
     }
@@ -101,7 +100,7 @@ class OpenAITranslator:
         self.model = model
         self.timeout_seconds = timeout_seconds
 
-    def translate(self, text: str, target_language: Language) -> str:
+    def translate(self, text: str, target_language: Language, source_language: Language | None = None) -> str:
         cleaned = text.strip()
         if not cleaned:
             raise TranslationError("Нет текста для перевода")
@@ -111,7 +110,12 @@ class OpenAITranslator:
             raise MissingApiKeyError("OpenAI API key is missing")
 
         payload = build_translation_payload(
-            TranslationRequest(text=cleaned, target_language=target_language, model=self.model)
+            TranslationRequest(
+                text=cleaned,
+                target_language=target_language,
+                model=self.model,
+                source_language=source_language,
+            )
         )
         body = json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(
@@ -164,7 +168,7 @@ class ProviderTranslator:
         self.model = model
         self.timeout_seconds = timeout_seconds
 
-    def translate(self, text: str, target_language: Language) -> str:
+    def translate(self, text: str, target_language: Language, source_language: Language | None = None) -> str:
         cleaned = text.strip()
         if not cleaned:
             raise TranslationError("Нет текста для перевода")
@@ -173,12 +177,21 @@ class ProviderTranslator:
         if not self.api_key:
             raise MissingApiKeyError(f"{provider_label(self.provider)} API key is missing")
 
-        request = TranslationRequest(text=cleaned, target_language=target_language, model=self.model)
+        request = TranslationRequest(
+            text=cleaned,
+            target_language=target_language,
+            model=self.model,
+            source_language=source_language,
+        )
         if self.provider == "google":
             return self._translate_with_google(request)
         if self.provider == "anthropic":
             return self._translate_with_anthropic(request)
-        return OpenAITranslator(self.api_key, self.model, self.timeout_seconds).translate(cleaned, target_language)
+        return OpenAITranslator(self.api_key, self.model, self.timeout_seconds).translate(
+            cleaned,
+            target_language,
+            source_language,
+        )
 
     def _translate_with_google(self, request: TranslationRequest) -> str:
         payload = build_gemini_payload(request)

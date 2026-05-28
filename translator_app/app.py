@@ -23,13 +23,15 @@ from translator_app.startup import (
     set_desktop_shortcut,
     set_start_with_windows,
 )
-from translator_app.ui import APP_STYLESHEET, HistoryDialog, SettingsDialog, TranslationPopup
+from translator_app.ui import APP_STYLESHEET, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup
 
 
 class AppSignals(QObject):
     hotkeyTriggered = Signal()
     translationReady = Signal(int, str, object)
     translationFailed = Signal(int, str, bool)
+    manualTranslationReady = Signal(int, str)
+    manualTranslationFailed = Signal(int, str, bool)
 
 
 class TranslatorApplication(QObject):
@@ -45,7 +47,14 @@ class TranslatorApplication(QObject):
         self.keyboard_hook = None
         self.original_text = ""
         self.request_id = 0
+        self.manual_request_id = 0
         self.pending_requests: dict[int, tuple[str, str, str, str]] = {}
+
+        self.main_window = MainTranslatorWindow(self.config.primary_language)
+        self.main_window.translateRequested.connect(self.translate_manual_text)
+        self.main_window.copyRequested.connect(self.copy_manual_translation)
+        self.main_window.historyRequested.connect(self.open_history)
+        self.main_window.settingsRequested.connect(self.open_settings)
 
         self.popup = TranslationPopup(self.config.popup_width, self.config.popup_height)
         self.popup.languageSelected.connect(self.retranslate)
@@ -60,6 +69,8 @@ class TranslatorApplication(QObject):
         self.signals.hotkeyTriggered.connect(self.on_hotkey_triggered)
         self.signals.translationReady.connect(self.on_translation_ready)
         self.signals.translationFailed.connect(self.on_translation_failed)
+        self.signals.manualTranslationReady.connect(self.on_manual_translation_ready)
+        self.signals.manualTranslationFailed.connect(self.on_manual_translation_failed)
 
         if self.config.enabled:
             self.start_hotkey_listener()
@@ -85,6 +96,10 @@ class TranslatorApplication(QObject):
         settings_action.triggered.connect(self.open_settings)
         menu.addAction(settings_action)
 
+        open_action = QAction("Открыть переводчик", self)
+        open_action.triggered.connect(self.open_main_window)
+        menu.addAction(open_action)
+
         history_action = QAction("История", self)
         history_action.triggered.connect(self.open_history)
         menu.addAction(history_action)
@@ -108,6 +123,11 @@ class TranslatorApplication(QObject):
         painter.drawText(pixmap.rect(), 0x84, "T")
         painter.end()
         return QIcon(pixmap)
+
+    def open_main_window(self) -> None:
+        self.main_window.show()
+        self.main_window.raise_()
+        self.main_window.activateWindow()
 
     def start_hotkey_listener(self) -> None:
         try:
@@ -209,6 +229,55 @@ class TranslatorApplication(QObject):
 
         threading.Thread(target=run, daemon=True).start()
 
+    def translate_manual_text(self, source_language_code: str, target_language_code: str, text: str) -> None:
+        cleaned = text.strip()
+        if not cleaned:
+            self.main_window.set_error("Нет текста для перевода")
+            return
+
+        target_language = get_language(target_language_code)
+        source_language = None if source_language_code == "auto" else get_language(source_language_code)
+        self.manual_request_id += 1
+        current_request_id = self.manual_request_id
+        provider = self.config.provider
+        model = self.config.model_for_provider()
+        self.main_window.set_loading()
+
+        def run() -> None:
+            try:
+                translator = ProviderTranslator(
+                    provider,
+                    self.key_store.get_api_key(provider),
+                    model=model,
+                )
+                translated = translator.translate(cleaned, target_language, source_language)
+            except MissingApiKeyError:
+                provider_name = provider_label(provider)
+                self.signals.manualTranslationFailed.emit(current_request_id, f"Нужен {provider_name} API key. Открою настройки.", True)
+            except TextTooLongError as exc:
+                self.signals.manualTranslationFailed.emit(current_request_id, str(exc), False)
+            except TranslationError as exc:
+                self.signals.manualTranslationFailed.emit(current_request_id, str(exc), False)
+            except Exception:
+                self.signals.manualTranslationFailed.emit(current_request_id, "Неожиданная ошибка перевода", False)
+            else:
+                self.history_store.add(cleaned, translated, target_language.code, provider, model)
+                self.signals.manualTranslationReady.emit(current_request_id, translated)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def on_manual_translation_ready(self, request_id: int, translated: str) -> None:
+        if request_id != self.manual_request_id:
+            return
+        self.main_window.set_translation(translated)
+
+    def on_manual_translation_failed(self, request_id: int, message: str, open_settings: bool) -> None:
+        if request_id != self.manual_request_id:
+            return
+        self.main_window.set_error(message)
+        if open_settings:
+            QTimer.singleShot(250, self.open_settings)
+
     def on_translation_ready(self, request_id: int, translated: str, target_language: object) -> None:
         if request_id != self.request_id:
             self.pending_requests.pop(request_id, None)
@@ -233,6 +302,11 @@ class TranslatorApplication(QObject):
         if text.strip():
             pyperclip.copy(text)
             self.popup.status_label.setText("Скопировано")
+
+    def copy_manual_translation(self) -> None:
+        text = self.main_window.current_translation()
+        if text.strip():
+            pyperclip.copy(text)
 
     def open_history(self) -> None:
         dialog = HistoryDialog(self.history_store.recent())
@@ -307,6 +381,9 @@ class TranslatorApplication(QObject):
         except Exception as exc:
             QMessageBox.warning(None, "Settings", f"Не удалось изменить ярлык на рабочем столе: {exc}")
         save_config(self.config)
+        target_index = self.main_window.target_language_input.findData(self.config.primary_language)
+        if target_index >= 0:
+            self.main_window.target_language_input.setCurrentIndex(target_index)
 
     def quit(self) -> None:
         self.shutdown()
@@ -324,6 +401,7 @@ def main() -> int:
     app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
     app.setStyleSheet(APP_STYLESHEET)
     controller = TranslatorApplication(app)
+    controller.open_main_window()
     app.aboutToQuit.connect(controller.shutdown)
     return app.exec()
 

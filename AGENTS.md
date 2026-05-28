@@ -2,7 +2,7 @@
 
 ## Project
 
-AI-LinguaFlow is a Windows tray translator. It listens for `Ctrl+C+C`, reads the copied selection, translates it through the selected AI provider, shows a compact popup, and keeps local translation history.
+AI-LinguaFlow is a Windows translator with two primary workflows: a normal manual translator window for chosen source/target languages, and a fast `Ctrl+C+C` popup workflow for selected text. It translates through the selected AI provider and keeps local translation history.
 
 Repository: `0sterman/AI-LinguaFlow`
 
@@ -50,7 +50,7 @@ dist\WindowsTranslator\WindowsTranslator.exe
 ## Architecture
 
 - `translator_app/app.py`: tray app, hotkey flow, translation orchestration, settings/history dialogs.
-- `translator_app/ui.py`: PySide6 popup, settings UI, history UI.
+- `translator_app/ui.py`: PySide6 main translator window, popup, settings UI, history UI.
 - `translator_app/openai_client.py`: provider API clients for OpenAI, Google Gemini, and Anthropic.
 - `translator_app/languages.py`: supported languages, lightweight local detection, primary-language routing.
 - `translator_app/history.py`: local SQLite translation history.
@@ -109,6 +109,7 @@ History should remain compact and searchable. Keep deletion/clear-history behavi
 ## UX Rules
 
 - The popup should stay compact, fast, and unobtrusive.
+- The main window should support ordinary manual translation from a selected source language to a selected target language.
 - Keep the visual style close to the logo: dark graphite surfaces, cool blue accents, clean Apple-like spacing, and no noisy decoration.
 - Do not replace the clipboard with translations automatically; keep explicit copy buttons.
 - Keep the `История` button visible and simple.

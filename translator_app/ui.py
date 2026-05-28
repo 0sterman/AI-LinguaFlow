@@ -66,6 +66,15 @@ QLabel#AppTitle {
     font-size: 15px;
     font-weight: 650;
 }
+QLabel#HeroTitle {
+    color: #f7fbff;
+    font-size: 24px;
+    font-weight: 700;
+}
+QLabel#HeroSubtitle {
+    color: #9caaba;
+    font-size: 13px;
+}
 QLabel#SectionLabel {
     color: #8fd8ff;
     font-size: 12px;
@@ -147,6 +156,15 @@ QPushButton#InfoButton {
     background: #172838;
     color: #dff6ff;
     font-weight: 700;
+}
+QPushButton#PrimaryButton {
+    background: #1e78ad;
+    border: 1px solid #65cfff;
+    color: #ffffff;
+    font-weight: 650;
+}
+QPushButton#PrimaryButton:hover {
+    background: #2588c3;
 }
 QCheckBox {
     spacing: 8px;
@@ -307,6 +325,120 @@ class TranslationPopup(QWidget):
             geometry.right() - self.width() - margin,
             geometry.bottom() - self.height() - margin,
         )
+
+
+class MainTranslatorWindow(QWidget):
+    translateRequested = Signal(str, str, str)
+    copyRequested = Signal()
+    historyRequested = Signal()
+    settingsRequested = Signal()
+
+    def __init__(self, primary_language_code: str) -> None:
+        super().__init__()
+        self.setWindowTitle("AI-LinguaFlow")
+        self.setObjectName("MainTranslatorWindow")
+        self.resize(860, 560)
+
+        title_label = QLabel("AI-LinguaFlow")
+        title_label.setObjectName("HeroTitle")
+        subtitle_label = QLabel("Быстрый перевод через Ctrl+C+C или обычный перевод с выбранного языка на выбранный.")
+        subtitle_label.setObjectName("HeroSubtitle")
+
+        self.source_language_input = QComboBox()
+        self.source_language_input.addItem("Auto", "auto")
+        for language in LANGUAGES:
+            self.source_language_input.addItem(language.english_name, language.code)
+
+        self.target_language_input = QComboBox()
+        for language in LANGUAGES:
+            self.target_language_input.addItem(language.english_name, language.code)
+        target_index = max(0, self.target_language_input.findData(primary_language_code))
+        self.target_language_input.setCurrentIndex(target_index)
+
+        self.source_text = QTextEdit()
+        self.source_text.setAcceptRichText(False)
+        self.source_text.setPlaceholderText("Введите или вставьте текст для перевода")
+
+        self.translation_text = QTextEdit()
+        self.translation_text.setReadOnly(True)
+        self.translation_text.setAcceptRichText(False)
+        self.translation_text.setPlaceholderText("Перевод появится здесь")
+
+        self.translate_button = QPushButton("Перевести")
+        self.translate_button.setObjectName("PrimaryButton")
+        self.translate_button.clicked.connect(self.emit_translate_requested)
+
+        self.copy_button = QPushButton("Копировать")
+        self.copy_button.clicked.connect(self.copyRequested.emit)
+
+        self.history_button = QPushButton("История")
+        self.history_button.setObjectName("HistoryButton")
+        self.history_button.clicked.connect(self.historyRequested.emit)
+
+        self.settings_button = QPushButton("Settings")
+        self.settings_button.clicked.connect(self.settingsRequested.emit)
+
+        language_row = QHBoxLayout()
+        language_row.addWidget(QLabel("С"))
+        language_row.addWidget(self.source_language_input)
+        language_row.addWidget(QLabel("На"))
+        language_row.addWidget(self.target_language_input)
+
+        action_row = QHBoxLayout()
+        action_row.addWidget(self.translate_button)
+        action_row.addWidget(self.copy_button)
+        action_row.addStretch(1)
+        action_row.addWidget(self.history_button)
+        action_row.addWidget(self.settings_button)
+
+        text_splitter = QSplitter(Qt.Orientation.Horizontal)
+        text_splitter.addWidget(self._labeled_text("Оригинал", self.source_text))
+        text_splitter.addWidget(self._labeled_text("Перевод", self.translation_text))
+        text_splitter.setSizes([430, 430])
+
+        header_layout = QVBoxLayout()
+        header_layout.addWidget(title_label)
+        header_layout.addWidget(subtitle_label)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(18, 18, 18, 18)
+        root.setSpacing(14)
+        root.addLayout(header_layout)
+        root.addLayout(language_row)
+        root.addWidget(text_splitter, 1)
+        root.addLayout(action_row)
+
+    def emit_translate_requested(self) -> None:
+        self.translateRequested.emit(
+            str(self.source_language_input.currentData()),
+            str(self.target_language_input.currentData()),
+            self.source_text.toPlainText(),
+        )
+
+    def set_loading(self) -> None:
+        self.translation_text.setPlainText("Перевожу...")
+        self.translate_button.setEnabled(False)
+
+    def set_translation(self, text: str) -> None:
+        self.translation_text.setPlainText(text)
+        self.translate_button.setEnabled(True)
+
+    def set_error(self, message: str) -> None:
+        self.translation_text.setPlainText(message)
+        self.translate_button.setEnabled(True)
+
+    def current_translation(self) -> str:
+        return self.translation_text.toPlainText()
+
+    def _labeled_text(self, label: str, text_edit: QTextEdit) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        section_label = QLabel(label)
+        section_label.setObjectName("SectionLabel")
+        layout.addWidget(section_label)
+        layout.addWidget(text_edit, 1)
+        return widget
 
 
 class HistoryDialog(QDialog):

@@ -1,10 +1,12 @@
 # AI-LinguaFlow
 
-AI-LinguaFlow is a small Windows tray translator for quick multilingual work. Hold `Ctrl` and press `C` twice quickly to translate the copied selection in a popup.
+AI-LinguaFlow is a small Windows translator for quick multilingual work. It can be opened normally from the desktop shortcut for manual translation, and it also supports a fast `Ctrl+C+C` workflow for translating selected text in a popup.
 
 Default behavior:
 
-- The selected text translates to your primary language by default.
+- Open the app to translate manually from a selected source language to a selected target language.
+- Use `Ctrl+C+C` as one of the main speed features for translating selected text without leaving the current app.
+- In quick mode, the selected text translates to your primary language by default.
 - If the text already appears to be in your primary language, it translates to a fallback language.
 - The app supports Russian, English, German, Spanish, and Simplified Chinese.
 - The popup can retranslate manually to any supported language.

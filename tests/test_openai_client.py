@@ -20,8 +20,23 @@ def test_payload_requests_only_translation() -> None:
 
     assert payload["model"] == "gpt-5-mini"
     assert "Return only the translated text" in payload["instructions"]
+    assert "Source language: Auto-detect" in payload["input"]
     assert "Target language: Russian" in payload["input"]
     assert "Hello" in payload["input"]
+
+
+def test_payload_can_include_manual_source_language() -> None:
+    payload = build_translation_payload(
+        TranslationRequest(
+            text="Hallo",
+            source_language=get_language("de"),
+            target_language=get_language("en"),
+            model="gpt-5-mini",
+        )
+    )
+
+    assert "Source language: German" in payload["input"]
+    assert "Target language: English" in payload["input"]
 
 
 def test_empty_text_raises_translation_error() -> None:
