@@ -49,6 +49,7 @@ class AppConfig:
     openai_model: str = DEFAULT_MODELS["openai"]
     google_model: str = DEFAULT_MODELS["google"]
     anthropic_model: str = DEFAULT_MODELS["anthropic"]
+    target_language: str = "ru"
     enabled: bool = True
     autostart: bool = False
     desktop_shortcut: bool = True
@@ -100,6 +101,8 @@ def load_config() -> AppConfig:
         defaults["provider"] = "openai"
     if defaults["primary_language"] not in {"ru", "en", "de", "es", "zh"}:
         defaults["primary_language"] = "ru"
+    if defaults["target_language"] not in {"ru", "en", "de", "es", "zh"}:
+        defaults["target_language"] = defaults["primary_language"]
     if defaults["theme"] not in THEME_OPTIONS:
         defaults["theme"] = "system"
     return AppConfig(**defaults)

@@ -187,7 +187,7 @@ def star_rating(value: int) -> str:
     )
 
 APP_DISPLAY_NAME = "LinguaFlow AI"
-APP_WINDOW_TITLE = "Oster - LinguaFlow AI Popup Translator"
+APP_WINDOW_TITLE = "Oster - LinguaFlow AI - Popup Translator"
 VK_RCONTROL = 0xA3
 
 
@@ -574,8 +574,9 @@ class MainTranslatorWindow(QWidget):
     copyRequested = Signal()
     historyRequested = Signal()
     settingsRequested = Signal()
+    targetLanguageChanged = Signal(str)
 
-    def __init__(self, primary_language_code: str) -> None:
+    def __init__(self, primary_language_code: str, target_language_code: str | None = None) -> None:
         super().__init__()
         self.ui_language = primary_language_code
         self.setWindowTitle(APP_WINDOW_TITLE)
@@ -598,8 +599,9 @@ class MainTranslatorWindow(QWidget):
         self.target_language_input = QComboBox()
         for language in LANGUAGES:
             self.target_language_input.addItem(language.english_name, language.code)
-        target_index = max(0, self.target_language_input.findData(primary_language_code))
+        target_index = max(0, self.target_language_input.findData(target_language_code or primary_language_code))
         self.target_language_input.setCurrentIndex(target_index)
+        self.target_language_input.currentIndexChanged.connect(self.emit_target_language_changed)
 
         self.source_text = SubmitTextEdit()
         self.source_text.setAcceptRichText(False)
@@ -698,6 +700,7 @@ class MainTranslatorWindow(QWidget):
         self.auto_translate_timer.stop()
         self.last_submitted_text = ""
         self.source_text.clear()
+        self.translation_text.clear()
 
     def load_source_text(self, text: str, target_language_code: str) -> None:
         self.auto_translate_timer.stop()
@@ -707,11 +710,16 @@ class MainTranslatorWindow(QWidget):
             self.source_language_input.setCurrentIndex(source_index)
         target_index = self.target_language_input.findData(target_language_code)
         if target_index >= 0:
+            was_blocked = self.target_language_input.blockSignals(True)
             self.target_language_input.setCurrentIndex(target_index)
+            self.target_language_input.blockSignals(was_blocked)
         self.translation_text.clear()
         self.source_text.setPlainText(text)
         self.source_text.moveCursor(QTextCursor.MoveOperation.End)
         self.source_text.setFocus()
+
+    def emit_target_language_changed(self) -> None:
+        self.targetLanguageChanged.emit(str(self.target_language_input.currentData()))
 
     def emit_translate_requested(self) -> None:
         self.auto_translate_timer.stop()
@@ -1073,12 +1081,6 @@ class SettingsDialog(QDialog):
         self.api_header_label = QLabel()
         header.addWidget(self.api_header_label)
         header.addStretch(1)
-        recommendations_box = QVBoxLayout()
-        recommendations_box.setSpacing(4)
-        recommendations_box.addWidget(self.recommendations_label, alignment=Qt.AlignmentFlag.AlignCenter)
-        recommendations_box.addWidget(self.info_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        header.addLayout(recommendations_box)
-        header.addStretch(1)
         layout.addLayout(header)
 
         form = QFormLayout()
@@ -1095,6 +1097,11 @@ class SettingsDialog(QDialog):
             form.addRow(key_label, key_row)
             form.addRow(model_label, self._model_row(provider))
         layout.addLayout(form)
+        recommendations_box = QVBoxLayout()
+        recommendations_box.setSpacing(5)
+        recommendations_box.addWidget(self.recommendations_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        recommendations_box.addWidget(self.info_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(recommendations_box)
         layout.addStretch(1)
         return widget
 

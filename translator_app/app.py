@@ -8,6 +8,7 @@ from pathlib import Path
 import pyperclip
 from PySide6.QtCore import QObject, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QIcon, QPainter, QPixmap, QColor
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from translator_app.config import AppConfig, load_config, save_config
@@ -31,6 +32,8 @@ from translator_app.startup import (
     set_start_with_windows,
 )
 from translator_app.ui import APP_DISPLAY_NAME, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup, app_stylesheet
+
+SINGLE_INSTANCE_NAME = "OsterLinguaFlowAITranslator"
 
 
 class AppSignals(QObject):
@@ -69,12 +72,13 @@ class TranslatorApplication(QObject):
         self.manual_request_id = 0
         self.pending_requests: dict[int, tuple[str, str, str, str]] = {}
 
-        self.main_window = MainTranslatorWindow(self.config.primary_language)
+        self.main_window = MainTranslatorWindow(self.config.primary_language, self.config.target_language)
         self.main_window.set_logo_path(str(resource_path("assets/app_icon.png")))
         self.main_window.translateRequested.connect(self.translate_manual_text)
         self.main_window.copyRequested.connect(self.copy_manual_translation)
         self.main_window.historyRequested.connect(self.open_history)
         self.main_window.settingsRequested.connect(self.open_settings)
+        self.main_window.targetLanguageChanged.connect(self.save_target_language)
 
         self.popup = TranslationPopup(self.config.popup_width, self.config.popup_height, self.config.primary_language)
         self.popup.languageSelected.connect(self.retranslate)
@@ -84,6 +88,7 @@ class TranslatorApplication(QObject):
         self.tray = QSystemTrayIcon(self._build_icon(), self.qt_app)
         self.tray.setToolTip(APP_DISPLAY_NAME)
         self.tray.setContextMenu(self._build_menu())
+        self.tray.activated.connect(self.on_tray_activated)
         self.tray.show()
 
         self.signals.hotkeyTriggered.connect(self.on_hotkey_triggered)
@@ -145,9 +150,18 @@ class TranslatorApplication(QObject):
         painter.end()
         return QIcon(pixmap)
 
+    def on_tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        if reason in {
+            QSystemTrayIcon.ActivationReason.Trigger,
+            QSystemTrayIcon.ActivationReason.DoubleClick,
+        }:
+            self.open_main_window()
+
     def open_main_window(self, stay_on_top: bool = False) -> None:
         if stay_on_top:
             self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        else:
+            self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
         self.main_window.show()
         self.main_window.raise_()
         self.main_window.activateWindow()
@@ -159,6 +173,12 @@ class TranslatorApplication(QObject):
             return
         self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
         self.main_window.show()
+
+    def save_target_language(self, language_code: str) -> None:
+        if language_code not in {"ru", "en", "de", "es", "zh"}:
+            return
+        self.config.target_language = language_code
+        save_config(self.config)
 
     def start_hotkey_listener(self) -> None:
         if sys.platform.startswith("win"):
@@ -577,9 +597,6 @@ class TranslatorApplication(QObject):
         except Exception as exc:
             QMessageBox.warning(None, "Settings", f"Не удалось изменить ярлык на рабочем столе: {exc}")
         save_config(self.config)
-        target_index = self.main_window.target_language_input.findData(self.config.primary_language)
-        if target_index >= 0:
-            self.main_window.target_language_input.setCurrentIndex(target_index)
         self.main_window.apply_locale(self.config.primary_language)
         self.popup.apply_locale(self.config.primary_language)
         self.tray.setContextMenu(self._build_menu())
@@ -651,11 +668,41 @@ def main() -> int:
     app.setApplicationDisplayName(APP_DISPLAY_NAME)
     app.setApplicationName(APP_DISPLAY_NAME)
     app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
+    single_instance_server = create_single_instance_server()
+    if single_instance_server is None:
+        return 0
     controller = TranslatorApplication(app)
+    single_instance_server.newConnection.connect(lambda: handle_second_instance(single_instance_server, controller))
     app.setStyleSheet(app_stylesheet(controller.resolved_theme()))
     controller.open_main_window()
     app.aboutToQuit.connect(controller.shutdown)
     return app.exec()
+
+
+def create_single_instance_server() -> QLocalServer | None:
+    probe = QLocalSocket()
+    probe.connectToServer(SINGLE_INSTANCE_NAME)
+    if probe.waitForConnected(250):
+        probe.write(b"show")
+        probe.flush()
+        probe.waitForBytesWritten(250)
+        probe.disconnectFromServer()
+        return None
+
+    QLocalServer.removeServer(SINGLE_INSTANCE_NAME)
+    server = QLocalServer()
+    if not server.listen(SINGLE_INSTANCE_NAME):
+        return None
+    return server
+
+
+def handle_second_instance(server: QLocalServer, controller: TranslatorApplication) -> None:
+    while server.hasPendingConnections():
+        socket = server.nextPendingConnection()
+        if socket is not None:
+            socket.readAll()
+            socket.disconnectFromServer()
+    controller.open_main_window(stay_on_top=True)
 
 
 def resource_path(relative_path: str) -> Path:
