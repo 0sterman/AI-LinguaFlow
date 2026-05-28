@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 from translator_app.config import AppConfig, load_config, save_config
 from translator_app.history import HistoryStore
 from translator_app.hotkey import DoubleCtrlCDetector
+from translator_app.i18n import t
 from translator_app.languages import Language, default_target_language, get_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
 from translator_app.secure_store import ApiKeyStore
@@ -32,6 +33,7 @@ class AppSignals(QObject):
     translationFailed = Signal(int, str, bool)
     manualTranslationReady = Signal(int, str)
     manualTranslationFailed = Signal(int, str, bool)
+    apiKeyCheckFinished = Signal(str, bool, str)
 
 
 class TranslatorApplication(QObject):
@@ -56,7 +58,7 @@ class TranslatorApplication(QObject):
         self.main_window.historyRequested.connect(self.open_history)
         self.main_window.settingsRequested.connect(self.open_settings)
 
-        self.popup = TranslationPopup(self.config.popup_width, self.config.popup_height)
+        self.popup = TranslationPopup(self.config.popup_width, self.config.popup_height, self.config.primary_language)
         self.popup.languageSelected.connect(self.retranslate)
         self.popup.copyRequested.connect(self.copy_translation)
         self.popup.historyRequested.connect(self.open_history)
@@ -71,6 +73,7 @@ class TranslatorApplication(QObject):
         self.signals.translationFailed.connect(self.on_translation_failed)
         self.signals.manualTranslationReady.connect(self.on_manual_translation_ready)
         self.signals.manualTranslationFailed.connect(self.on_manual_translation_failed)
+        self.signals.apiKeyCheckFinished.connect(self.on_api_key_check_finished)
 
         if self.config.enabled:
             self.start_hotkey_listener()
@@ -86,27 +89,27 @@ class TranslatorApplication(QObject):
     def _build_menu(self) -> QMenu:
         menu = QMenu()
 
-        self.enabled_action = QAction("Enabled", self)
+        self.enabled_action = QAction(t(self.config.primary_language, "enabled"), self)
         self.enabled_action.setCheckable(True)
         self.enabled_action.setChecked(self.config.enabled)
         self.enabled_action.triggered.connect(self.set_enabled)
         menu.addAction(self.enabled_action)
 
-        settings_action = QAction("Settings", self)
+        settings_action = QAction(t(self.config.primary_language, "settings"), self)
         settings_action.triggered.connect(self.open_settings)
         menu.addAction(settings_action)
 
-        open_action = QAction("Открыть переводчик", self)
+        open_action = QAction(t(self.config.primary_language, "open_translator"), self)
         open_action.triggered.connect(self.open_main_window)
         menu.addAction(open_action)
 
-        history_action = QAction("История", self)
+        history_action = QAction(t(self.config.primary_language, "history"), self)
         history_action.triggered.connect(self.open_history)
         menu.addAction(history_action)
 
         menu.addSeparator()
 
-        quit_action = QAction("Quit", self)
+        quit_action = QAction(t(self.config.primary_language, "quit"), self)
         quit_action.triggered.connect(self.quit)
         menu.addAction(quit_action)
         return menu
@@ -184,7 +187,7 @@ class TranslatorApplication(QObject):
             return
 
         if not text or not text.strip():
-            self.popup.show_error("Нет текста для перевода")
+            self.popup.show_error(t(self.config.primary_language, "no_text"))
             return
 
         self.original_text = text
@@ -232,7 +235,7 @@ class TranslatorApplication(QObject):
     def translate_manual_text(self, source_language_code: str, target_language_code: str, text: str) -> None:
         cleaned = text.strip()
         if not cleaned:
-            self.main_window.set_error("Нет текста для перевода")
+            self.main_window.set_error(t(self.config.primary_language, "no_text"))
             return
 
         target_language = get_language(target_language_code)
@@ -309,7 +312,7 @@ class TranslatorApplication(QObject):
             pyperclip.copy(text)
 
     def open_history(self) -> None:
-        dialog = HistoryDialog(self.history_store.recent())
+        dialog = HistoryDialog(self.history_store.recent(), self.config.primary_language)
         dialog.filtersChanged.connect(lambda query, date_from, date_to: self.filter_history(dialog, query, date_from, date_to))
         dialog.copy_source_button.clicked.connect(
             lambda: self.copy_history_text(dialog, copy_translation=False)
@@ -353,8 +356,13 @@ class TranslatorApplication(QObject):
             "anthropic": bool(self.key_store.get_api_key("anthropic")),
         }
         dialog = SettingsDialog(self.config, saved_key_status=saved_key_status)
+        self.active_settings_dialog = dialog
+        dialog.apiKeyCheckRequested.connect(self.check_api_key)
+        dialog.apiKeyDeleteRequested.connect(self.delete_api_key)
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
+            self.active_settings_dialog = None
             return
+        self.active_settings_dialog = None
 
         for provider, api_key in dialog.api_keys.items():
             if not api_key:
@@ -384,6 +392,35 @@ class TranslatorApplication(QObject):
         target_index = self.main_window.target_language_input.findData(self.config.primary_language)
         if target_index >= 0:
             self.main_window.target_language_input.setCurrentIndex(target_index)
+        self.main_window.apply_locale(self.config.primary_language)
+        self.popup.apply_locale(self.config.primary_language)
+        self.tray.setContextMenu(self._build_menu())
+
+    def check_api_key(self, provider: str, api_key: str, model: str) -> None:
+        key_to_check = api_key.strip() or self.key_store.get_api_key(provider)
+        if not key_to_check:
+            self.signals.apiKeyCheckFinished.emit(provider, False, "API key is missing")
+            return
+
+        def run() -> None:
+            try:
+                translator = ProviderTranslator(provider, key_to_check, model=model, timeout_seconds=20)
+                translator.translate("Hello", get_language("ru"))
+            except Exception as exc:
+                self.signals.apiKeyCheckFinished.emit(provider, False, str(exc))
+            else:
+                self.signals.apiKeyCheckFinished.emit(provider, True, "")
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def on_api_key_check_finished(self, provider: str, is_valid: bool, message: str) -> None:
+        dialog = getattr(self, "active_settings_dialog", None)
+        if dialog is None:
+            return
+        dialog.update_api_key_status(provider, "valid" if is_valid else "invalid", message or None)
+
+    def delete_api_key(self, provider: str) -> None:
+        self.key_store.delete_api_key(provider)
 
     def quit(self) -> None:
         self.shutdown()

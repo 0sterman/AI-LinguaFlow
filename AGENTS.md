@@ -110,10 +110,13 @@ History should remain compact and searchable. Keep deletion/clear-history behavi
 
 - The popup should stay compact, fast, and unobtrusive.
 - The main window should support ordinary manual translation from a selected source language to a selected target language.
+- In the main window, Enter submits the translation request and Shift+Enter inserts a newline.
+- Changing the primary language should update the interface language for the main window, popup, settings, history, and tray labels where practical.
 - Keep the visual style close to the logo: dark graphite surfaces, cool blue accents, clean Apple-like spacing, and no noisy decoration.
 - Do not replace the clipboard with translations automatically; keep explicit copy buttons.
 - Keep the `История` button visible and simple.
 - Settings should expose provider, primary language, API keys, model names, desktop shortcut, and autostart.
+- Settings should let the user check and delete provider API keys. Key checks must use a small real provider request and must not log key values.
 - The executable, tray icon, and desktop shortcut should use `assets/app_icon.ico`.
 - Avoid adding large dashboards or heavy flows. This is a quick translator, not a knowledge-management app.
 - Any feature that stores more user data needs a clear local-only behavior and an easy way to delete data.

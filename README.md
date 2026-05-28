@@ -9,7 +9,9 @@ Default behavior:
 - In quick mode, the selected text translates to your primary language by default.
 - If the text already appears to be in your primary language, it translates to a fallback language.
 - The app supports Russian, English, German, Spanish, and Simplified Chinese.
+- The interface follows the selected primary language.
 - The popup can retranslate manually to any supported language.
+- In the main window, press `Enter` to translate pasted text; use `Shift+Enter` for a new line.
 - Translation history is saved locally after installation under your Windows user profile.
 
 ## Setup
@@ -21,7 +23,7 @@ python -m pip install -r requirements.txt
 python -m translator_app
 ```
 
-On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart.
+On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart. API keys can be checked with a real provider request and deleted from local secure storage.
 
 The app uses an AI-LinguaFlow icon and dark Apple-inspired interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
 

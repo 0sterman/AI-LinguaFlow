@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QDate, Qt, Signal
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QKeyEvent
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 
 from translator_app.config import AppConfig, DEFAULT_MODELS
 from translator_app.history import HistoryRecord
+from translator_app.i18n import t
 from translator_app.languages import LANGUAGES, Language
 
 
@@ -33,6 +34,13 @@ PROVIDERS = (
     ("google", "Google Gemini"),
     ("anthropic", "Anthropic Claude"),
 )
+
+
+def provider_label_for_ui(provider: str) -> str:
+    for provider_code, label in PROVIDERS:
+        if provider_code == provider:
+            return label
+    return provider
 
 MODEL_INFO = """Рекомендация для переводчика:
 
@@ -83,6 +91,21 @@ QLabel#SectionLabel {
 QLabel#StatusLabel {
     color: #9caaba;
     font-size: 12px;
+}
+QLabel#KeyStatusOk {
+    color: #5ef0a5;
+    font-size: 18px;
+    font-weight: 800;
+}
+QLabel#KeyStatusBad {
+    color: #ff6b7a;
+    font-size: 18px;
+    font-weight: 800;
+}
+QLabel#KeyStatusNeutral {
+    color: #8fd8ff;
+    font-size: 18px;
+    font-weight: 800;
 }
 QTextEdit, QLineEdit, QComboBox, QDateEdit, QListWidget {
     background: #151b24;
@@ -215,31 +238,44 @@ QMenu::item:selected {
 """
 
 
+class SubmitTextEdit(QTextEdit):
+    submitRequested = Signal()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
+            if not event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+                self.submitRequested.emit()
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
+
 class TranslationPopup(QWidget):
     languageSelected = Signal(str)
     copyRequested = Signal()
     historyRequested = Signal()
 
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, ui_language: str = "ru") -> None:
         super().__init__(
             None,
             Qt.WindowType.Tool
             | Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint,
         )
+        self.ui_language = ui_language
         self.setObjectName("TranslationPopup")
         self.resize(width, height)
 
-        title_label = QLabel("AI-LinguaFlow")
-        title_label.setObjectName("AppTitle")
+        self.title_label = QLabel("AI-LinguaFlow")
+        self.title_label.setObjectName("AppTitle")
 
-        self.status_label = QLabel("Готово")
+        self.status_label = QLabel()
         self.status_label.setObjectName("StatusLabel")
 
         self.language_buttons: dict[str, QPushButton] = {}
         header_row = QHBoxLayout()
         header_row.setSpacing(6)
-        header_row.addWidget(title_label)
+        header_row.addWidget(self.title_label)
         header_row.addStretch(1)
         for language in LANGUAGES:
             button = QPushButton(language.label)
@@ -254,17 +290,16 @@ class TranslationPopup(QWidget):
         self.text_box.setReadOnly(True)
         self.text_box.setAcceptRichText(False)
 
-        self.copy_button = QPushButton("Copy")
+        self.copy_button = QPushButton()
         self.copy_button.setFixedWidth(82)
         self.copy_button.clicked.connect(self.copyRequested.emit)
 
-        self.history_button = QPushButton("История")
+        self.history_button = QPushButton()
         self.history_button.setObjectName("HistoryButton")
         self.history_button.setFixedWidth(94)
-        self.history_button.setToolTip("Открыть локальную историю переводов")
         self.history_button.clicked.connect(self.historyRequested.emit)
 
-        self.close_button = QPushButton("Close")
+        self.close_button = QPushButton()
         self.close_button.setFixedWidth(82)
         self.close_button.clicked.connect(self.hide)
 
@@ -290,11 +325,20 @@ class TranslationPopup(QWidget):
             }
             """
         )
+        self.apply_locale(ui_language)
+
+    def apply_locale(self, language_code: str) -> None:
+        self.ui_language = language_code
+        self.status_label.setText(t(language_code, "ready"))
+        self.copy_button.setText(t(language_code, "copy"))
+        self.history_button.setText(t(language_code, "history"))
+        self.history_button.setToolTip(t(language_code, "history"))
+        self.close_button.setText(t(language_code, "close"))
 
     def show_loading(self, target_language: Language) -> None:
         self._mark_language(target_language.code)
-        self.text_box.setPlainText("Перевожу...")
-        self.status_label.setText(f"Цель: {target_language.english_name}")
+        self.text_box.setPlainText(t(self.ui_language, "translating"))
+        self.status_label.setText(t(self.ui_language, "target", language=target_language.english_name))
         self.copy_button.setEnabled(False)
         self._move_to_bottom_right()
         self.show()
@@ -304,7 +348,7 @@ class TranslationPopup(QWidget):
     def show_translation(self, text: str, target_language: Language) -> None:
         self._mark_language(target_language.code)
         self.text_box.setPlainText(text)
-        self.status_label.setText(f"Переведено на {target_language.english_name}")
+        self.status_label.setText(t(self.ui_language, "translated_to", language=target_language.english_name))
         self.copy_button.setEnabled(bool(text.strip()))
         self._move_to_bottom_right()
         self.show()
@@ -312,7 +356,7 @@ class TranslationPopup(QWidget):
 
     def show_error(self, message: str) -> None:
         self.text_box.setPlainText(message)
-        self.status_label.setText("Ошибка")
+        self.status_label.setText(t(self.ui_language, "error"))
         self.copy_button.setEnabled(False)
         self._move_to_bottom_right()
         self.show()
@@ -343,14 +387,15 @@ class MainTranslatorWindow(QWidget):
 
     def __init__(self, primary_language_code: str) -> None:
         super().__init__()
+        self.ui_language = primary_language_code
         self.setWindowTitle("AI-LinguaFlow")
         self.setObjectName("MainTranslatorWindow")
         self.resize(860, 560)
 
-        title_label = QLabel("AI-LinguaFlow")
-        title_label.setObjectName("HeroTitle")
-        subtitle_label = QLabel("Быстрый перевод через Ctrl+C+C или обычный перевод с выбранного языка на выбранный.")
-        subtitle_label.setObjectName("HeroSubtitle")
+        self.title_label = QLabel("AI-LinguaFlow")
+        self.title_label.setObjectName("HeroTitle")
+        self.subtitle_label = QLabel()
+        self.subtitle_label.setObjectName("HeroSubtitle")
 
         self.source_language_input = QComboBox()
         self.source_language_input.addItem("Auto", "auto")
@@ -363,33 +408,34 @@ class MainTranslatorWindow(QWidget):
         target_index = max(0, self.target_language_input.findData(primary_language_code))
         self.target_language_input.setCurrentIndex(target_index)
 
-        self.source_text = QTextEdit()
+        self.source_text = SubmitTextEdit()
         self.source_text.setAcceptRichText(False)
-        self.source_text.setPlaceholderText("Введите или вставьте текст для перевода")
+        self.source_text.submitRequested.connect(self.emit_translate_requested)
 
         self.translation_text = QTextEdit()
         self.translation_text.setReadOnly(True)
         self.translation_text.setAcceptRichText(False)
-        self.translation_text.setPlaceholderText("Перевод появится здесь")
 
-        self.translate_button = QPushButton("Перевести")
+        self.translate_button = QPushButton()
         self.translate_button.setObjectName("PrimaryButton")
         self.translate_button.clicked.connect(self.emit_translate_requested)
 
-        self.copy_button = QPushButton("Копировать")
+        self.copy_button = QPushButton()
         self.copy_button.clicked.connect(self.copyRequested.emit)
 
-        self.history_button = QPushButton("История")
+        self.history_button = QPushButton()
         self.history_button.setObjectName("HistoryButton")
         self.history_button.clicked.connect(self.historyRequested.emit)
 
-        self.settings_button = QPushButton("Settings")
+        self.settings_button = QPushButton()
         self.settings_button.clicked.connect(self.settingsRequested.emit)
 
+        self.from_label = QLabel()
+        self.to_label = QLabel()
         language_row = QHBoxLayout()
-        language_row.addWidget(QLabel("С"))
+        language_row.addWidget(self.from_label)
         language_row.addWidget(self.source_language_input)
-        language_row.addWidget(QLabel("На"))
+        language_row.addWidget(self.to_label)
         language_row.addWidget(self.target_language_input)
 
         action_row = QHBoxLayout()
@@ -400,13 +446,17 @@ class MainTranslatorWindow(QWidget):
         action_row.addWidget(self.settings_button)
 
         text_splitter = QSplitter(Qt.Orientation.Horizontal)
-        text_splitter.addWidget(self._labeled_text("Оригинал", self.source_text))
-        text_splitter.addWidget(self._labeled_text("Перевод", self.translation_text))
+        self.source_section_label = QLabel()
+        self.source_section_label.setObjectName("SectionLabel")
+        self.translation_section_label = QLabel()
+        self.translation_section_label.setObjectName("SectionLabel")
+        text_splitter.addWidget(self._labeled_text(self.source_section_label, self.source_text))
+        text_splitter.addWidget(self._labeled_text(self.translation_section_label, self.translation_text))
         text_splitter.setSizes([430, 430])
 
         header_layout = QVBoxLayout()
-        header_layout.addWidget(title_label)
-        header_layout.addWidget(subtitle_label)
+        header_layout.addWidget(self.title_label)
+        header_layout.addWidget(self.subtitle_label)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(18, 18, 18, 18)
@@ -415,6 +465,21 @@ class MainTranslatorWindow(QWidget):
         root.addLayout(language_row)
         root.addWidget(text_splitter, 1)
         root.addLayout(action_row)
+        self.apply_locale(primary_language_code)
+
+    def apply_locale(self, language_code: str) -> None:
+        self.ui_language = language_code
+        self.subtitle_label.setText(t(language_code, "main_subtitle"))
+        self.from_label.setText(t(language_code, "from"))
+        self.to_label.setText(t(language_code, "to"))
+        self.source_section_label.setText(t(language_code, "original"))
+        self.translation_section_label.setText(t(language_code, "translation"))
+        self.source_text.setPlaceholderText(t(language_code, "source_placeholder"))
+        self.translation_text.setPlaceholderText(t(language_code, "translation_placeholder"))
+        self.translate_button.setText(t(language_code, "translate"))
+        self.copy_button.setText(t(language_code, "copy"))
+        self.history_button.setText(t(language_code, "history"))
+        self.settings_button.setText(t(language_code, "settings"))
 
     def emit_translate_requested(self) -> None:
         self.translateRequested.emit(
@@ -424,7 +489,7 @@ class MainTranslatorWindow(QWidget):
         )
 
     def set_loading(self) -> None:
-        self.translation_text.setPlainText("Перевожу...")
+        self.translation_text.setPlainText(t(self.ui_language, "translating"))
         self.translate_button.setEnabled(False)
 
     def set_translation(self, text: str) -> None:
@@ -438,13 +503,11 @@ class MainTranslatorWindow(QWidget):
     def current_translation(self) -> str:
         return self.translation_text.toPlainText()
 
-    def _labeled_text(self, label: str, text_edit: QTextEdit) -> QWidget:
+    def _labeled_text(self, label: QLabel, text_edit: QTextEdit) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
-        section_label = QLabel(label)
-        section_label.setObjectName("SectionLabel")
-        layout.addWidget(section_label)
+        layout.addWidget(label)
         layout.addWidget(text_edit, 1)
         return widget
 
@@ -452,21 +515,20 @@ class MainTranslatorWindow(QWidget):
 class HistoryDialog(QDialog):
     filtersChanged = Signal(str, object, object)
 
-    def __init__(self, records: list[HistoryRecord], parent: QWidget | None = None) -> None:
+    def __init__(self, records: list[HistoryRecord], ui_language: str = "ru", parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.ui_language = ui_language
         self.setObjectName("SurfaceDialog")
-        self.setWindowTitle("История переводов")
         self.resize(900, 560)
         self.records_by_id: dict[int, HistoryRecord] = {}
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Поиск")
         self.search_input.textChanged.connect(self.emit_filters_changed)
 
         self.date_from_input = QDateEdit()
         self.date_from_input.setCalendarPopup(True)
         self.date_from_input.setDisplayFormat("dd.MM.yyyy")
-        self.date_from_input.setSpecialValueText("С")
+        self.date_from_input.setSpecialValueText(t(ui_language, "date_from"))
         self.date_from_input.setMinimumDate(QDate(2000, 1, 1))
         self.date_from_input.setDate(self.date_from_input.minimumDate())
         self.date_from_input.dateChanged.connect(self.emit_filters_changed)
@@ -474,13 +536,13 @@ class HistoryDialog(QDialog):
         self.date_to_input = QDateEdit()
         self.date_to_input.setCalendarPopup(True)
         self.date_to_input.setDisplayFormat("dd.MM.yyyy")
-        self.date_to_input.setSpecialValueText("По")
+        self.date_to_input.setSpecialValueText(t(ui_language, "date_to"))
         self.date_to_input.setMinimumDate(QDate(2000, 1, 1))
         self.date_to_input.setMaximumDate(QDate.currentDate().addYears(5))
         self.date_to_input.setDate(self.date_to_input.minimumDate())
         self.date_to_input.dateChanged.connect(self.emit_filters_changed)
 
-        self.reset_filters_button = QPushButton("Сброс")
+        self.reset_filters_button = QPushButton()
         self.reset_filters_button.clicked.connect(self.reset_filters)
 
         self.list_widget = QListWidget()
@@ -494,9 +556,11 @@ class HistoryDialog(QDialog):
         self.translation_box.setReadOnly(True)
         self.translation_box.setAcceptRichText(False)
 
+        self.source_section_label = QLabel()
+        self.translation_section_label = QLabel()
         text_splitter = QSplitter(Qt.Orientation.Vertical)
-        text_splitter.addWidget(self._labeled_text("Оригинал", self.source_box))
-        text_splitter.addWidget(self._labeled_text("Перевод", self.translation_box))
+        text_splitter.addWidget(self._labeled_text(self.source_section_label, self.source_box))
+        text_splitter.addWidget(self._labeled_text(self.translation_section_label, self.translation_box))
         text_splitter.setSizes([220, 260])
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -504,17 +568,19 @@ class HistoryDialog(QDialog):
         splitter.addWidget(text_splitter)
         splitter.setSizes([280, 540])
 
-        self.copy_source_button = QPushButton("Копировать оригинал")
-        self.copy_translation_button = QPushButton("Копировать перевод")
-        self.clear_button = QPushButton("Очистить историю")
-        self.close_button = QPushButton("Закрыть")
+        self.copy_source_button = QPushButton()
+        self.copy_translation_button = QPushButton()
+        self.clear_button = QPushButton()
+        self.close_button = QPushButton()
         self.close_button.clicked.connect(self.accept)
 
+        self.date_from_label = QLabel()
+        self.date_to_label = QLabel()
         filter_row = QHBoxLayout()
         filter_row.addWidget(self.search_input, 1)
-        filter_row.addWidget(QLabel("С"))
+        filter_row.addWidget(self.date_from_label)
         filter_row.addWidget(self.date_from_input)
-        filter_row.addWidget(QLabel("По"))
+        filter_row.addWidget(self.date_to_label)
         filter_row.addWidget(self.date_to_input)
         filter_row.addWidget(self.reset_filters_button)
 
@@ -531,7 +597,22 @@ class HistoryDialog(QDialog):
         root.addLayout(filter_row)
         root.addWidget(splitter, 1)
         root.addLayout(bottom_row)
+        self.apply_locale(ui_language)
         self.set_records(records)
+
+    def apply_locale(self, language_code: str) -> None:
+        self.ui_language = language_code
+        self.setWindowTitle(t(language_code, "history_title"))
+        self.search_input.setPlaceholderText(t(language_code, "search"))
+        self.date_from_label.setText(t(language_code, "date_from"))
+        self.date_to_label.setText(t(language_code, "date_to"))
+        self.reset_filters_button.setText(t(language_code, "reset"))
+        self.source_section_label.setText(t(language_code, "original"))
+        self.translation_section_label.setText(t(language_code, "translation"))
+        self.copy_source_button.setText(t(language_code, "copy_original"))
+        self.copy_translation_button.setText(t(language_code, "copy_translation"))
+        self.clear_button.setText(t(language_code, "clear_history"))
+        self.close_button.setText(t(language_code, "close"))
 
     def set_records(self, records: list[HistoryRecord]) -> None:
         self.records_by_id = {record.id: record for record in records}
@@ -544,7 +625,7 @@ class HistoryDialog(QDialog):
         if self.list_widget.count():
             self.list_widget.setCurrentRow(0)
         else:
-            self.source_box.setPlainText("Ничего не найдено.")
+            self.source_box.setPlainText(t(self.ui_language, "nothing_found"))
             self.translation_box.clear()
 
     def selected_record(self) -> HistoryRecord | None:
@@ -589,22 +670,26 @@ class HistoryDialog(QDialog):
             preview = f"{preview[:55]}..."
         return f"{record.local_date_label}  |  {record.target_language.upper()}  |  {preview}"
 
-    def _labeled_text(self, label: str, text_edit: QTextEdit) -> QWidget:
+    def _labeled_text(self, label: QLabel, text_edit: QTextEdit) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(QLabel(label))
+        layout.addWidget(label)
         layout.addWidget(text_edit, 1)
         return widget
 
 
 class SettingsDialog(QDialog):
+    apiKeyCheckRequested = Signal(str, str, str)
+    apiKeyDeleteRequested = Signal(str)
+
     def __init__(self, config: AppConfig, saved_key_status: dict[str, bool], parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Translator Settings")
+        self.ui_language = config.primary_language
+        self.saved_key_status = dict(saved_key_status)
         self.setObjectName("SurfaceDialog")
         self.setModal(True)
-        self.resize(540, 430)
+        self.resize(690, 500)
 
         self.provider_input = QComboBox()
         for provider, label in PROVIDERS:
@@ -617,49 +702,71 @@ class SettingsDialog(QDialog):
             self.primary_language_input.addItem(language.english_name, language.code)
         language_index = max(0, self.primary_language_input.findData(config.primary_language))
         self.primary_language_input.setCurrentIndex(language_index)
+        self.primary_language_input.currentIndexChanged.connect(self._on_primary_language_changed)
 
         self.key_inputs: dict[str, QLineEdit] = {}
         self.model_inputs: dict[str, QLineEdit] = {}
+        self.key_status_labels: dict[str, QLabel] = {}
+        self.key_check_buttons: dict[str, QPushButton] = {}
+        self.key_delete_buttons: dict[str, QPushButton] = {}
+        self.key_row_labels: dict[str, QLabel] = {}
+        self.model_row_labels: dict[str, QLabel] = {}
         for provider, label in PROVIDERS:
             key_input = QLineEdit()
             key_input.setEchoMode(QLineEdit.EchoMode.Password)
-            key_input.setPlaceholderText("Saved key exists" if saved_key_status.get(provider) else f"{label} API key")
             self.key_inputs[provider] = key_input
+            key_input.textChanged.connect(lambda _text="", p=provider: self._on_key_text_changed(p))
+
+            status_label = QLabel()
+            status_label.setFixedWidth(28)
+            status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.key_status_labels[provider] = status_label
+
+            check_button = QPushButton()
+            check_button.clicked.connect(lambda _checked=False, p=provider: self.request_api_key_check(p))
+            self.key_check_buttons[provider] = check_button
+
+            delete_button = QPushButton()
+            delete_button.clicked.connect(lambda _checked=False, p=provider: self.confirm_delete_api_key(p))
+            self.key_delete_buttons[provider] = delete_button
 
             model_input = QLineEdit(config.model_for_provider(provider) or DEFAULT_MODELS[provider])
             self.model_inputs[provider] = model_input
+            self.update_api_key_status(provider, "saved" if saved_key_status.get(provider) else "missing")
 
-        self.autostart_checkbox = QCheckBox("Start with Windows")
+        self.autostart_checkbox = QCheckBox()
         self.autostart_checkbox.setChecked(config.autostart)
 
-        self.desktop_shortcut_checkbox = QCheckBox("Desktop shortcut")
+        self.desktop_shortcut_checkbox = QCheckBox()
         self.desktop_shortcut_checkbox.setChecked(config.desktop_shortcut)
 
         self.info_button = QPushButton("?")
         self.info_button.setObjectName("InfoButton")
         self.info_button.setFixedSize(28, 28)
-        self.info_button.setToolTip("Recommended models and cost tips")
         self.info_button.clicked.connect(self.show_model_info)
 
-        tabs = QTabWidget()
-        tabs.addTab(self._build_general_tab(), "General")
-        tabs.addTab(self._build_api_tab(), "API")
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self._build_general_tab(), "")
+        self.tabs.addTab(self._build_api_tab(), "")
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
-        layout.addWidget(tabs)
-        layout.addWidget(buttons)
+        layout.addWidget(self.tabs)
+        layout.addWidget(self.buttons)
+        self.apply_locale(config.primary_language)
 
     def _build_general_tab(self) -> QWidget:
         widget = QWidget()
         form = QFormLayout(widget)
-        form.addRow("Provider", self.provider_input)
-        form.addRow("Primary language", self.primary_language_input)
+        self.provider_label = QLabel()
+        self.primary_language_label = QLabel()
+        form.addRow(self.provider_label, self.provider_input)
+        form.addRow(self.primary_language_label, self.primary_language_input)
         form.addRow("", self.autostart_checkbox)
         form.addRow("", self.desktop_shortcut_checkbox)
         return widget
@@ -669,21 +776,117 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(widget)
 
         header = QHBoxLayout()
-        header.addWidget(QLabel("API keys and models"))
+        self.api_header_label = QLabel()
+        header.addWidget(self.api_header_label)
         header.addStretch(1)
         header.addWidget(self.info_button)
         layout.addLayout(header)
 
         form = QFormLayout()
         for provider, label in PROVIDERS:
-            form.addRow(f"{label} key", self.key_inputs[provider])
-            form.addRow(f"{label} model", self.model_inputs[provider])
+            key_row = QHBoxLayout()
+            key_row.addWidget(self.key_inputs[provider], 1)
+            key_row.addWidget(self.key_status_labels[provider])
+            key_row.addWidget(self.key_check_buttons[provider])
+            key_row.addWidget(self.key_delete_buttons[provider])
+            key_label = QLabel()
+            model_label = QLabel()
+            self.key_row_labels[provider] = key_label
+            self.model_row_labels[provider] = model_label
+            form.addRow(key_label, key_row)
+            form.addRow(model_label, self.model_inputs[provider])
         layout.addLayout(form)
         layout.addStretch(1)
         return widget
 
     def show_model_info(self) -> None:
-        QMessageBox.information(self, "Recommended models", MODEL_INFO)
+        QMessageBox.information(self, t(self.ui_language, "recommended_models"), MODEL_INFO)
+
+    def apply_locale(self, language_code: str) -> None:
+        self.ui_language = language_code
+        self.setWindowTitle(t(language_code, "settings_title"))
+        self.tabs.setTabText(0, t(language_code, "general"))
+        self.tabs.setTabText(1, t(language_code, "api"))
+        self.provider_label.setText(t(language_code, "provider"))
+        self.primary_language_label.setText(t(language_code, "primary_language"))
+        self.autostart_checkbox.setText(t(language_code, "autostart"))
+        self.desktop_shortcut_checkbox.setText(t(language_code, "desktop_shortcut"))
+        self.api_header_label.setText(t(language_code, "api_keys_models"))
+        self.info_button.setToolTip(t(language_code, "info_tooltip"))
+        save_button = self.buttons.button(QDialogButtonBox.StandardButton.Save)
+        cancel_button = self.buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        if save_button:
+            save_button.setText(t(language_code, "save"))
+        if cancel_button:
+            cancel_button.setText(t(language_code, "cancel"))
+        for provider, label in PROVIDERS:
+            self.key_row_labels[provider].setText(f"{label} {t(language_code, 'key')}")
+            self.model_row_labels[provider].setText(f"{label} {t(language_code, 'model')}")
+            self.key_check_buttons[provider].setText(t(language_code, "check"))
+            self.key_delete_buttons[provider].setText(t(language_code, "delete"))
+            placeholder = t(language_code, "saved_key_exists") if self.saved_key_status.get(provider) else t(
+                language_code,
+                "api_key_placeholder",
+                provider=label,
+            )
+            self.key_inputs[provider].setPlaceholderText(placeholder)
+
+    def request_api_key_check(self, provider: str) -> None:
+        key_text = self.key_inputs[provider].text().strip()
+        if not key_text and not self.saved_key_status.get(provider):
+            self.update_api_key_status(provider, "missing")
+            return
+        self.update_api_key_status(provider, "checking")
+        self.apiKeyCheckRequested.emit(provider, key_text, self.models[provider])
+
+    def confirm_delete_api_key(self, provider: str) -> None:
+        label = provider_label_for_ui(provider)
+        answer = QMessageBox.question(
+            self,
+            t(self.ui_language, "key_delete_confirm_title"),
+            t(self.ui_language, "key_delete_confirm", provider=label),
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self.key_inputs[provider].clear()
+        self.saved_key_status[provider] = False
+        self.update_api_key_status(provider, "missing")
+        self.apiKeyDeleteRequested.emit(provider)
+
+    def update_api_key_status(self, provider: str, status: str, message: str | None = None) -> None:
+        label = self.key_status_labels[provider]
+        if status == "valid":
+            label.setText("✓")
+            label.setObjectName("KeyStatusOk")
+            label.setToolTip(message or t(self.ui_language, "key_valid"))
+            self.saved_key_status[provider] = True
+        elif status in {"missing", "invalid"}:
+            label.setText("✕")
+            label.setObjectName("KeyStatusBad")
+            label.setToolTip(message or t(self.ui_language, "key_missing" if status == "missing" else "key_invalid"))
+            if status == "missing":
+                self.saved_key_status[provider] = False
+        elif status == "checking":
+            label.setText("…")
+            label.setObjectName("KeyStatusNeutral")
+            label.setToolTip(t(self.ui_language, "key_checking"))
+        else:
+            label.setText("•")
+            label.setObjectName("KeyStatusNeutral")
+            label.setToolTip(message or t(self.ui_language, "key_saved"))
+        label.style().unpolish(label)
+        label.style().polish(label)
+
+    def _on_key_text_changed(self, provider: str) -> None:
+        if self.key_inputs[provider].text().strip():
+            self.update_api_key_status(provider, "saved", t(self.ui_language, "key_saved"))
+        elif self.saved_key_status.get(provider):
+            self.update_api_key_status(provider, "saved")
+        else:
+            self.update_api_key_status(provider, "missing")
+
+    def _on_primary_language_changed(self) -> None:
+        self.apply_locale(self.primary_language)
 
     @property
     def provider(self) -> str:

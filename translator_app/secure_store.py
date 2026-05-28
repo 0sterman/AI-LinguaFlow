@@ -47,3 +47,16 @@ class ApiKeyStore:
         if self._keyring is None:
             raise RuntimeError("keyring is not installed")
         self._keyring.set_password(SERVICE_NAME, account_name(provider), cleaned)
+
+    def delete_api_key(self, provider: str) -> None:
+        if self._keyring is None:
+            return
+        try:
+            self._keyring.delete_password(SERVICE_NAME, account_name(provider))
+        except Exception:
+            pass
+        if provider == "openai":
+            try:
+                self._keyring.delete_password(SERVICE_NAME, LEGACY_OPENAI_ACCOUNT)
+            except Exception:
+                pass
