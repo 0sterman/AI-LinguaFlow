@@ -5,7 +5,7 @@ a = Analysis(
     ['translator_app\\__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets\\app_icon.ico', 'assets')],
+    datas=[('assets\\app_icon.ico', 'assets'), ('assets\\app_icon.png', 'assets'), ('assets\\dropdown_arrow.svg', 'assets')],
     hiddenimports=['keyring.backends.Windows'],
     hookspath=[],
     hooksconfig={},

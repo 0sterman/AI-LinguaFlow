@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 import pyperclip
-from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtCore import QObject, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QIcon, QPainter, QPixmap, QColor
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
@@ -145,10 +145,20 @@ class TranslatorApplication(QObject):
         painter.end()
         return QIcon(pixmap)
 
-    def open_main_window(self) -> None:
+    def open_main_window(self, stay_on_top: bool = False) -> None:
+        if stay_on_top:
+            self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
         self.main_window.show()
         self.main_window.raise_()
         self.main_window.activateWindow()
+        if stay_on_top:
+            QTimer.singleShot(2500, self.release_main_window_top_hint)
+
+    def release_main_window_top_hint(self) -> None:
+        if not self.main_window.isVisible():
+            return
+        self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
+        self.main_window.show()
 
     def start_hotkey_listener(self) -> None:
         if sys.platform.startswith("win"):
@@ -316,7 +326,25 @@ class TranslatorApplication(QObject):
         if now - self.last_hotkey_at < 0.5:
             return
         self.last_hotkey_at = now
-        QTimer.singleShot(320, self.translate_clipboard)
+        QTimer.singleShot(320, self.open_clipboard_in_main_window)
+
+    def open_clipboard_in_main_window(self) -> None:
+        try:
+            text = pyperclip.paste()
+        except pyperclip.PyperclipException:
+            self.open_main_window(stay_on_top=True)
+            self.main_window.set_error("Не удалось прочитать буфер обмена")
+            return
+
+        if not text or not text.strip():
+            self.open_main_window(stay_on_top=True)
+            self.main_window.set_error(t(self.config.primary_language, "no_text"))
+            return
+
+        self.original_text = text
+        target_language = default_target_language(text, self.config.primary_language)
+        self.main_window.load_source_text(text, target_language.code)
+        self.open_main_window(stay_on_top=True)
 
     def translate_clipboard(self) -> None:
         try:

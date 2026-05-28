@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QDate, QTimer, Qt, Signal
 import ctypes
+import sys
+from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication, QKeyEvent, QPixmap
+from PySide6.QtGui import QGuiApplication, QKeyEvent, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -44,6 +46,11 @@ def provider_label_for_ui(provider: str) -> str:
         if provider_code == provider:
             return label
     return provider
+
+
+def ui_resource_path(relative_path: str) -> Path:
+    base_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
+    return base_path / relative_path
 
 MODEL_DESCRIPTIONS = {
     "ru": {
@@ -190,9 +197,11 @@ def is_right_ctrl_down() -> bool:
 
 
 def app_stylesheet(theme: str = "dark") -> str:
+    arrow_path = ui_resource_path("assets/dropdown_arrow.svg").as_posix()
+    stylesheet = DARK_STYLESHEET.replace("__DROPDOWN_ARROW__", arrow_path)
     if theme == "light":
-        return LIGHT_STYLESHEET
-    return DARK_STYLESHEET
+        return LIGHT_STYLESHEET.replace("__DROPDOWN_ARROW__", arrow_path)
+    return stylesheet
 
 
 DARK_STYLESHEET = """
@@ -270,8 +279,9 @@ QComboBox::drop-down, QDateEdit::drop-down {
     border-bottom-right-radius: 8px;
 }
 QComboBox::down-arrow, QDateEdit::down-arrow {
-    width: 0;
-    height: 0;
+    image: url("__DROPDOWN_ARROW__");
+    width: 12px;
+    height: 12px;
 }
 QPushButton#DropdownButton {
     background: #1e78ad;
@@ -683,6 +693,20 @@ class MainTranslatorWindow(QWidget):
         self.auto_translate_timer.stop()
         self.last_submitted_text = ""
         self.source_text.clear()
+
+    def load_source_text(self, text: str, target_language_code: str) -> None:
+        self.auto_translate_timer.stop()
+        self.last_submitted_text = ""
+        source_index = self.source_language_input.findData("auto")
+        if source_index >= 0:
+            self.source_language_input.setCurrentIndex(source_index)
+        target_index = self.target_language_input.findData(target_language_code)
+        if target_index >= 0:
+            self.target_language_input.setCurrentIndex(target_index)
+        self.translation_text.clear()
+        self.source_text.setPlainText(text)
+        self.source_text.moveCursor(QTextCursor.MoveOperation.End)
+        self.source_text.setFocus()
 
     def emit_translate_requested(self) -> None:
         self.auto_translate_timer.stop()
