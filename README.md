@@ -50,7 +50,7 @@ The executable will be created under `dist\WindowsTranslator\WindowsTranslator.e
 ## Notes
 
 - Translation history is stored only on this computer in `%APPDATA%\WindowsTranslator\history.sqlite3`.
-- Use the `История` button in the popup or tray menu to open local history.
+- Use the `History` button in the popup or tray menu to open local history.
 - Use the desktop shortcut or tray icon to open and control the app.
 - Language detection before translation is lightweight local detection. Russian and Chinese are detected more reliably than English, German, and Spanish, so the manual language buttons remain useful.
 - The app does not replace your clipboard with the translation automatically. Use the popup copy button.
