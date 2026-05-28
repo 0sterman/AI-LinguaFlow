@@ -112,24 +112,38 @@ class WindowsCtrlCHook:
         self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         self._user32.SetWindowsHookExW.restype = ctypes.c_void_p
         self._user32.SetWindowsHookExW.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_ulong]
-        self._user32.CallNextHookEx.restype = ctypes.c_long
+        self._user32.CallNextHookEx.restype = ctypes.c_ssize_t
         self._user32.CallNextHookEx.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_size_t, ctypes.c_void_p]
         self._user32.UnhookWindowsHookEx.argtypes = [ctypes.c_void_p]
         self._user32.PostThreadMessageW.argtypes = [ctypes.c_ulong, ctypes.c_uint, ctypes.c_size_t, ctypes.c_void_p]
+        self._user32.GetMessageW.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self._user32.GetMessageW.restype = ctypes.c_int
         self._kernel32.GetModuleHandleW.restype = ctypes.c_void_p
         self._hook_handle: int | None = None
         self._thread: threading.Thread | None = None
         self._thread_id = 0
         self._c_is_down = False
         self._callback = None
+        self._ready = threading.Event()
+        self._last_error = 0
         self._lock = threading.Lock()
 
     def start(self) -> None:
         with self._lock:
             if self._thread is not None and self._thread.is_alive():
                 return
+            self._ready.clear()
+            self._last_error = 0
             self._thread = threading.Thread(target=self._run, name="AI LinguaFlow hotkey", daemon=True)
             self._thread.start()
+        self._ready.wait(timeout=1.5)
+
+    def is_ready(self) -> bool:
+        return bool(self._hook_handle)
+
+    @property
+    def last_error(self) -> int:
+        return self._last_error
 
     def stop(self) -> None:
         with self._lock:
@@ -149,11 +163,14 @@ class WindowsCtrlCHook:
 
     def _run(self) -> None:
         self._thread_id = self._kernel32.GetCurrentThreadId()
-        callback_type = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.c_int, ctypes.c_size_t, ctypes.c_void_p)
+        callback_type = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, ctypes.c_int, ctypes.c_size_t, ctypes.c_void_p)
         self._callback = callback_type(self._keyboard_proc)
-        self._hook_handle = self._user32.SetWindowsHookExW(WH_KEYBOARD_LL, self._callback, self._kernel32.GetModuleHandleW(None), 0)
+        self._hook_handle = self._user32.SetWindowsHookExW(WH_KEYBOARD_LL, self._callback, None, 0)
         if not self._hook_handle:
+            self._last_error = ctypes.get_last_error()
+            self._ready.set()
             return
+        self._ready.set()
         msg = MSG()
         try:
             while self._user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
