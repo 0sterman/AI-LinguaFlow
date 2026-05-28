@@ -19,7 +19,9 @@ python -m pip install -r requirements.txt
 python -m translator_app
 ```
 
-On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, or autostart.
+On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart.
+
+The app uses an AI-LinguaFlow icon based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
 
 Supported providers and default models:
 
@@ -45,6 +47,7 @@ The executable will be created under `dist\WindowsTranslator\WindowsTranslator.e
 
 - Translation history is stored only on this computer in `%APPDATA%\WindowsTranslator\history.sqlite3`.
 - Use the `История` button in the popup or tray menu to open local history.
+- Use the desktop shortcut or tray icon to open and control the app.
 - Language detection before translation is lightweight local detection. Russian and Chinese are detected more reliably than English, German, and Spanish, so the manual language buttons remain useful.
 - The app does not replace your clipboard with the translation automatically. Use the popup copy button.
 - The global keyboard hook may be blocked by some security tools or elevated apps. If it does not trigger inside an elevated app, run the translator with the same privilege level.

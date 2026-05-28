@@ -57,6 +57,8 @@ dist\WindowsTranslator\WindowsTranslator.exe
 - `translator_app/secure_store.py`: API key storage through Windows Credential Manager/keyring with environment fallback.
 - `translator_app/config.py`: user config under `%APPDATA%\WindowsTranslator`.
 - `translator_app/hotkey.py`: isolated `Ctrl+C+C` detection logic.
+- `translator_app/startup.py`: Windows startup and desktop shortcut integration.
+- `assets/app_icon.ico`: executable, tray, and shortcut icon based on the repository/avatar style.
 
 Keep business logic testable outside the GUI. Put reusable logic in small modules and test it directly.
 
@@ -109,7 +111,8 @@ History should remain compact and searchable. Keep deletion/clear-history behavi
 - The popup should stay compact, fast, and unobtrusive.
 - Do not replace the clipboard with translations automatically; keep explicit copy buttons.
 - Keep the `История` button visible and simple.
-- Settings should expose provider, primary language, API keys, model names, and autostart.
+- Settings should expose provider, primary language, API keys, model names, desktop shortcut, and autostart.
+- The executable, tray icon, and desktop shortcut should use `assets/app_icon.ico`.
 - Avoid adding large dashboards or heavy flows. This is a quick translator, not a knowledge-management app.
 - Any feature that stores more user data needs a clear local-only behavior and an easy way to delete data.
 

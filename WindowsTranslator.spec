@@ -5,7 +5,7 @@ a = Analysis(
     ['translator_app\\__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('assets\\app_icon.ico', 'assets')],
     hiddenimports=['keyring.backends.Windows'],
     hookspath=[],
     hooksconfig={},
@@ -32,6 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['assets\\app_icon.ico'],
 )
 coll = COLLECT(
     exe,

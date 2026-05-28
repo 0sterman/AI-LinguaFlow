@@ -25,6 +25,7 @@ class AppConfig:
     anthropic_model: str = DEFAULT_MODELS["anthropic"]
     enabled: bool = True
     autostart: bool = False
+    desktop_shortcut: bool = True
     popup_width: int = 520
     popup_height: int = 360
 

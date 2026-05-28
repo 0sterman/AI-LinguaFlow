@@ -379,6 +379,9 @@ class SettingsDialog(QDialog):
         self.autostart_checkbox = QCheckBox("Start with Windows")
         self.autostart_checkbox.setChecked(config.autostart)
 
+        self.desktop_shortcut_checkbox = QCheckBox("Desktop shortcut")
+        self.desktop_shortcut_checkbox.setChecked(config.desktop_shortcut)
+
         self.info_button = QPushButton("i")
         self.info_button.setFixedSize(26, 26)
         self.info_button.setToolTip("Recommended models")
@@ -415,6 +418,7 @@ class SettingsDialog(QDialog):
         form.addRow("Provider", self.provider_input)
         form.addRow("Primary language", self.primary_language_input)
         form.addRow("", self.autostart_checkbox)
+        form.addRow("", self.desktop_shortcut_checkbox)
         return widget
 
     def _build_api_tab(self) -> QWidget:
@@ -460,3 +464,7 @@ class SettingsDialog(QDialog):
     @property
     def autostart(self) -> bool:
         return self.autostart_checkbox.isChecked()
+
+    @property
+    def desktop_shortcut(self) -> bool:
+        return self.desktop_shortcut_checkbox.isChecked()

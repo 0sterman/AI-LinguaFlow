@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import threading
 import time
+from pathlib import Path
 
 import pyperclip
 from PySide6.QtCore import QObject, QTimer, Signal
@@ -15,7 +16,13 @@ from translator_app.hotkey import DoubleCtrlCDetector
 from translator_app.languages import Language, default_target_language, get_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
 from translator_app.secure_store import ApiKeyStore
-from translator_app.startup import is_start_with_windows_enabled, set_start_with_windows
+from translator_app.startup import (
+    ensure_desktop_shortcut,
+    is_desktop_shortcut_enabled,
+    is_start_with_windows_enabled,
+    set_desktop_shortcut,
+    set_start_with_windows,
+)
 from translator_app.ui import HistoryDialog, SettingsDialog, TranslationPopup
 
 
@@ -46,7 +53,7 @@ class TranslatorApplication(QObject):
         self.popup.historyRequested.connect(self.open_history)
 
         self.tray = QSystemTrayIcon(self._build_icon(), self.qt_app)
-        self.tray.setToolTip("Windows Translator")
+        self.tray.setToolTip("AI-LinguaFlow")
         self.tray.setContextMenu(self._build_menu())
         self.tray.show()
 
@@ -56,6 +63,12 @@ class TranslatorApplication(QObject):
 
         if self.config.enabled:
             self.start_hotkey_listener()
+        if self.config.desktop_shortcut:
+            try:
+                ensure_desktop_shortcut()
+                self.config.desktop_shortcut = is_desktop_shortcut_enabled()
+            except Exception:
+                pass
         if not self.key_store.get_api_key(self.config.provider):
             QTimer.singleShot(350, self.open_settings)
 
@@ -84,6 +97,10 @@ class TranslatorApplication(QObject):
         return menu
 
     def _build_icon(self) -> QIcon:
+        icon_path = resource_path("assets/app_icon.ico")
+        if icon_path.exists():
+            return QIcon(str(icon_path))
+
         pixmap = QPixmap(64, 64)
         pixmap.fill(QColor("#2f6f73"))
         painter = QPainter(pixmap)
@@ -280,10 +297,15 @@ class TranslatorApplication(QObject):
         self.config.google_model = dialog.models["google"]
         self.config.anthropic_model = dialog.models["anthropic"]
         self.config.autostart = dialog.autostart
+        self.config.desktop_shortcut = dialog.desktop_shortcut
         try:
             set_start_with_windows(self.config.autostart)
         except Exception as exc:
             QMessageBox.warning(None, "Settings", f"Не удалось изменить автозапуск: {exc}")
+        try:
+            set_desktop_shortcut(self.config.desktop_shortcut)
+        except Exception as exc:
+            QMessageBox.warning(None, "Settings", f"Не удалось изменить ярлык на рабочем столе: {exc}")
         save_config(self.config)
 
     def quit(self) -> None:
@@ -299,6 +321,12 @@ class TranslatorApplication(QObject):
 def main() -> int:
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+    app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
     controller = TranslatorApplication(app)
     app.aboutToQuit.connect(controller.shutdown)
     return app.exec()
+
+
+def resource_path(relative_path: str) -> Path:
+    base_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
+    return base_path / relative_path
