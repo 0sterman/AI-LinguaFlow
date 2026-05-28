@@ -1126,11 +1126,12 @@ class SettingsDialog(QDialog):
         return (
             "<style>"
             f"body{{font-family:Calibri,sans-serif;color:{text_color};background:{page_background};font-size:12px;margin:8px;}}"
+            "h2,table,th,td,code,.stars{font-family:Calibri,sans-serif;}"
             "h2{font-size:20px;margin:0 0 10px 0;}"
             "table{border-collapse:collapse;width:100%;table-layout:fixed;}"
             f"th,td{{border:1px solid {border_color};padding:5px 7px;vertical-align:top;line-height:1.25;color:{muted_text};}}"
             f"th{{background:{header_background};color:{header_color};text-align:left;font-weight:700;}}"
-            f"code{{color:{code_color};background:{code_background};font-weight:700;font-size:11px;padding:1px 3px;border-radius:4px;white-space:normal;}}"
+            f"code{{color:{code_color};background:{code_background};font-weight:700;font-size:12px;padding:1px 3px;border-radius:4px;white-space:normal;}}"
             ".stars{font-size:15px;letter-spacing:1px;white-space:nowrap;}"
             ".star-on{color:#ffc857;font-weight:700;}"
             f".star-off{{color:{star_off_color};font-weight:700;}}"
