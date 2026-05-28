@@ -1,6 +1,6 @@
-# AI-LinguaFlow
+# AI LinguaFlow
 
-AI-LinguaFlow is a small Windows translator built around a fast `Ctrl+C+C` workflow for translating selected text in a popup. It also opens normally from the desktop shortcut for manual translation between selected languages.
+AI LinguaFlow is a small Windows translator built around a fast `Ctrl+C+C` workflow for translating selected text in a popup. It also opens normally from the desktop shortcut for manual translation between selected languages.
 
 Default behavior:
 
@@ -11,7 +11,7 @@ Default behavior:
 - The app supports Russian, English, German, Spanish, and Simplified Chinese.
 - The interface follows the selected primary language.
 - The popup can retranslate manually to any supported language.
-- In the main window, press `Enter` to translate pasted text; use `Shift+Enter` for a new line.
+- In the main window, press right `Ctrl+Enter` to translate pasted text; `Enter` keeps working as a normal new line.
 - Translation history is saved locally after installation under your Windows user profile.
 
 ## Setup
@@ -25,13 +25,15 @@ python -m translator_app
 
 On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart. API keys can be checked with a real provider request and deleted from local secure storage.
 
-The app uses an AI-LinguaFlow icon and dark Apple-inspired interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
+The app uses an AI LinguaFlow icon and Apple-inspired interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
 
 Supported providers and default models:
 
 - OpenAI: `gpt-5-mini`
 - Google Gemini: `gemini-2.5-flash-lite`
 - Anthropic Claude: `claude-3-5-haiku-latest`
+
+The model fields are editable combo boxes. The defaults stay cost-conscious, but users can choose another listed model or type an available model name manually.
 
 Environment variable fallbacks:
 

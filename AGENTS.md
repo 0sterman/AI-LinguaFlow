@@ -2,7 +2,7 @@
 
 ## Project
 
-AI-LinguaFlow is a Windows translator whose main workflow is fast selected-text translation through a `Ctrl+C+C` popup. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
+AI LinguaFlow is a Windows translator whose main workflow is fast selected-text translation through a `Ctrl+C+C` popup. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
 
 Repository: `0sterman/AI-LinguaFlow`
 
@@ -110,7 +110,7 @@ History should remain compact and searchable. Keep deletion/clear-history behavi
 
 - The popup should stay compact, fast, and unobtrusive.
 - The main window should support ordinary manual translation from a selected source language to a selected target language.
-- In the main window, Enter submits the translation request and Shift+Enter inserts a newline.
+- In the main window, right Ctrl+Enter submits the translation request and Enter inserts a newline.
 - Changing the primary language should update the interface language for the main window, popup, settings, history, and tray labels where practical.
 - Keep the visual style close to the logo: dark graphite surfaces, cool blue accents, clean Apple-like spacing, and no noisy decoration.
 - Do not replace the clipboard with translations automatically; keep explicit copy buttons.
@@ -154,7 +154,7 @@ If `dist\WindowsTranslator` is locked during build, stop the running `WindowsTra
 
 ## Current Known Limits
 
-- Global hotkeys may not work inside elevated apps unless AI-LinguaFlow runs with matching privileges.
+- Global hotkeys may not work inside elevated apps unless AI LinguaFlow runs with matching privileges.
 - Language detection is heuristic.
 - Very long text is rejected by the first-version length limit in `openai_client.py`.
 - The executable is a PyInstaller folder build and is larger than a native Windows app.

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from translator_app.config import AppConfig, load_config, save_config
 from translator_app.history import HistoryStore
-from translator_app.hotkey import CtrlCPollStateDetector, DoubleCtrlCDetector, WindowsKeyStateReader
+from translator_app.hotkey import WindowsCtrlCHook
 from translator_app.i18n import t
 from translator_app.languages import Language, default_target_language, get_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
@@ -24,7 +24,7 @@ from translator_app.startup import (
     set_desktop_shortcut,
     set_start_with_windows,
 )
-from translator_app.ui import APP_STYLESHEET, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup
+from translator_app.ui import APP_DISPLAY_NAME, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup, app_stylesheet
 
 
 class AppSignals(QObject):
@@ -44,10 +44,8 @@ class TranslatorApplication(QObject):
         self.config.autostart = is_start_with_windows_enabled()
         self.key_store = ApiKeyStore()
         self.history_store = HistoryStore()
-        self.detector = DoubleCtrlCDetector()
-        self.poll_detector = CtrlCPollStateDetector(DoubleCtrlCDetector())
-        self.hotkey_timer: QTimer | None = None
-        self.key_state_reader: WindowsKeyStateReader | None = None
+        self.hotkey_listener: WindowsCtrlCHook | None = None
+        self.last_hotkey_at = 0.0
         self.signals = AppSignals()
         self.keyboard_hook = None
         self.original_text = ""
@@ -56,6 +54,7 @@ class TranslatorApplication(QObject):
         self.pending_requests: dict[int, tuple[str, str, str, str]] = {}
 
         self.main_window = MainTranslatorWindow(self.config.primary_language)
+        self.main_window.set_logo_path(str(resource_path("assets/app_icon.png")))
         self.main_window.translateRequested.connect(self.translate_manual_text)
         self.main_window.copyRequested.connect(self.copy_manual_translation)
         self.main_window.historyRequested.connect(self.open_history)
@@ -67,7 +66,7 @@ class TranslatorApplication(QObject):
         self.popup.historyRequested.connect(self.open_history)
 
         self.tray = QSystemTrayIcon(self._build_icon(), self.qt_app)
-        self.tray.setToolTip("AI-LinguaFlow")
+        self.tray.setToolTip(APP_DISPLAY_NAME)
         self.tray.setContextMenu(self._build_menu())
         self.tray.show()
 
@@ -137,19 +136,14 @@ class TranslatorApplication(QObject):
 
     def start_hotkey_listener(self) -> None:
         if sys.platform.startswith("win"):
-            if self.hotkey_timer is not None and self.hotkey_timer.isActive():
+            if self.hotkey_listener is not None:
                 return
             try:
-                self.key_state_reader = WindowsKeyStateReader()
+                self.hotkey_listener = WindowsCtrlCHook(lambda: self.signals.hotkeyTriggered.emit())
+                self.hotkey_listener.start()
             except Exception:
-                self.key_state_reader = None
+                self.hotkey_listener = None
                 self.popup.show_error("Не удалось включить Windows hotkey listener.")
-                return
-            self.poll_detector.reset()
-            self.hotkey_timer = QTimer(self)
-            self.hotkey_timer.setInterval(25)
-            self.hotkey_timer.timeout.connect(self.poll_hotkey_state)
-            self.hotkey_timer.start()
             return
 
         try:
@@ -173,23 +167,10 @@ class TranslatorApplication(QObject):
             self.keyboard_hook = None
             self.popup.show_error("Не удалось включить глобальный хоткей. Попробуйте запустить приложение от администратора.")
 
-    def poll_hotkey_state(self) -> None:
-        if self.key_state_reader is None:
-            return
-        if self.poll_detector.update(
-            self.key_state_reader.ctrl_down(),
-            self.key_state_reader.c_down(),
-            time.monotonic(),
-        ):
-            self.signals.hotkeyTriggered.emit()
-
     def stop_hotkey_listener(self) -> None:
-        if self.hotkey_timer is not None:
-            self.hotkey_timer.stop()
-            self.hotkey_timer.deleteLater()
-            self.hotkey_timer = None
-        self.key_state_reader = None
-        self.poll_detector.reset()
+        if self.hotkey_listener is not None:
+            self.hotkey_listener.stop()
+            self.hotkey_listener = None
         if self.keyboard_hook is None:
             return
         try:
@@ -212,6 +193,10 @@ class TranslatorApplication(QObject):
     def on_hotkey_triggered(self) -> None:
         if not self.config.enabled:
             return
+        now = time.monotonic()
+        if now - self.last_hotkey_at < 0.5:
+            return
+        self.last_hotkey_at = now
         QTimer.singleShot(220, self.translate_clipboard)
 
     def translate_clipboard(self) -> None:
@@ -339,7 +324,7 @@ class TranslatorApplication(QObject):
         text = self.popup.current_text()
         if text.strip():
             pyperclip.copy(text)
-            self.popup.status_label.setText("Скопировано")
+            self.popup.status_label.setText(t(self.config.primary_language, "copied"))
 
     def copy_manual_translation(self) -> None:
         text = self.main_window.current_translation()
@@ -390,20 +375,29 @@ class TranslatorApplication(QObject):
             "google": bool(self.key_store.get_api_key("google")),
             "anthropic": bool(self.key_store.get_api_key("anthropic")),
         }
-        dialog = SettingsDialog(self.config, saved_key_status=saved_key_status)
+        key_valid_status = {
+            "openai": self.config.key_status_for_provider("openai"),
+            "google": self.config.key_status_for_provider("google"),
+            "anthropic": self.config.key_status_for_provider("anthropic"),
+        }
+        dialog = SettingsDialog(self.config, saved_key_status=saved_key_status, key_valid_status=key_valid_status)
         self.active_settings_dialog = dialog
         dialog.apiKeyCheckRequested.connect(self.check_api_key)
         dialog.apiKeyDeleteRequested.connect(self.delete_api_key)
+        dialog.applyRequested.connect(lambda: self.apply_settings(dialog, close_dialog=False))
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             self.active_settings_dialog = None
             return
         self.active_settings_dialog = None
+        self.apply_settings(dialog, close_dialog=True)
 
+    def apply_settings(self, dialog: SettingsDialog, close_dialog: bool) -> None:
         for provider, api_key in dialog.api_keys.items():
             if not api_key:
                 continue
             try:
                 self.key_store.save_api_key(provider, api_key)
+                self.config.set_key_status_for_provider(provider, dialog.key_valid_status.get(provider))
             except Exception as exc:
                 QMessageBox.warning(None, "Settings", f"Не удалось сохранить {provider_label(provider)} API key: {exc}")
                 return
@@ -415,6 +409,7 @@ class TranslatorApplication(QObject):
         self.config.anthropic_model = dialog.models["anthropic"]
         self.config.autostart = dialog.autostart
         self.config.desktop_shortcut = dialog.desktop_shortcut
+        self.config.theme = dialog.theme
         try:
             set_start_with_windows(self.config.autostart)
         except Exception as exc:
@@ -430,6 +425,9 @@ class TranslatorApplication(QObject):
         self.main_window.apply_locale(self.config.primary_language)
         self.popup.apply_locale(self.config.primary_language)
         self.tray.setContextMenu(self._build_menu())
+        self.qt_app.setStyleSheet(app_stylesheet(self.resolved_theme()))
+        if close_dialog:
+            return
 
     def check_api_key(self, provider: str, api_key: str, model: str) -> None:
         key_to_check = api_key.strip() or self.key_store.get_api_key(provider)
@@ -453,9 +451,14 @@ class TranslatorApplication(QObject):
         if dialog is None:
             return
         dialog.update_api_key_status(provider, "valid" if is_valid else "invalid", message or None)
+        if dialog.api_keys.get(provider) or self.key_store.get_api_key(provider):
+            self.config.set_key_status_for_provider(provider, is_valid)
+            save_config(self.config)
 
     def delete_api_key(self, provider: str) -> None:
         self.key_store.delete_api_key(provider)
+        self.config.set_key_status_for_provider(provider, False)
+        save_config(self.config)
 
     def quit(self) -> None:
         self.shutdown()
@@ -466,13 +469,32 @@ class TranslatorApplication(QObject):
         self.tray.hide()
         save_config(self.config)
 
+    def resolved_theme(self) -> str:
+        if self.config.theme in {"dark", "light"}:
+            return self.config.theme
+        if sys.platform != "win32":
+            return "dark"
+        try:
+            import winreg
+
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+            ) as key:
+                apps_use_light_theme, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+                return "light" if int(apps_use_light_theme) else "dark"
+        except Exception:
+            return "dark"
+
 
 def main() -> int:
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+    app.setApplicationDisplayName(APP_DISPLAY_NAME)
+    app.setApplicationName(APP_DISPLAY_NAME)
     app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
-    app.setStyleSheet(APP_STYLESHEET)
     controller = TranslatorApplication(app)
+    app.setStyleSheet(app_stylesheet(controller.resolved_theme()))
     controller.open_main_window()
     app.aboutToQuit.connect(controller.shutdown)
     return app.exec()

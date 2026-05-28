@@ -7,8 +7,9 @@ import uuid
 from pathlib import Path
 
 
-APP_SHORTCUT_NAME = "AI-LinguaFlow.url"
+APP_SHORTCUT_NAME = "AI LinguaFlow.url"
 LEGACY_SHORTCUT_NAME = "WindowsTranslator.url"
+OLD_APP_SHORTCUT_NAME = "AI-LinguaFlow.url"
 
 
 def startup_shortcut_path() -> Path:
@@ -49,6 +50,9 @@ def set_start_with_windows(enabled: bool) -> None:
     legacy_shortcut = shortcut.with_name(LEGACY_SHORTCUT_NAME)
     if legacy_shortcut.exists() and not enabled:
         legacy_shortcut.unlink()
+    old_shortcut = shortcut.with_name(OLD_APP_SHORTCUT_NAME)
+    if old_shortcut.exists() and not enabled:
+        old_shortcut.unlink()
 
 
 def is_start_with_windows_enabled() -> bool:
@@ -75,8 +79,7 @@ def is_desktop_shortcut_enabled() -> bool:
 
 
 def ensure_desktop_shortcut() -> None:
-    if not is_desktop_shortcut_enabled():
-        set_desktop_shortcut(True)
+    set_desktop_shortcut(True)
 
 
 def _write_url_shortcut(path: Path, target: str, icon: str) -> None:
@@ -91,7 +94,10 @@ def _write_url_shortcut(path: Path, target: str, icon: str) -> None:
 
 def _stale_desktop_shortcut_paths(active_shortcut: Path) -> list[Path]:
     candidates = [
+        active_shortcut.with_name(OLD_APP_SHORTCUT_NAME),
+        active_shortcut.with_name(LEGACY_SHORTCUT_NAME),
         Path.home() / "Desktop" / APP_SHORTCUT_NAME,
+        Path.home() / "Desktop" / OLD_APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / LEGACY_SHORTCUT_NAME,
     ]
     return [path for path in candidates if path != active_shortcut]
