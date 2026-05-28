@@ -19,6 +19,7 @@ DEFAULT_MODELS = {
 @dataclass
 class AppConfig:
     provider: str = "openai"
+    primary_language: str = "ru"
     openai_model: str = DEFAULT_MODELS["openai"]
     google_model: str = DEFAULT_MODELS["google"]
     anthropic_model: str = DEFAULT_MODELS["anthropic"]
@@ -51,6 +52,8 @@ def load_config() -> AppConfig:
     defaults.update({key: value for key, value in data.items() if key in defaults})
     if defaults["provider"] not in DEFAULT_MODELS:
         defaults["provider"] = "openai"
+    if defaults["primary_language"] not in {"ru", "en", "de", "es", "zh"}:
+        defaults["primary_language"] = "ru"
     return AppConfig(**defaults)
 
 

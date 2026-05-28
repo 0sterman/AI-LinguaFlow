@@ -359,6 +359,12 @@ class SettingsDialog(QDialog):
         selected_index = max(0, self.provider_input.findData(config.provider))
         self.provider_input.setCurrentIndex(selected_index)
 
+        self.primary_language_input = QComboBox()
+        for language in LANGUAGES:
+            self.primary_language_input.addItem(language.english_name, language.code)
+        language_index = max(0, self.primary_language_input.findData(config.primary_language))
+        self.primary_language_input.setCurrentIndex(language_index)
+
         self.key_inputs: dict[str, QLineEdit] = {}
         self.model_inputs: dict[str, QLineEdit] = {}
         for provider, label in PROVIDERS:
@@ -407,6 +413,7 @@ class SettingsDialog(QDialog):
         widget = QWidget()
         form = QFormLayout(widget)
         form.addRow("Provider", self.provider_input)
+        form.addRow("Primary language", self.primary_language_input)
         form.addRow("", self.autostart_checkbox)
         return widget
 
@@ -434,6 +441,10 @@ class SettingsDialog(QDialog):
     @property
     def provider(self) -> str:
         return str(self.provider_input.currentData())
+
+    @property
+    def primary_language(self) -> str:
+        return str(self.primary_language_input.currentData())
 
     @property
     def api_keys(self) -> dict[str, str]:

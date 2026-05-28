@@ -1,12 +1,13 @@
-# Windows Translator
+# AI-LinguaFlow
 
-Small Windows tray translator. Hold `Ctrl` and press `C` twice quickly to translate the copied selection in a popup.
+AI-LinguaFlow is a small Windows tray translator for quick multilingual work. Hold `Ctrl` and press `C` twice quickly to translate the copied selection in a popup.
 
 Default behavior:
 
-- Non-Russian text translates to Russian.
-- Russian text translates to English.
-- The popup can retranslate to Russian, English, German, Spanish, or Simplified Chinese.
+- The selected text translates to your primary language by default.
+- If the text already appears to be in your primary language, it translates to a fallback language.
+- The app supports Russian, English, German, Spanish, and Simplified Chinese.
+- The popup can retranslate manually to any supported language.
 - Translation history is saved locally after installation under your Windows user profile.
 
 ## Setup
@@ -18,7 +19,7 @@ python -m pip install -r requirements.txt
 python -m translator_app
 ```
 
-On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, models, API keys, or autostart.
+On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, or autostart.
 
 Supported providers and default models:
 
@@ -44,5 +45,6 @@ The executable will be created under `dist\WindowsTranslator\WindowsTranslator.e
 
 - Translation history is stored only on this computer in `%APPDATA%\WindowsTranslator\history.sqlite3`.
 - Use the `История` button in the popup or tray menu to open local history.
+- Language detection before translation is lightweight local detection. Russian and Chinese are detected more reliably than English, German, and Spanish, so the manual language buttons remain useful.
 - The app does not replace your clipboard with the translation automatically. Use the popup copy button.
 - The global keyboard hook may be blocked by some security tools or elevated apps. If it does not trigger inside an elevated app, run the translator with the same privilege level.

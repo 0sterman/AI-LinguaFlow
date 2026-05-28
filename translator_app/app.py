@@ -151,7 +151,7 @@ class TranslatorApplication(QObject):
             return
 
         self.original_text = text
-        self.translate_text(text, default_target_language(text))
+        self.translate_text(text, default_target_language(text, self.config.primary_language))
 
     def retranslate(self, language_code: str) -> None:
         if not self.original_text.strip():
@@ -275,6 +275,7 @@ class TranslatorApplication(QObject):
                 return
 
         self.config.provider = dialog.provider
+        self.config.primary_language = dialog.primary_language
         self.config.openai_model = dialog.models["openai"]
         self.config.google_model = dialog.models["google"]
         self.config.anthropic_model = dialog.models["anthropic"]
