@@ -104,6 +104,15 @@ class WindowsKeyStateReader:
         return bool(self._user32.GetAsyncKeyState(virtual_key) & 0x8000)
 
 
+class WindowsClipboardSequenceReader:
+    def __init__(self) -> None:
+        self._user32 = ctypes.WinDLL("user32", use_last_error=True)
+        self._user32.GetClipboardSequenceNumber.restype = ctypes.c_uint
+
+    def sequence_number(self) -> int:
+        return int(self._user32.GetClipboardSequenceNumber())
+
+
 class WindowsCtrlCHook:
     def __init__(self, on_double_ctrl_c: Callable[[], None], max_interval_seconds: float = 0.7) -> None:
         self._on_double_ctrl_c = on_double_ctrl_c

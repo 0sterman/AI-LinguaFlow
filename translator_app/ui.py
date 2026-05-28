@@ -133,6 +133,32 @@ MODEL_DESCRIPTIONS = {
     },
 }
 
+MODEL_SPEED_CATEGORY = {
+    "gpt-5-mini": "fast",
+    "gpt-5-nano": "very_fast",
+    "gpt-4.1-mini": "fast",
+    "gpt-4.1-nano": "very_fast",
+    "gpt-4o-mini": "fast",
+    "gemini-2.5-flash-lite": "very_fast",
+    "gemini-2.5-flash": "fast",
+    "gemini-2.0-flash-lite": "very_fast",
+    "gemini-2.0-flash": "fast",
+    "gemini-1.5-flash": "fast",
+    "claude-3-5-haiku-latest": "fast",
+    "claude-3-5-haiku-20241022": "fast",
+    "claude-3-haiku-20240307": "very_fast",
+    "claude-3-7-sonnet-latest": "medium",
+    "claude-sonnet-4-20250514": "medium",
+}
+
+MODEL_SPEED_LABELS = {
+    "ru": {"very_fast": "Очень высокая", "fast": "Высокая", "medium": "Средняя"},
+    "en": {"very_fast": "Very fast", "fast": "Fast", "medium": "Medium"},
+    "de": {"very_fast": "Sehr schnell", "fast": "Schnell", "medium": "Mittel"},
+    "es": {"very_fast": "Muy rápida", "fast": "Rápida", "medium": "Media"},
+    "zh": {"very_fast": "很快", "fast": "快", "medium": "中等"},
+}
+
 APP_DISPLAY_NAME = "AI LinguaFlow"
 VK_RCONTROL = 0xA3
 
@@ -1033,7 +1059,7 @@ class SettingsDialog(QDialog):
     def show_model_info(self) -> None:
         dialog = QDialog(self)
         dialog.setWindowTitle(t(self.ui_language, "recommended_models"))
-        dialog.resize(880, 520)
+        dialog.resize(900, 520)
 
         browser = QTextBrowser()
         browser.setOpenExternalLinks(False)
@@ -1050,26 +1076,45 @@ class SettingsDialog(QDialog):
     def _model_info_html(self) -> str:
         language_code = self.ui_language if self.ui_language in MODEL_DESCRIPTIONS else "en"
         descriptions = MODEL_DESCRIPTIONS.get(language_code, MODEL_DESCRIPTIONS["en"])
+        speed_labels = MODEL_SPEED_LABELS.get(language_code, MODEL_SPEED_LABELS["en"])
+        theme = self.theme
+        dark = theme == "dark" or theme == "system"
+        page_background = "#101620" if dark else "#f6f8fb"
+        text_color = "#eef3f8" if dark else "#07111c"
+        muted_text = "#d7dee8" if dark else "#263241"
+        border_color = "#2b3545" if dark else "#c7d3e0"
+        header_background = "#1c2634" if dark else "#e7f1fa"
+        header_color = "#8fd8ff" if dark else "#0b5f90"
+        code_background = "#172231" if dark else "#eaf1f7"
+        code_color = "#f7fbff" if dark else "#07111c"
         rows: list[str] = []
         provider_names = dict(PROVIDERS)
         for provider, model_names in MODEL_OPTIONS.items():
             for model_name in model_names:
                 use, cost = descriptions.get(model_name) or MODEL_DESCRIPTIONS["en"].get(model_name, ("", ""))
+                speed = speed_labels.get(MODEL_SPEED_CATEGORY.get(model_name, "fast"), "")
                 rows.append(
                     "<tr>"
                     f"<td>{provider_names.get(provider, provider)}</td>"
                     f"<td><code>{model_name}</code></td>"
                     f"<td>{use}</td>"
+                    f"<td>{speed}</td>"
                     f"<td>{cost}</td>"
                     "</tr>"
                 )
         return (
             "<style>"
-            "body{font-family:'Segoe UI',sans-serif;color:#eef3f8;background:#101620;}"
-            "table{border-collapse:collapse;width:100%;}"
-            "th,td{border:1px solid #2b3545;padding:8px;vertical-align:top;}"
-            "th{background:#1c2634;color:#8fd8ff;text-align:left;}"
-            "code{color:#ffffff;font-weight:700;}"
+            f"body{{font-family:'Segoe UI',sans-serif;color:{text_color};background:{page_background};font-size:12px;margin:8px;}}"
+            "h2{font-size:20px;margin:0 0 10px 0;}"
+            "table{border-collapse:collapse;width:100%;table-layout:fixed;}"
+            f"th,td{{border:1px solid {border_color};padding:5px 7px;vertical-align:top;line-height:1.25;color:{muted_text};}}"
+            f"th{{background:{header_background};color:{header_color};text-align:left;font-weight:700;}}"
+            f"code{{color:{code_color};background:{code_background};font-weight:700;font-size:11px;padding:1px 3px;border-radius:4px;white-space:normal;}}"
+            "th:nth-child(1),td:nth-child(1){width:16%;}"
+            "th:nth-child(2),td:nth-child(2){width:26%;}"
+            "th:nth-child(3),td:nth-child(3){width:34%;}"
+            "th:nth-child(4),td:nth-child(4){width:12%;}"
+            "th:nth-child(5),td:nth-child(5){width:12%;}"
             "</style>"
             f"<h2>{t(self.ui_language, 'recommended_models')}</h2>"
             "<table>"
@@ -1077,6 +1122,7 @@ class SettingsDialog(QDialog):
             f"<th>{t(self.ui_language, 'provider_column')}</th>"
             f"<th>{t(self.ui_language, 'model_column')}</th>"
             f"<th>{t(self.ui_language, 'use_column')}</th>"
+            f"<th>{t(self.ui_language, 'speed_column')}</th>"
             f"<th>{t(self.ui_language, 'cost_column')}</th>"
             "</tr></thead>"
             f"<tbody>{''.join(rows)}</tbody>"

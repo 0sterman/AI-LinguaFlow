@@ -12,7 +12,13 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from translator_app.config import AppConfig, load_config, save_config
 from translator_app.history import HistoryStore
-from translator_app.hotkey import CtrlCPollStateDetector, DoubleCtrlCDetector, WindowsCtrlCHook, WindowsKeyStateReader
+from translator_app.hotkey import (
+    CtrlCPollStateDetector,
+    DoubleCtrlCDetector,
+    WindowsClipboardSequenceReader,
+    WindowsCtrlCHook,
+    WindowsKeyStateReader,
+)
 from translator_app.i18n import t
 from translator_app.languages import Language, default_target_language, get_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
@@ -49,6 +55,11 @@ class TranslatorApplication(QObject):
         self.hotkey_poll_timer: QTimer | None = None
         self.hotkey_poll_detector = CtrlCPollStateDetector(DoubleCtrlCDetector())
         self.key_state_reader: WindowsKeyStateReader | None = None
+        self.clipboard_sequence_reader: WindowsClipboardSequenceReader | None = None
+        self.clipboard_sequence_timer: QTimer | None = None
+        self.clipboard_sequence_detector = DoubleCtrlCDetector()
+        self.last_clipboard_sequence: int | None = None
+        self.last_ctrl_down_at = 0.0
         self.last_hotkey_at = 0.0
         self.keyboard_hotkey_handle = None
         self.signals = AppSignals()
@@ -170,7 +181,25 @@ class TranslatorApplication(QObject):
                 except Exception:
                     self.key_state_reader = None
                     self.hotkey_poll_timer = None
-            if self.keyboard_hotkey_handle is None and self.hotkey_listener is None and self.hotkey_poll_timer is None:
+            if self.clipboard_sequence_timer is None:
+                try:
+                    self.clipboard_sequence_reader = WindowsClipboardSequenceReader()
+                    self.last_clipboard_sequence = self.clipboard_sequence_reader.sequence_number()
+                    self.clipboard_sequence_detector.reset()
+                    self.clipboard_sequence_timer = QTimer(self)
+                    self.clipboard_sequence_timer.setInterval(35)
+                    self.clipboard_sequence_timer.timeout.connect(self.poll_clipboard_sequence)
+                    self.clipboard_sequence_timer.start()
+                except Exception:
+                    self.clipboard_sequence_reader = None
+                    self.clipboard_sequence_timer = None
+                    self.last_clipboard_sequence = None
+            if (
+                self.keyboard_hotkey_handle is None
+                and self.hotkey_listener is None
+                and self.hotkey_poll_timer is None
+                and self.clipboard_sequence_timer is None
+            ):
                 self.popup.show_error("Не удалось включить Windows hotkey listener.")
             return
 
@@ -202,11 +231,37 @@ class TranslatorApplication(QObject):
     def poll_hotkey_state(self) -> None:
         if self.key_state_reader is None:
             return
+        ctrl_down = self.key_state_reader.ctrl_down()
+        if ctrl_down:
+            self.last_ctrl_down_at = time.monotonic()
         if self.hotkey_poll_detector.update(
-            self.key_state_reader.ctrl_down(),
+            ctrl_down,
             self.key_state_reader.c_down(),
             time.monotonic(),
         ):
+            self.signals.hotkeyTriggered.emit()
+
+    def poll_clipboard_sequence(self) -> None:
+        if self.clipboard_sequence_reader is None:
+            return
+        current_sequence = self.clipboard_sequence_reader.sequence_number()
+        if self.last_clipboard_sequence is None:
+            self.last_clipboard_sequence = current_sequence
+            return
+        if current_sequence == self.last_clipboard_sequence:
+            return
+        self.last_clipboard_sequence = current_sequence
+
+        now = time.monotonic()
+        ctrl_down = False
+        if self.key_state_reader is not None:
+            ctrl_down = self.key_state_reader.ctrl_down()
+        if ctrl_down:
+            self.last_ctrl_down_at = now
+        if not ctrl_down and now - self.last_ctrl_down_at > 0.35:
+            self.clipboard_sequence_detector.reset()
+            return
+        if self.clipboard_sequence_detector.register_key_press("c", True, now):
             self.signals.hotkeyTriggered.emit()
 
     def stop_hotkey_listener(self) -> None:
@@ -225,8 +280,15 @@ class TranslatorApplication(QObject):
             self.hotkey_poll_timer.stop()
             self.hotkey_poll_timer.deleteLater()
             self.hotkey_poll_timer = None
+        if self.clipboard_sequence_timer is not None:
+            self.clipboard_sequence_timer.stop()
+            self.clipboard_sequence_timer.deleteLater()
+            self.clipboard_sequence_timer = None
         self.key_state_reader = None
+        self.clipboard_sequence_reader = None
+        self.last_clipboard_sequence = None
         self.hotkey_poll_detector.reset()
+        self.clipboard_sequence_detector.reset()
         self.detector.reset()
         if self.keyboard_hook is None:
             return
