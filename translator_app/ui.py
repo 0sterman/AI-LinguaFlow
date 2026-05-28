@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QDate, Qt, Signal
+from PySide6.QtCore import QDate, QTimer, Qt, Signal
 import ctypes
 
 from PySide6.QtGui import QGuiApplication, QKeyEvent, QPixmap
@@ -254,6 +254,7 @@ QTabBar::tab:selected {
     background: #1c2634;
     color: #ffffff;
     border-bottom-color: #60c6ff;
+    font-weight: 800;
 }
 QPushButton {
     background: #1d2632;
@@ -349,7 +350,12 @@ QMenu::item:selected {
 }
 """
 
-LIGHT_STYLESHEET = DARK_STYLESHEET.replace("#0f131a", "#f6f8fb").replace("#eef3f8", "#16202c").replace("#d7dee8", "#263241").replace("#f7fbff", "#101720").replace("#9caaba", "#536173").replace("#151b24", "#ffffff").replace("#2b3545", "#cfd8e5").replace("#f2f6fb", "#111827").replace("#60c6ff", "#1686c4").replace("#111722", "#ffffff").replace("#252f3f", "#d8e0eb").replace("#1c2634", "#eaf4fb").replace("#aab7c7", "#46566a").replace("#1d2632", "#edf2f7").replace("#344154", "#c6d0dd").replace("#263244", "#e3edf7").replace("#4f8fb6", "#4a9eca").replace("#18202b", "#dce7f2").replace("#121821", "#ffffff").replace("#303b4d", "#cad5e2").replace("#1b415a", "#d8eefc")
+LIGHT_STYLESHEET = DARK_STYLESHEET.replace("#0f131a", "#f6f8fb").replace("#eef3f8", "#16202c").replace("#d7dee8", "#263241").replace("#f7fbff", "#101720").replace("#9caaba", "#536173").replace("#151b24", "#ffffff").replace("#2b3545", "#cfd8e5").replace("#f2f6fb", "#111827").replace("#60c6ff", "#1686c4").replace("#111722", "#ffffff").replace("#252f3f", "#d8e0eb").replace("#1c2634", "#eaf4fb").replace("#aab7c7", "#46566a").replace("#1d2632", "#edf2f7").replace("#344154", "#c6d0dd").replace("#263244", "#e3edf7").replace("#4f8fb6", "#4a9eca").replace("#18202b", "#dce7f2").replace("#121821", "#ffffff").replace("#303b4d", "#cad5e2").replace("#1b415a", "#d8eefc") + """
+QTabBar::tab:selected {
+    color: #07111c;
+    font-weight: 800;
+}
+"""
 APP_STYLESHEET = DARK_STYLESHEET
 
 
@@ -536,6 +542,12 @@ class MainTranslatorWindow(QWidget):
         self.source_text.setAcceptRichText(False)
         self.source_text.submitRequested.connect(self.emit_translate_requested)
         self.source_text.clearRequested.connect(self.clear_source_text)
+        self.source_text.textChanged.connect(self.schedule_auto_translate)
+        self.auto_translate_timer = QTimer(self)
+        self.auto_translate_timer.setSingleShot(True)
+        self.auto_translate_timer.setInterval(1500)
+        self.auto_translate_timer.timeout.connect(self.emit_auto_translate_requested)
+        self.last_submitted_text = ""
 
         self.translation_text = QTextEdit()
         self.translation_text.setReadOnly(True)
@@ -622,14 +634,31 @@ class MainTranslatorWindow(QWidget):
         self.settings_button.setText(t(language_code, "settings"))
 
     def clear_source_text(self) -> None:
+        self.auto_translate_timer.stop()
+        self.last_submitted_text = ""
         self.source_text.clear()
 
     def emit_translate_requested(self) -> None:
+        self.auto_translate_timer.stop()
+        self.last_submitted_text = self.source_text.toPlainText()
         self.translateRequested.emit(
             str(self.source_language_input.currentData()),
             str(self.target_language_input.currentData()),
             self.source_text.toPlainText(),
         )
+
+    def schedule_auto_translate(self) -> None:
+        text = self.source_text.toPlainText().strip()
+        if not text or text == self.last_submitted_text.strip():
+            self.auto_translate_timer.stop()
+            return
+        self.auto_translate_timer.start()
+
+    def emit_auto_translate_requested(self) -> None:
+        text = self.source_text.toPlainText().strip()
+        if not text or text == self.last_submitted_text.strip():
+            return
+        self.emit_translate_requested()
 
     def set_loading(self) -> None:
         self.translation_text.setPlainText(t(self.ui_language, "translating"))
@@ -947,7 +976,7 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
         layout.addWidget(self.tabs)
-        layout.addWidget(self.apply_button, alignment=Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self.apply_button, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.buttons)
         self.apply_locale(config.primary_language)
 

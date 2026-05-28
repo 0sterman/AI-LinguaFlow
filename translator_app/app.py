@@ -50,6 +50,7 @@ class TranslatorApplication(QObject):
         self.hotkey_poll_detector = CtrlCPollStateDetector(DoubleCtrlCDetector())
         self.key_state_reader: WindowsKeyStateReader | None = None
         self.last_hotkey_at = 0.0
+        self.keyboard_hotkey_handle = None
         self.signals = AppSignals()
         self.keyboard_hook = None
         self.original_text = ""
@@ -140,6 +141,18 @@ class TranslatorApplication(QObject):
 
     def start_hotkey_listener(self) -> None:
         if sys.platform.startswith("win"):
+            if self.keyboard_hotkey_handle is None:
+                try:
+                    import keyboard
+
+                    self.keyboard_hotkey_handle = keyboard.add_hotkey(
+                        "ctrl+c",
+                        self.on_ctrl_c_hotkey_press,
+                        suppress=False,
+                        trigger_on_release=False,
+                    )
+                except Exception:
+                    self.keyboard_hotkey_handle = None
             if self.hotkey_listener is None:
                 try:
                     self.hotkey_listener = WindowsCtrlCHook(lambda: self.signals.hotkeyTriggered.emit())
@@ -157,7 +170,7 @@ class TranslatorApplication(QObject):
                 except Exception:
                     self.key_state_reader = None
                     self.hotkey_poll_timer = None
-            if self.hotkey_listener is None and self.hotkey_poll_timer is None:
+            if self.keyboard_hotkey_handle is None and self.hotkey_listener is None and self.hotkey_poll_timer is None:
                 self.popup.show_error("Не удалось включить Windows hotkey listener.")
             return
 
@@ -182,6 +195,10 @@ class TranslatorApplication(QObject):
             self.keyboard_hook = None
             self.popup.show_error("Не удалось включить глобальный хоткей. Попробуйте запустить приложение от администратора.")
 
+    def on_ctrl_c_hotkey_press(self) -> None:
+        if self.detector.register_key_press("c", True, time.monotonic()):
+            self.signals.hotkeyTriggered.emit()
+
     def poll_hotkey_state(self) -> None:
         if self.key_state_reader is None:
             return
@@ -193,6 +210,14 @@ class TranslatorApplication(QObject):
             self.signals.hotkeyTriggered.emit()
 
     def stop_hotkey_listener(self) -> None:
+        if self.keyboard_hotkey_handle is not None:
+            try:
+                import keyboard
+
+                keyboard.remove_hotkey(self.keyboard_hotkey_handle)
+            except Exception:
+                pass
+            self.keyboard_hotkey_handle = None
         if self.hotkey_listener is not None:
             self.hotkey_listener.stop()
             self.hotkey_listener = None
@@ -202,6 +227,7 @@ class TranslatorApplication(QObject):
             self.hotkey_poll_timer = None
         self.key_state_reader = None
         self.hotkey_poll_detector.reset()
+        self.detector.reset()
         if self.keyboard_hook is None:
             return
         try:
@@ -416,6 +442,17 @@ class TranslatorApplication(QObject):
         dialog.apiKeyCheckRequested.connect(self.check_api_key)
         dialog.apiKeyDeleteRequested.connect(self.delete_api_key)
         dialog.applyRequested.connect(lambda: self.apply_settings(dialog, close_dialog=False))
+        for provider, has_key in saved_key_status.items():
+            if has_key and key_valid_status.get(provider) is not True:
+                dialog.update_api_key_status(provider, "checking")
+                QTimer.singleShot(
+                    150,
+                    lambda provider_name=provider: self.check_api_key(
+                        provider_name,
+                        "",
+                        dialog.models[provider_name],
+                    ),
+                )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             self.active_settings_dialog = None
             return
