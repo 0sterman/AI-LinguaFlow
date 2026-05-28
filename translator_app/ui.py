@@ -997,12 +997,12 @@ class SettingsDialog(QDialog):
 
         self.apply_button = QPushButton()
         self.apply_button.clicked.connect(self.applyRequested.emit)
+        self.buttons.addButton(self.apply_button, QDialogButtonBox.ButtonRole.ApplyRole)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
         layout.addWidget(self.tabs)
-        layout.addWidget(self.apply_button, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.buttons)
         self.apply_locale(config.primary_language)
 
