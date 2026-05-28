@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QTabWidget,
     QTextEdit,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -44,18 +45,93 @@ def provider_label_for_ui(provider: str) -> str:
             return label
     return provider
 
-MODEL_INFO = """Рекомендация для переводчика:
-
-OpenAI: gpt-5-mini
-Хороший баланс качества, скорости и цены для коротких переводов. Если экономия важнее качества, можно попробовать gpt-5-nano, gpt-4.1-mini или gpt-4.1-nano.
-
-Google: gemini-2.5-flash-lite
-Самый быстрый и экономичный вариант Gemini для массовых коротких задач. Для чуть лучшего качества можно поставить gemini-2.5-flash.
-
-Anthropic: claude-3-5-haiku-latest
-Быстрый и недорогой Claude для простых переводов. Sonnet обычно качественнее, но дороже и чаще избыточен для всплывающего переводчика.
-
-Мой строгий совет: начните с OpenAI gpt-5-mini или Google gemini-2.5-flash-lite. Не ставьте самые дорогие модели для перевода выделенного текста, это обычно лишняя трата."""
+MODEL_DESCRIPTIONS = {
+    "ru": {
+        "gpt-5-mini": ("Основной вариант для качественного быстрого перевода.", "Низкая"),
+        "gpt-5-nano": ("Самый экономный OpenAI-вариант для короткого текста.", "Очень низкая"),
+        "gpt-4.1-mini": ("Хороший запасной вариант, если нужен стабильный mini-класс.", "Низкая"),
+        "gpt-4.1-nano": ("Очень экономный вариант для простых фраз.", "Очень низкая"),
+        "gpt-4o-mini": ("Быстрый старый mini-вариант, полезен как fallback.", "Низкая"),
+        "gemini-2.5-flash-lite": ("Самый экономный Gemini для массовых коротких переводов.", "Очень низкая"),
+        "gemini-2.5-flash": ("Лучше качество Gemini без перехода в тяжёлые модели.", "Низкая"),
+        "gemini-2.0-flash-lite": ("Лёгкий fallback для простых переводов.", "Очень низкая"),
+        "gemini-2.0-flash": ("Быстрый универсальный Gemini-вариант.", "Низкая"),
+        "gemini-1.5-flash": ("Старый совместимый fallback.", "Низкая"),
+        "claude-3-5-haiku-latest": ("Основной экономный Claude для быстрых переводов.", "Низкая"),
+        "claude-3-5-haiku-20241022": ("Фиксированная версия Haiku вместо latest.", "Низкая"),
+        "claude-3-haiku-20240307": ("Старый быстрый Haiku fallback.", "Низкая"),
+        "claude-3-7-sonnet-latest": ("Качественнее, но часто избыточен для popup-перевода.", "Средняя"),
+        "claude-sonnet-4-20250514": ("Сильная модель для сложных текстов, не основной экономный выбор.", "Средняя/выше"),
+    },
+    "en": {
+        "gpt-5-mini": ("Default balanced OpenAI choice for fast, good translations.", "Low"),
+        "gpt-5-nano": ("Cheapest OpenAI option for short text.", "Very low"),
+        "gpt-4.1-mini": ("Good stable mini-class fallback.", "Low"),
+        "gpt-4.1-nano": ("Very cheap choice for simple phrases.", "Very low"),
+        "gpt-4o-mini": ("Fast older mini option, useful as fallback.", "Low"),
+        "gemini-2.5-flash-lite": ("Cheapest Gemini choice for many short translations.", "Very low"),
+        "gemini-2.5-flash": ("Better Gemini quality without heavy models.", "Low"),
+        "gemini-2.0-flash-lite": ("Light fallback for simple translations.", "Very low"),
+        "gemini-2.0-flash": ("Fast general Gemini option.", "Low"),
+        "gemini-1.5-flash": ("Older compatible fallback.", "Low"),
+        "claude-3-5-haiku-latest": ("Default economical Claude for fast translation.", "Low"),
+        "claude-3-5-haiku-20241022": ("Pinned Haiku version instead of latest.", "Low"),
+        "claude-3-haiku-20240307": ("Older fast Haiku fallback.", "Low"),
+        "claude-3-7-sonnet-latest": ("Higher quality, often excessive for popup translation.", "Medium"),
+        "claude-sonnet-4-20250514": ("Strong model for difficult text, not the cheapest default.", "Medium/higher"),
+    },
+    "de": {
+        "gpt-5-mini": ("Standardauswahl von OpenAI für schnelle, gute Übersetzungen.", "Niedrig"),
+        "gpt-5-nano": ("Günstigste OpenAI-Option für kurze Texte.", "Sehr niedrig"),
+        "gpt-4.1-mini": ("Stabile Mini-Alternative.", "Niedrig"),
+        "gpt-4.1-nano": ("Sehr günstige Option für einfache Sätze.", "Sehr niedrig"),
+        "gpt-4o-mini": ("Ältere schnelle Mini-Option als Fallback.", "Niedrig"),
+        "gemini-2.5-flash-lite": ("Günstigste Gemini-Option für viele kurze Übersetzungen.", "Sehr niedrig"),
+        "gemini-2.5-flash": ("Bessere Gemini-Qualität ohne schwere Modelle.", "Niedrig"),
+        "gemini-2.0-flash-lite": ("Leichter Fallback für einfache Übersetzungen.", "Sehr niedrig"),
+        "gemini-2.0-flash": ("Schnelle universelle Gemini-Option.", "Niedrig"),
+        "gemini-1.5-flash": ("Älterer kompatibler Fallback.", "Niedrig"),
+        "claude-3-5-haiku-latest": ("Günstiger Standard-Claude für schnelle Übersetzungen.", "Niedrig"),
+        "claude-3-5-haiku-20241022": ("Fixierte Haiku-Version statt latest.", "Niedrig"),
+        "claude-3-haiku-20240307": ("Älterer schneller Haiku-Fallback.", "Niedrig"),
+        "claude-3-7-sonnet-latest": ("Bessere Qualität, oft zu viel für Popup-Übersetzung.", "Mittel"),
+        "claude-sonnet-4-20250514": ("Starke Modellwahl für schwierige Texte, nicht der günstigste Standard.", "Mittel/höher"),
+    },
+    "es": {
+        "gpt-5-mini": ("Opción OpenAI equilibrada para traducciones rápidas y buenas.", "Bajo"),
+        "gpt-5-nano": ("Opción OpenAI más barata para textos cortos.", "Muy bajo"),
+        "gpt-4.1-mini": ("Alternativa mini estable.", "Bajo"),
+        "gpt-4.1-nano": ("Opción muy barata para frases simples.", "Muy bajo"),
+        "gpt-4o-mini": ("Mini anterior rápido como respaldo.", "Bajo"),
+        "gemini-2.5-flash-lite": ("Gemini más barato para muchas traducciones cortas.", "Muy bajo"),
+        "gemini-2.5-flash": ("Mejor calidad Gemini sin modelos pesados.", "Bajo"),
+        "gemini-2.0-flash-lite": ("Respaldo ligero para traducciones simples.", "Muy bajo"),
+        "gemini-2.0-flash": ("Opción Gemini rápida y general.", "Bajo"),
+        "gemini-1.5-flash": ("Respaldo compatible anterior.", "Bajo"),
+        "claude-3-5-haiku-latest": ("Claude económico por defecto para traducción rápida.", "Bajo"),
+        "claude-3-5-haiku-20241022": ("Versión fija de Haiku en vez de latest.", "Bajo"),
+        "claude-3-haiku-20240307": ("Respaldo Haiku rápido anterior.", "Bajo"),
+        "claude-3-7-sonnet-latest": ("Más calidad, a menudo excesivo para traducción popup.", "Medio"),
+        "claude-sonnet-4-20250514": ("Modelo fuerte para texto difícil, no el predeterminado más barato.", "Medio/alto"),
+    },
+    "zh": {
+        "gpt-5-mini": ("OpenAI 默认均衡选择，适合快速且质量好的翻译。", "低"),
+        "gpt-5-nano": ("OpenAI 最省钱选项，适合短文本。", "很低"),
+        "gpt-4.1-mini": ("稳定的 mini 级备用选择。", "低"),
+        "gpt-4.1-nano": ("适合简单短句的超省钱选择。", "很低"),
+        "gpt-4o-mini": ("较早的快速 mini 备用选项。", "低"),
+        "gemini-2.5-flash-lite": ("Gemini 最省钱选择，适合大量短翻译。", "很低"),
+        "gemini-2.5-flash": ("质量更好的 Gemini 选择，不算重型模型。", "低"),
+        "gemini-2.0-flash-lite": ("适合简单翻译的轻量备用。", "很低"),
+        "gemini-2.0-flash": ("快速通用 Gemini 选择。", "低"),
+        "gemini-1.5-flash": ("较早的兼容备用模型。", "低"),
+        "claude-3-5-haiku-latest": ("默认经济 Claude，适合快速翻译。", "低"),
+        "claude-3-5-haiku-20241022": ("固定 Haiku 版本，不使用 latest。", "低"),
+        "claude-3-haiku-20240307": ("较早的快速 Haiku 备用。", "低"),
+        "claude-3-7-sonnet-latest": ("质量更高，但对弹窗翻译通常过强。", "中"),
+        "claude-sonnet-4-20250514": ("适合复杂文本的强模型，不是最省钱默认。", "中/较高"),
+    },
+}
 
 APP_DISPLAY_NAME = "AI LinguaFlow"
 VK_RCONTROL = 0xA3
@@ -141,8 +217,25 @@ QTextEdit:focus, QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QListWidget:
     border: 1px solid #60c6ff;
 }
 QComboBox::drop-down, QDateEdit::drop-down {
-    width: 24px;
-    border: 0;
+    width: 30px;
+    border-left: 1px solid #344154;
+    background: #1b2634;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+QComboBox::down-arrow, QDateEdit::down-arrow {
+    width: 0;
+    height: 0;
+}
+QPushButton#DropdownButton {
+    background: #1e78ad;
+    border: 1px solid #65cfff;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    padding: 0;
+    min-width: 30px;
+    max-width: 30px;
 }
 QTabWidget::pane {
     border: 1px solid #252f3f;
@@ -773,6 +866,7 @@ class SettingsDialog(QDialog):
         self.key_status_labels: dict[str, QLabel] = {}
         self.key_check_buttons: dict[str, QPushButton] = {}
         self.key_delete_buttons: dict[str, QPushButton] = {}
+        self.model_dropdown_buttons: dict[str, QPushButton] = {}
         self.key_row_labels: dict[str, QLabel] = {}
         self.model_row_labels: dict[str, QLabel] = {}
         for provider, label in PROVIDERS:
@@ -796,6 +890,7 @@ class SettingsDialog(QDialog):
 
             model_input = QComboBox()
             model_input.setEditable(True)
+            model_input.setMinimumWidth(300)
             for model_name in MODEL_OPTIONS[provider]:
                 model_input.addItem(model_name)
             selected_model = config.model_for_provider(provider) or DEFAULT_MODELS[provider]
@@ -805,6 +900,11 @@ class SettingsDialog(QDialog):
                 model_index = 0
             model_input.setCurrentIndex(model_index)
             self.model_inputs[provider] = model_input
+            dropdown_button = QPushButton("▼")
+            dropdown_button.setObjectName("DropdownButton")
+            dropdown_button.setToolTip("Open model list")
+            dropdown_button.clicked.connect(lambda _checked=False, p=provider: self.model_inputs[p].showPopup())
+            self.model_dropdown_buttons[provider] = dropdown_button
             if not saved_key_status.get(provider):
                 initial_status = "missing"
             elif self.key_valid_status.get(provider) is True:
@@ -887,13 +987,72 @@ class SettingsDialog(QDialog):
             self.key_row_labels[provider] = key_label
             self.model_row_labels[provider] = model_label
             form.addRow(key_label, key_row)
-            form.addRow(model_label, self.model_inputs[provider])
+            form.addRow(model_label, self._model_row(provider))
         layout.addLayout(form)
         layout.addStretch(1)
         return widget
 
+    def _model_row(self, provider: str) -> QWidget:
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.model_inputs[provider], 1)
+        layout.addWidget(self.model_dropdown_buttons[provider])
+        return widget
+
     def show_model_info(self) -> None:
-        QMessageBox.information(self, t(self.ui_language, "recommended_models"), MODEL_INFO)
+        dialog = QDialog(self)
+        dialog.setWindowTitle(t(self.ui_language, "recommended_models"))
+        dialog.resize(880, 520)
+
+        browser = QTextBrowser()
+        browser.setOpenExternalLinks(False)
+        browser.setHtml(self._model_info_html())
+
+        close_button = QPushButton(t(self.ui_language, "close"))
+        close_button.clicked.connect(dialog.accept)
+
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(browser, 1)
+        layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
+        dialog.exec()
+
+    def _model_info_html(self) -> str:
+        language_code = self.ui_language if self.ui_language in MODEL_DESCRIPTIONS else "en"
+        descriptions = MODEL_DESCRIPTIONS.get(language_code, MODEL_DESCRIPTIONS["en"])
+        rows: list[str] = []
+        provider_names = dict(PROVIDERS)
+        for provider, model_names in MODEL_OPTIONS.items():
+            for model_name in model_names:
+                use, cost = descriptions.get(model_name) or MODEL_DESCRIPTIONS["en"].get(model_name, ("", ""))
+                rows.append(
+                    "<tr>"
+                    f"<td>{provider_names.get(provider, provider)}</td>"
+                    f"<td><code>{model_name}</code></td>"
+                    f"<td>{use}</td>"
+                    f"<td>{cost}</td>"
+                    "</tr>"
+                )
+        return (
+            "<style>"
+            "body{font-family:'Segoe UI',sans-serif;color:#eef3f8;background:#101620;}"
+            "table{border-collapse:collapse;width:100%;}"
+            "th,td{border:1px solid #2b3545;padding:8px;vertical-align:top;}"
+            "th{background:#1c2634;color:#8fd8ff;text-align:left;}"
+            "code{color:#ffffff;font-weight:700;}"
+            "</style>"
+            f"<h2>{t(self.ui_language, 'recommended_models')}</h2>"
+            "<table>"
+            "<thead><tr>"
+            f"<th>{t(self.ui_language, 'provider_column')}</th>"
+            f"<th>{t(self.ui_language, 'model_column')}</th>"
+            f"<th>{t(self.ui_language, 'use_column')}</th>"
+            f"<th>{t(self.ui_language, 'cost_column')}</th>"
+            "</tr></thead>"
+            f"<tbody>{''.join(rows)}</tbody>"
+            "</table>"
+        )
 
     def apply_locale(self, language_code: str) -> None:
         self.ui_language = language_code
@@ -922,6 +1081,7 @@ class SettingsDialog(QDialog):
             self.model_row_labels[provider].setText(f"{label} {t(language_code, 'model')}")
             self.key_check_buttons[provider].setText(t(language_code, "check"))
             self.key_delete_buttons[provider].setText(t(language_code, "delete"))
+            self.model_dropdown_buttons[provider].setToolTip(t(language_code, "model"))
             placeholder = t(language_code, "saved_key_exists") if self.saved_key_status.get(provider) else t(
                 language_code,
                 "api_key_placeholder",
@@ -973,17 +1133,18 @@ class SettingsDialog(QDialog):
             label.setObjectName("KeyStatusNeutral")
             label.setToolTip(t(self.ui_language, "key_checking"))
         else:
-            label.setText("•")
-            label.setObjectName("KeyStatusNeutral")
-            label.setToolTip(message or t(self.ui_language, "key_saved"))
+            label.setText("✕")
+            label.setObjectName("KeyStatusBad")
+            label.setToolTip(message or t(self.ui_language, "key_not_checked"))
+            self.key_valid_status[provider] = False
         label.style().unpolish(label)
         label.style().polish(label)
 
     def _on_key_text_changed(self, provider: str) -> None:
         if self.key_inputs[provider].text().strip():
-            self.update_api_key_status(provider, "saved", t(self.ui_language, "key_saved"))
+            self.update_api_key_status(provider, "saved", t(self.ui_language, "key_not_checked"))
         elif self.saved_key_status.get(provider):
-            self.update_api_key_status(provider, "saved")
+            self.update_api_key_status(provider, "saved", t(self.ui_language, "key_not_checked"))
         else:
             self.update_api_key_status(provider, "missing")
 
