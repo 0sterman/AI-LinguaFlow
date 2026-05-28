@@ -665,7 +665,7 @@ class TranslatorApplication(QObject):
 def main() -> int:
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    app.setApplicationDisplayName(APP_DISPLAY_NAME)
+    app.setApplicationDisplayName("")
     app.setApplicationName(APP_DISPLAY_NAME)
     app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
     single_instance_server = create_single_instance_server()
