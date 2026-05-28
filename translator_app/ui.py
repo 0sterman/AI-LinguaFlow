@@ -47,6 +47,147 @@ Anthropic: claude-3-5-haiku-latest
 
 Мой строгий совет: начните с OpenAI gpt-5-mini или Google gemini-2.5-flash-lite. Не ставьте самые дорогие модели для перевода выделенного текста, это обычно лишняя трата."""
 
+APP_STYLESHEET = """
+QWidget {
+    background: #0f131a;
+    color: #eef3f8;
+    font-family: "Segoe UI Variable", "Segoe UI";
+    font-size: 13px;
+}
+QDialog {
+    background: #0f131a;
+}
+QLabel {
+    color: #d7dee8;
+    background: transparent;
+}
+QLabel#AppTitle {
+    color: #f7fbff;
+    font-size: 15px;
+    font-weight: 650;
+}
+QLabel#SectionLabel {
+    color: #8fd8ff;
+    font-size: 12px;
+    font-weight: 600;
+}
+QLabel#StatusLabel {
+    color: #9caaba;
+    font-size: 12px;
+}
+QTextEdit, QLineEdit, QComboBox, QDateEdit, QListWidget {
+    background: #151b24;
+    border: 1px solid #2b3545;
+    border-radius: 8px;
+    color: #f2f6fb;
+    padding: 7px 9px;
+    selection-background-color: #2f86c8;
+    selection-color: #ffffff;
+}
+QTextEdit {
+    font-size: 14px;
+}
+QTextEdit:focus, QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QListWidget:focus {
+    border: 1px solid #60c6ff;
+}
+QComboBox::drop-down, QDateEdit::drop-down {
+    width: 24px;
+    border: 0;
+}
+QTabWidget::pane {
+    border: 1px solid #252f3f;
+    border-radius: 8px;
+    background: #111722;
+    top: -1px;
+}
+QTabBar::tab {
+    background: #151b24;
+    border: 1px solid #252f3f;
+    color: #aab7c7;
+    padding: 8px 14px;
+    min-width: 72px;
+}
+QTabBar::tab:selected {
+    background: #1c2634;
+    color: #ffffff;
+    border-bottom-color: #60c6ff;
+}
+QPushButton {
+    background: #1d2632;
+    border: 1px solid #344154;
+    border-radius: 8px;
+    color: #eef3f8;
+    padding: 7px 12px;
+    min-height: 24px;
+}
+QPushButton:hover {
+    background: #263244;
+    border-color: #4f8fb6;
+}
+QPushButton:pressed {
+    background: #18202b;
+}
+QPushButton:checked {
+    background: #1e78ad;
+    border-color: #65cfff;
+    color: #ffffff;
+}
+QPushButton#HistoryButton {
+    background: #132534;
+    border: 1px solid #4bb8ed;
+    color: #dff6ff;
+    font-weight: 650;
+}
+QPushButton#HistoryButton:hover {
+    background: #183247;
+}
+QPushButton#InfoButton {
+    border-radius: 13px;
+    border: 1px solid #6ccaff;
+    background: #172838;
+    color: #dff6ff;
+    font-weight: 700;
+}
+QCheckBox {
+    spacing: 8px;
+    color: #d7dee8;
+}
+QCheckBox::indicator {
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    border: 1px solid #526174;
+    background: #151b24;
+}
+QCheckBox::indicator:checked {
+    background: #1e78ad;
+    border: 1px solid #65cfff;
+}
+QListWidget::item {
+    border-radius: 7px;
+    padding: 8px;
+    margin: 2px;
+}
+QListWidget::item:selected {
+    background: #1b415a;
+    color: #ffffff;
+}
+QSplitter::handle {
+    background: #202938;
+}
+QMenu {
+    background: #121821;
+    border: 1px solid #303b4d;
+    color: #eef3f8;
+}
+QMenu::item {
+    padding: 7px 28px 7px 20px;
+}
+QMenu::item:selected {
+    background: #1b415a;
+}
+"""
+
 
 class TranslationPopup(QWidget):
     languageSelected = Signal(str)
@@ -63,12 +204,17 @@ class TranslationPopup(QWidget):
         self.setObjectName("TranslationPopup")
         self.resize(width, height)
 
+        title_label = QLabel("AI-LinguaFlow")
+        title_label.setObjectName("AppTitle")
+
         self.status_label = QLabel("Готово")
         self.status_label.setObjectName("StatusLabel")
 
         self.language_buttons: dict[str, QPushButton] = {}
-        language_row = QHBoxLayout()
-        language_row.setSpacing(6)
+        header_row = QHBoxLayout()
+        header_row.setSpacing(6)
+        header_row.addWidget(title_label)
+        header_row.addStretch(1)
         for language in LANGUAGES:
             button = QPushButton(language.label)
             button.setCheckable(True)
@@ -76,8 +222,7 @@ class TranslationPopup(QWidget):
             button.setToolTip(f"Перевести на {language.english_name}")
             button.clicked.connect(lambda _checked=False, code=language.code: self.languageSelected.emit(code))
             self.language_buttons[language.code] = button
-            language_row.addWidget(button)
-        language_row.addStretch(1)
+            header_row.addWidget(button)
 
         self.text_box = QTextEdit()
         self.text_box.setReadOnly(True)
@@ -106,52 +251,16 @@ class TranslationPopup(QWidget):
         root = QVBoxLayout(self)
         root.setContentsMargins(14, 14, 14, 14)
         root.setSpacing(10)
-        root.addLayout(language_row)
+        root.addLayout(header_row)
         root.addWidget(self.text_box, 1)
         root.addLayout(bottom_row)
 
         self.setStyleSheet(
             """
             QWidget#TranslationPopup {
-                background: #fcfcfb;
-                border: 1px solid #b8bbb7;
+                background: #101620;
+                border: 1px solid #314055;
                 border-radius: 8px;
-            }
-            QLabel#StatusLabel {
-                color: #4d5358;
-                font-size: 12px;
-            }
-            QTextEdit {
-                background: #ffffff;
-                border: 1px solid #d7d9d4;
-                border-radius: 6px;
-                padding: 8px;
-                font-size: 14px;
-                color: #1f2328;
-            }
-            QPushButton {
-                background: #edf0ec;
-                border: 1px solid #c8ccc6;
-                border-radius: 6px;
-                padding: 5px 8px;
-                color: #1f2328;
-            }
-            QPushButton:hover {
-                background: #e2e7e1;
-            }
-            QPushButton:checked {
-                background: #2f6f73;
-                color: white;
-                border-color: #285f62;
-            }
-            QPushButton#HistoryButton {
-                background: #f7fbfb;
-                border: 1px solid #6b9ca0;
-                color: #235d61;
-                font-weight: 600;
-            }
-            QPushButton#HistoryButton:hover {
-                background: #e7f3f2;
             }
             """
         )
@@ -205,6 +314,7 @@ class HistoryDialog(QDialog):
 
     def __init__(self, records: list[HistoryRecord], parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setObjectName("SurfaceDialog")
         self.setWindowTitle("История переводов")
         self.resize(900, 560)
         self.records_by_id: dict[int, HistoryRecord] = {}
@@ -276,6 +386,8 @@ class HistoryDialog(QDialog):
         bottom_row.addWidget(self.close_button)
 
         root = QVBoxLayout(self)
+        root.setContentsMargins(16, 16, 16, 16)
+        root.setSpacing(12)
         root.addLayout(filter_row)
         root.addWidget(splitter, 1)
         root.addLayout(bottom_row)
@@ -350,6 +462,7 @@ class SettingsDialog(QDialog):
     def __init__(self, config: AppConfig, saved_key_status: dict[str, bool], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Translator Settings")
+        self.setObjectName("SurfaceDialog")
         self.setModal(True)
         self.resize(540, 430)
 
@@ -383,22 +496,10 @@ class SettingsDialog(QDialog):
         self.desktop_shortcut_checkbox.setChecked(config.desktop_shortcut)
 
         self.info_button = QPushButton("i")
+        self.info_button.setObjectName("InfoButton")
         self.info_button.setFixedSize(26, 26)
         self.info_button.setToolTip("Recommended models")
         self.info_button.clicked.connect(self.show_model_info)
-        self.info_button.setStyleSheet(
-            """
-            QPushButton {
-                border-radius: 13px;
-                border: 1px solid #7f8b8c;
-                background: #f4f6f5;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background: #e7ecea;
-            }
-            """
-        )
 
         tabs = QTabWidget()
         tabs.addTab(self._build_general_tab(), "General")
@@ -409,6 +510,8 @@ class SettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
         layout.addWidget(tabs)
         layout.addWidget(buttons)
 

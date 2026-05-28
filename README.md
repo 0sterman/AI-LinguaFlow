@@ -21,7 +21,7 @@ python -m translator_app
 
 On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart.
 
-The app uses an AI-LinguaFlow icon based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
+The app uses an AI-LinguaFlow icon and dark Apple-inspired interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
 
 Supported providers and default models:
 

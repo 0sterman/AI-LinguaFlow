@@ -23,7 +23,7 @@ from translator_app.startup import (
     set_desktop_shortcut,
     set_start_with_windows,
 )
-from translator_app.ui import HistoryDialog, SettingsDialog, TranslationPopup
+from translator_app.ui import APP_STYLESHEET, HistoryDialog, SettingsDialog, TranslationPopup
 
 
 class AppSignals(QObject):
@@ -322,6 +322,7 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
+    app.setStyleSheet(APP_STYLESHEET)
     controller = TranslatorApplication(app)
     app.aboutToQuit.connect(controller.shutdown)
     return app.exec()

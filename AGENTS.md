@@ -109,6 +109,7 @@ History should remain compact and searchable. Keep deletion/clear-history behavi
 ## UX Rules
 
 - The popup should stay compact, fast, and unobtrusive.
+- Keep the visual style close to the logo: dark graphite surfaces, cool blue accents, clean Apple-like spacing, and no noisy decoration.
 - Do not replace the clipboard with translations automatically; keep explicit copy buttons.
 - Keep the `История` button visible and simple.
 - Settings should expose provider, primary language, API keys, model names, desktop shortcut, and autostart.
