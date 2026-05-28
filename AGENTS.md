@@ -2,7 +2,7 @@
 
 ## Project
 
-AI LinguaFlow is a Windows translator whose main workflow is fast selected-text translation through a `Ctrl+C+C` popup. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
+LinguaFlow AI is a Windows translator whose main workflow is fast selected-text translation through a `Ctrl+C+C` popup. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
 
 Repository: `0sterman/AI-LinguaFlow`
 
@@ -154,7 +154,7 @@ If `dist\WindowsTranslator` is locked during build, stop the running `WindowsTra
 
 ## Current Known Limits
 
-- Global hotkeys may not work inside elevated apps unless AI LinguaFlow runs with matching privileges.
+- Global hotkeys may not work inside elevated apps unless LinguaFlow AI runs with matching privileges.
 - Language detection is heuristic.
 - Very long text is rejected by the first-version length limit in `openai_client.py`.
 - The executable is a PyInstaller folder build and is larger than a native Windows app.

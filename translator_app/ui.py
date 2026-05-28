@@ -186,7 +186,8 @@ def star_rating(value: int) -> str:
         "</span>"
     )
 
-APP_DISPLAY_NAME = "AI LinguaFlow"
+APP_DISPLAY_NAME = "LinguaFlow AI"
+APP_WINDOW_TITLE = "Oster - LinguaFlow AI Popup Translator"
 VK_RCONTROL = 0xA3
 
 
@@ -231,6 +232,11 @@ QLabel#HeroTitle {
 QLabel#HeroSubtitle {
     color: #9caaba;
     font-size: 13px;
+}
+QLabel#HotkeyHint {
+    color: #f7fbff;
+    font-size: 15px;
+    font-weight: 800;
 }
 QLabel#SectionLabel {
     color: #8fd8ff;
@@ -391,7 +397,8 @@ QListWidget::item:selected {
     color: #ffffff;
 }
 QSplitter::handle {
-    background: #202938;
+    background: transparent;
+    border: none;
 }
 QMenu {
     background: #121821;
@@ -571,16 +578,16 @@ class MainTranslatorWindow(QWidget):
     def __init__(self, primary_language_code: str) -> None:
         super().__init__()
         self.ui_language = primary_language_code
-        self.setWindowTitle(APP_DISPLAY_NAME)
+        self.setWindowTitle(APP_WINDOW_TITLE)
         self.setObjectName("MainTranslatorWindow")
         self.resize(860, 560)
 
         self.title_label = QLabel(APP_DISPLAY_NAME)
         self.title_label.setObjectName("HeroTitle")
         self.subtitle_label = QLabel()
-        self.subtitle_label.setObjectName("HeroSubtitle")
+        self.subtitle_label.setObjectName("HotkeyHint")
         self.logo_label = QLabel()
-        self.logo_label.setFixedSize(62, 62)
+        self.logo_label.setFixedSize(66, 66)
         self.logo_label.setScaledContents(True)
 
         self.source_language_input = QComboBox()
@@ -653,11 +660,9 @@ class MainTranslatorWindow(QWidget):
         text_splitter.addWidget(self._labeled_text(self.translation_section_label, self.translation_text, self.copy_button))
         text_splitter.setSizes([430, 430])
 
-        title_layout = QVBoxLayout()
-        title_layout.addWidget(self.title_label)
-        title_layout.addWidget(self.subtitle_label)
         header_layout = QHBoxLayout()
-        header_layout.addLayout(title_layout, 1)
+        header_layout.addWidget(self.subtitle_label, 1)
+        header_layout.addWidget(self.title_label, 0, Qt.AlignmentFlag.AlignVCenter)
         header_layout.addWidget(self.logo_label)
 
         root = QVBoxLayout(self)
@@ -677,7 +682,7 @@ class MainTranslatorWindow(QWidget):
 
     def apply_locale(self, language_code: str) -> None:
         self.ui_language = language_code
-        self.subtitle_label.setText(t(language_code, "main_subtitle"))
+        self.subtitle_label.setText("Select text and press Ctrl+C+C for instant popup translation")
         self.from_label.setText(t(language_code, "from"))
         self.to_label.setText(t(language_code, "to"))
         self.source_section_label.setText(t(language_code, "original"))
@@ -965,7 +970,6 @@ class SettingsDialog(QDialog):
         self.key_status_labels: dict[str, QLabel] = {}
         self.key_check_buttons: dict[str, QPushButton] = {}
         self.key_delete_buttons: dict[str, QPushButton] = {}
-        self.model_dropdown_buttons: dict[str, QPushButton] = {}
         self.key_row_labels: dict[str, QLabel] = {}
         self.model_row_labels: dict[str, QLabel] = {}
         for provider, label in PROVIDERS:
@@ -999,11 +1003,6 @@ class SettingsDialog(QDialog):
                 model_index = 0
             model_input.setCurrentIndex(model_index)
             self.model_inputs[provider] = model_input
-            dropdown_button = QPushButton("▼")
-            dropdown_button.setObjectName("DropdownButton")
-            dropdown_button.setToolTip("Open model list")
-            dropdown_button.clicked.connect(lambda _checked=False, p=provider: self.model_inputs[p].showPopup())
-            self.model_dropdown_buttons[provider] = dropdown_button
             if not saved_key_status.get(provider):
                 initial_status = "missing"
             elif self.key_valid_status.get(provider) is True:
@@ -1028,8 +1027,11 @@ class SettingsDialog(QDialog):
 
         self.info_button = QPushButton("?")
         self.info_button.setObjectName("InfoButton")
-        self.info_button.setFixedSize(28, 28)
+        self.info_button.setFixedSize(34, 34)
         self.info_button.clicked.connect(self.show_model_info)
+        self.recommendations_label = QLabel()
+        self.recommendations_label.setObjectName("SectionLabel")
+        self.recommendations_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_general_tab(), "")
@@ -1071,7 +1073,12 @@ class SettingsDialog(QDialog):
         self.api_header_label = QLabel()
         header.addWidget(self.api_header_label)
         header.addStretch(1)
-        header.addWidget(self.info_button)
+        recommendations_box = QVBoxLayout()
+        recommendations_box.setSpacing(4)
+        recommendations_box.addWidget(self.recommendations_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        recommendations_box.addWidget(self.info_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        header.addLayout(recommendations_box)
+        header.addStretch(1)
         layout.addLayout(header)
 
         form = QFormLayout()
@@ -1097,7 +1104,6 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
         layout.addWidget(self.model_inputs[provider], 1)
-        layout.addWidget(self.model_dropdown_buttons[provider])
         return widget
 
     def show_model_info(self) -> None:
@@ -1192,6 +1198,7 @@ class SettingsDialog(QDialog):
         self.autostart_checkbox.setText(t(language_code, "autostart"))
         self.desktop_shortcut_checkbox.setText(t(language_code, "desktop_shortcut"))
         self.api_header_label.setText(t(language_code, "api_keys_models"))
+        self.recommendations_label.setText(t(language_code, "recommendations"))
         self.info_button.setToolTip(t(language_code, "info_tooltip"))
         save_button = self.buttons.button(QDialogButtonBox.StandardButton.Save)
         cancel_button = self.buttons.button(QDialogButtonBox.StandardButton.Cancel)
@@ -1205,7 +1212,6 @@ class SettingsDialog(QDialog):
             self.model_row_labels[provider].setText(f"{label} {t(language_code, 'model')}")
             self.key_check_buttons[provider].setText(t(language_code, "check"))
             self.key_delete_buttons[provider].setText(t(language_code, "delete"))
-            self.model_dropdown_buttons[provider].setToolTip(t(language_code, "model"))
             placeholder = t(language_code, "saved_key_exists") if self.saved_key_status.get(provider) else t(
                 language_code,
                 "api_key_placeholder",
