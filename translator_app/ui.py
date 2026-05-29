@@ -355,7 +355,7 @@ QLabel#AppTitle {
 }
 QLabel#HeroTitle {
     color: #f7fbff;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
 }
 QLabel#HeroSubtitle {
@@ -364,7 +364,7 @@ QLabel#HeroSubtitle {
 }
 QLabel#HotkeyHint {
     color: #f7fbff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
 }
 QLabel#SectionLabel {
@@ -761,14 +761,14 @@ class MainTranslatorWindow(QWidget):
         self.ui_language = primary_language_code
         self.setWindowTitle(APP_WINDOW_TITLE)
         self.setObjectName("MainTranslatorWindow")
-        self.resize(860, 560)
+        self.resize(900, 600)
 
         self.title_label = QLabel(APP_DISPLAY_NAME)
         self.title_label.setObjectName("HeroTitle")
         self.subtitle_label = QLabel()
         self.subtitle_label.setObjectName("HotkeyHint")
         self.logo_label = QLabel()
-        self.logo_label.setFixedSize(66, 66)
+        self.logo_label.setFixedSize(54, 54)
         self.logo_label.setScaledContents(True)
 
         self.source_language_input = QComboBox()
@@ -824,7 +824,7 @@ class MainTranslatorWindow(QWidget):
         source_language_group = QWidget()
         source_language_layout = QHBoxLayout(source_language_group)
         source_language_layout.setContentsMargins(0, 0, 0, 0)
-        source_language_layout.setSpacing(12)
+        source_language_layout.setSpacing(10)
         source_language_layout.addWidget(self.from_label)
         source_language_layout.addWidget(self.source_language_input, 0)
         source_language_layout.addStretch(1)
@@ -832,17 +832,19 @@ class MainTranslatorWindow(QWidget):
         target_language_group = QWidget()
         target_language_layout = QHBoxLayout(target_language_group)
         target_language_layout.setContentsMargins(0, 0, 0, 0)
-        target_language_layout.setSpacing(12)
+        target_language_layout.setSpacing(10)
         target_language_layout.addWidget(self.to_label)
         target_language_layout.addWidget(self.target_language_input, 0)
         target_language_layout.addStretch(1)
 
         language_row = QHBoxLayout()
-        language_row.setSpacing(24)
+        language_row.setSpacing(18)
         language_row.addWidget(source_language_group, 1)
         language_row.addWidget(target_language_group, 1)
 
         action_row = QHBoxLayout()
+        action_row.setContentsMargins(0, 0, 0, 0)
+        action_row.setSpacing(8)
         action_row.addWidget(self.translate_button)
         action_row.addStretch(1)
         action_row.addWidget(self.history_button)
@@ -858,13 +860,15 @@ class MainTranslatorWindow(QWidget):
         text_splitter.setSizes([430, 430])
 
         header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(10)
         header_layout.addWidget(self.subtitle_label, 1)
         header_layout.addWidget(self.title_label, 0, Qt.AlignmentFlag.AlignVCenter)
         header_layout.addWidget(self.logo_label)
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(18, 18, 18, 18)
-        root.setSpacing(14)
+        root.setContentsMargins(18, 12, 18, 14)
+        root.setSpacing(8)
         root.addLayout(header_layout)
         root.addLayout(language_row)
         root.addWidget(text_splitter, 1)
@@ -957,8 +961,10 @@ class MainTranslatorWindow(QWidget):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
         header = QHBoxLayout()
         header.setContentsMargins(0, 0, 0, 0)
+        header.setSpacing(6)
         header.addWidget(label)
         header.addStretch(1)
         if action_button is not None:
