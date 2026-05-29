@@ -19,7 +19,8 @@ APP_VERSION = "0.1.0"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
-SHORTCUT_NAME = "LinguaFlow AI Translator.url"
+SHORTCUT_NAME = "LinguaFlow AI Translator.lnk"
+URL_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 PAYLOAD_ZIP = "LinguaFlowAI_payload.zip"
 MARKER_FILE = ".linguaflow-install"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
@@ -366,9 +367,11 @@ def install(options: InstallOptions) -> None:
         (install_root / MARKER_FILE).write_text(APP_NAME, encoding="utf-8")
 
         target_exe = install_root / APP_EXE
+        installed_icon = install_root / "_internal" / "assets" / "app_icon.ico"
+        shortcut_icon = installed_icon if installed_icon.exists() else target_exe
         write_uninstaller(install_root)
-        register_uninstall_entry(install_root, target_exe)
-        write_shortcuts(target_exe, target_exe, options)
+        register_uninstall_entry(install_root, target_exe, shortcut_icon)
+        write_shortcuts(target_exe, shortcut_icon, options)
 
         if options.launch_after_install:
             subprocess.Popen([str(target_exe)], cwd=str(install_root))
@@ -413,11 +416,11 @@ def stop_running_app() -> None:
 def write_shortcuts(target_exe: Path, icon_path: Path, options: InstallOptions) -> None:
     if options.desktop_shortcut:
         desktop = Path(os.environ.get("PUBLIC", str(Path.home()))) / "Desktop"
-        write_url_shortcut(desktop / SHORTCUT_NAME, target_exe, icon_path)
+        write_shortcut(desktop / SHORTCUT_NAME, target_exe, icon_path)
 
     if options.start_menu_shortcut:
         start_menu = Path(os.environ.get("ProgramData", os.environ["APPDATA"])) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
-        write_url_shortcut(start_menu / SHORTCUT_NAME, target_exe, icon_path)
+        write_shortcut(start_menu / SHORTCUT_NAME, target_exe, icon_path)
 
 
 def write_url_shortcut(path: Path, target: Path, icon: Path) -> None:
@@ -436,17 +439,74 @@ def write_url_shortcut(path: Path, target: Path, icon: Path) -> None:
     )
 
 
+def write_shortcut(path: Path, target: Path, icon: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stale_url_shortcut = path.with_name(URL_SHORTCUT_NAME)
+    if stale_url_shortcut.exists():
+        stale_url_shortcut.unlink()
+    try:
+        write_lnk_shortcut(path, target, icon)
+    except Exception:
+        write_url_shortcut(path.with_suffix(".url"), target, icon)
+
+
+def write_lnk_shortcut(path: Path, target: Path, icon: Path) -> None:
+    script = (
+        "$shortcutPath=$args[0];"
+        "$targetPath=$args[1];"
+        "$iconPath=$args[2];"
+        "$shell=New-Object -ComObject WScript.Shell;"
+        "$shortcut=$shell.CreateShortcut($shortcutPath);"
+        "$shortcut.TargetPath=$targetPath;"
+        "$shortcut.WorkingDirectory=Split-Path -Parent $targetPath;"
+        "$shortcut.IconLocation=$iconPath + ',0';"
+        "$shortcut.Save();"
+    )
+    subprocess.run(
+        [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            script,
+            str(path),
+            str(target.resolve()),
+            str(icon.resolve()),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
 def write_uninstaller(install_root: Path) -> None:
     script_path = install_root / "uninstall_linguaflow.ps1"
+    shortcut_names = (SHORTCUT_NAME, URL_SHORTCUT_NAME)
     lines = [
         '$ErrorActionPreference = "SilentlyContinue"',
         f'Get-Process -Name "{APP_NAME}" -ErrorAction SilentlyContinue | Stop-Process -Force',
         "$installRoot = Split-Path -Parent $MyInvocation.MyCommand.Path",
-        f'Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath("Desktop")) "{SHORTCUT_NAME}") -Force',
-        f'Remove-Item -LiteralPath (Join-Path $env:PUBLIC "Desktop\\{SHORTCUT_NAME}") -Force',
-        f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\{SHORTCUT_NAME}") -Force',
-        f'Remove-Item -LiteralPath (Join-Path $env:ProgramData "Microsoft\\Windows\\Start Menu\\Programs\\{SHORTCUT_NAME}") -Force',
-        f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{SHORTCUT_NAME}") -Force',
+        *[
+            f'Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath("Desktop")) "{name}") -Force'
+            for name in shortcut_names
+        ],
+        *[
+            f'Remove-Item -LiteralPath (Join-Path $env:PUBLIC "Desktop\\{name}") -Force'
+            for name in shortcut_names
+        ],
+        *[
+            f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\{name}") -Force'
+            for name in shortcut_names
+        ],
+        *[
+            f'Remove-Item -LiteralPath (Join-Path $env:ProgramData "Microsoft\\Windows\\Start Menu\\Programs\\{name}") -Force'
+            for name in shortcut_names
+        ],
+        *[
+            f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{name}") -Force'
+            for name in shortcut_names
+        ],
         f'Remove-Item -LiteralPath "HKLM:\\{UNINSTALL_KEY}" -Recurse -Force',
         f'Remove-Item -LiteralPath "HKCU:\\{UNINSTALL_KEY}" -Recurse -Force',
         '$deleteCommand = \'/c timeout /t 2 /nobreak >nul & rmdir /s /q "\' + $installRoot + \'"\'',
@@ -455,7 +515,7 @@ def write_uninstaller(install_root: Path) -> None:
     script_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def register_uninstall_entry(install_root: Path, target_exe: Path) -> None:
+def register_uninstall_entry(install_root: Path, target_exe: Path, display_icon: Path) -> None:
     uninstall_script = install_root / "uninstall_linguaflow.ps1"
     uninstall_command = f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{uninstall_script}"'
     estimated_size_kb = sum(file.stat().st_size for file in install_root.rglob("*") if file.is_file()) // 1024
@@ -472,7 +532,7 @@ def register_uninstall_entry(install_root: Path, target_exe: Path) -> None:
         winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, APP_VERSION)
         winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, APP_PUBLISHER)
         winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, str(install_root))
-        winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, str(target_exe))
+        winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, str(display_icon))
         winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, uninstall_command)
         winreg.SetValueEx(key, "QuietUninstallString", 0, winreg.REG_SZ, uninstall_command)
         winreg.SetValueEx(key, "NoModify", 0, winreg.REG_DWORD, 1)

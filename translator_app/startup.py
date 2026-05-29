@@ -3,11 +3,13 @@ from __future__ import annotations
 import os
 import sys
 import ctypes
+import subprocess
 import uuid
 from pathlib import Path
 
 
-APP_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
+APP_SHORTCUT_NAME = "LinguaFlow AI Translator.lnk"
+URL_APP_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 LEGACY_SHORTCUT_NAME = "WindowsTranslator.url"
 OLD_APP_SHORTCUT_NAME = "AI-LinguaFlow.url"
 PREVIOUS_APP_SHORTCUT_NAME = "AI LinguaFlow.url"
@@ -37,6 +39,10 @@ def current_launch_target() -> str:
 
 def current_icon_target() -> str:
     if getattr(sys, "frozen", False):
+        app_root = Path(sys.executable).resolve().parent
+        installed_icon = app_root / "_internal" / "assets" / "app_icon.ico"
+        if installed_icon.exists():
+            return str(installed_icon)
         return sys.executable
     return str(Path(__file__).resolve().parents[1] / "assets" / "app_icon.ico")
 
@@ -45,18 +51,13 @@ def set_start_with_windows(enabled: bool) -> None:
     shortcut = startup_shortcut_path()
     if enabled:
         shortcut.parent.mkdir(parents=True, exist_ok=True)
-        _write_url_shortcut(shortcut, current_launch_target(), current_icon_target())
+        _write_shortcut(shortcut, current_launch_target(), current_icon_target())
     elif shortcut.exists():
         shortcut.unlink()
-    legacy_shortcut = shortcut.with_name(LEGACY_SHORTCUT_NAME)
-    if legacy_shortcut.exists() and not enabled:
-        legacy_shortcut.unlink()
-    old_shortcut = shortcut.with_name(OLD_APP_SHORTCUT_NAME)
-    if old_shortcut.exists() and not enabled:
-        old_shortcut.unlink()
-    previous_shortcut = shortcut.with_name(PREVIOUS_APP_SHORTCUT_NAME)
-    if previous_shortcut.exists() and not enabled:
-        previous_shortcut.unlink()
+    if not enabled:
+        for stale_shortcut in _stale_shortcut_paths(shortcut):
+            if stale_shortcut.exists():
+                stale_shortcut.unlink()
 
 
 def is_start_with_windows_enabled() -> bool:
@@ -67,13 +68,11 @@ def set_desktop_shortcut(enabled: bool) -> None:
     shortcut = desktop_shortcut_path()
     if enabled:
         shortcut.parent.mkdir(parents=True, exist_ok=True)
-        _write_url_shortcut(shortcut, current_launch_target(), current_icon_target())
+        created_shortcut = _write_shortcut(shortcut, current_launch_target(), current_icon_target())
     elif shortcut.exists():
         shortcut.unlink()
-    legacy_shortcut = shortcut.with_name(LEGACY_SHORTCUT_NAME)
-    if legacy_shortcut.exists() and not enabled:
-        legacy_shortcut.unlink()
-    for stale_shortcut in _stale_desktop_shortcut_paths(shortcut):
+        created_shortcut = shortcut
+    for stale_shortcut in _stale_desktop_shortcut_paths(created_shortcut):
         if stale_shortcut.exists():
             stale_shortcut.unlink()
 
@@ -96,12 +95,55 @@ def _write_url_shortcut(path: Path, target: str, icon: str) -> None:
     )
 
 
+def _write_shortcut(path: Path, target: str, icon: str) -> Path:
+    if sys.platform == "win32" and path.suffix.lower() == ".lnk":
+        try:
+            _write_lnk_shortcut(path, target, icon)
+            return path
+        except Exception:
+            path = path.with_suffix(".url")
+    _write_url_shortcut(path, target, icon)
+    return path
+
+
+def _write_lnk_shortcut(path: Path, target: str, icon: str) -> None:
+    script = (
+        "$shortcutPath=$args[0];"
+        "$targetPath=$args[1];"
+        "$iconPath=$args[2];"
+        "$shell=New-Object -ComObject WScript.Shell;"
+        "$shortcut=$shell.CreateShortcut($shortcutPath);"
+        "$shortcut.TargetPath=$targetPath;"
+        "$shortcut.WorkingDirectory=Split-Path -Parent $targetPath;"
+        "$shortcut.IconLocation=$iconPath + ',0';"
+        "$shortcut.Save();"
+    )
+    subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script, str(path), target, icon],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
+def _stale_shortcut_paths(active_shortcut: Path) -> list[Path]:
+    candidates = [
+        active_shortcut.with_name(URL_APP_SHORTCUT_NAME),
+        active_shortcut.with_name(OLD_APP_SHORTCUT_NAME),
+        active_shortcut.with_name(PREVIOUS_APP_SHORTCUT_NAME),
+        active_shortcut.with_name(LEGACY_SHORTCUT_NAME),
+    ]
+    return [path for path in candidates if path != active_shortcut]
+
+
 def _stale_desktop_shortcut_paths(active_shortcut: Path) -> list[Path]:
     candidates = [
+        *_stale_shortcut_paths(active_shortcut),
         active_shortcut.with_name(OLD_APP_SHORTCUT_NAME),
         active_shortcut.with_name(PREVIOUS_APP_SHORTCUT_NAME),
         active_shortcut.with_name(LEGACY_SHORTCUT_NAME),
         Path.home() / "Desktop" / APP_SHORTCUT_NAME,
+        Path.home() / "Desktop" / URL_APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / OLD_APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / PREVIOUS_APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / LEGACY_SHORTCUT_NAME,

@@ -5,7 +5,7 @@ from PySide6.QtCore import QDate, QSize, QTimer, Qt, Signal
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication, QKeyEvent, QKeySequence, QPixmap, QTextCursor
+from PySide6.QtGui import QGuiApplication, QIcon, QKeyEvent, QKeySequence, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -55,6 +55,13 @@ def provider_label_for_ui(provider: str) -> str:
 def ui_resource_path(relative_path: str) -> Path:
     base_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
     return base_path / relative_path
+
+
+def app_icon() -> QIcon:
+    icon = QIcon(str(ui_resource_path("assets/app_icon.ico")))
+    if icon.isNull():
+        icon = QIcon(str(ui_resource_path("assets/app_icon.png")))
+    return icon
 
 MODEL_DESCRIPTIONS = {
     "ru": {
@@ -864,6 +871,7 @@ class TranslationPopup(QWidget):
             | Qt.WindowType.WindowStaysOnTopHint,
         )
         self.ui_language = ui_language
+        self.setWindowIcon(app_icon())
         self.setObjectName("TranslationPopup")
         self.resize(width, height)
 
@@ -991,6 +999,7 @@ class MainTranslatorWindow(QWidget):
         super().__init__()
         self.ui_language = primary_language_code
         self.setWindowTitle(APP_WINDOW_TITLE)
+        self.setWindowIcon(app_icon())
         self.setObjectName("MainTranslatorWindow")
         self.resize(900, 600)
 
@@ -1223,6 +1232,7 @@ class HistoryDialog(QDialog):
     def __init__(self, records: list[HistoryRecord], ui_language: str = "ru", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.ui_language = ui_language
+        self.setWindowIcon(app_icon())
         self.setObjectName("SurfaceDialog")
         self.resize(900, 560)
         self.records_by_id: dict[int, HistoryRecord] = {}
@@ -1406,6 +1416,7 @@ class SettingsDialog(QDialog):
         self.ui_language = config.primary_language
         self.saved_key_status = dict(saved_key_status)
         self.key_valid_status = key_valid_status or {}
+        self.setWindowIcon(app_icon())
         self.setObjectName("SurfaceDialog")
         self.setModal(True)
         self.resize(690, 500)

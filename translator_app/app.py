@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import ctypes
 import threading
 import time
 from pathlib import Path
@@ -34,6 +35,7 @@ from translator_app.startup import (
 from translator_app.ui import APP_DISPLAY_NAME, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup, app_stylesheet
 
 SINGLE_INSTANCE_NAME = "OsterLinguaFlowAITranslator"
+WINDOWS_APP_USER_MODEL_ID = "Oster.LinguaFlowAI.PopupTranslator"
 
 
 class AppSignals(QObject):
@@ -681,6 +683,7 @@ class TranslatorApplication(QObject):
 
 
 def main() -> int:
+    set_windows_app_user_model_id()
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationDisplayName("")
@@ -726,3 +729,12 @@ def handle_second_instance(server: QLocalServer, controller: TranslatorApplicati
 def resource_path(relative_path: str) -> Path:
     base_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
     return base_path / relative_path
+
+
+def set_windows_app_user_model_id() -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(WINDOWS_APP_USER_MODEL_ID)
+    except Exception:
+        pass
