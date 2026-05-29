@@ -26,7 +26,6 @@ from translator_app.languages import Language, detect_language_code, get_languag
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
 from translator_app.secure_store import ApiKeyStore
 from translator_app.startup import (
-    ensure_desktop_shortcut,
     is_desktop_shortcut_enabled,
     is_start_with_windows_enabled,
     set_desktop_shortcut,
@@ -105,11 +104,7 @@ class TranslatorApplication(QObject):
         if self.config.enabled:
             self.start_hotkey_listener()
         if self.config.desktop_shortcut:
-            try:
-                ensure_desktop_shortcut()
-                self.config.desktop_shortcut = is_desktop_shortcut_enabled()
-            except Exception:
-                pass
+            self.config.desktop_shortcut = is_desktop_shortcut_enabled()
         self.missing_api_key_notice_shown = False
 
     def _build_menu(self) -> QMenu:
@@ -161,21 +156,12 @@ class TranslatorApplication(QObject):
             self.open_main_window()
 
     def open_main_window(self, stay_on_top: bool = False) -> None:
-        if stay_on_top:
-            self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-        else:
-            self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
         self.main_window.show()
         self.main_window.raise_()
         self.main_window.activateWindow()
-        if stay_on_top:
-            QTimer.singleShot(2500, self.release_main_window_top_hint)
 
     def release_main_window_top_hint(self) -> None:
-        if not self.main_window.isVisible():
-            return
-        self.main_window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
-        self.main_window.show()
+        return
 
     def save_target_language(self, language_code: str) -> None:
         if language_code not in {"ru", "en", "de", "es", "zh"}:

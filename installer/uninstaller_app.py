@@ -94,6 +94,8 @@ def stop_running_app() -> None:
         ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        startupinfo=hidden_startupinfo(),
+        creationflags=hidden_creationflags(),
         check=False,
     )
 
@@ -136,8 +138,22 @@ def schedule_install_folder_removal(install_root: Path) -> None:
     subprocess.Popen(
         [os.environ.get("ComSpec", "cmd.exe"), "/c", str(script_path)],
         cwd=str(Path(tempfile.gettempdir())),
-        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+        startupinfo=hidden_startupinfo(),
+        creationflags=hidden_creationflags(),
     )
+
+
+def hidden_startupinfo() -> subprocess.STARTUPINFO | None:
+    if sys.platform != "win32":
+        return None
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = 0
+    return startupinfo
+
+
+def hidden_creationflags() -> int:
+    return subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
 
 def show_message(title: str, text: str, icon_error: bool = False) -> None:

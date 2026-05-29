@@ -122,8 +122,23 @@ def _write_lnk_shortcut(path: Path, target: str, icon: str) -> None:
         ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script, str(path), target, icon],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        startupinfo=_hidden_startupinfo(),
+        creationflags=_hidden_creationflags(),
         check=True,
     )
+
+
+def _hidden_startupinfo() -> subprocess.STARTUPINFO | None:
+    if sys.platform != "win32":
+        return None
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = 0
+    return startupinfo
+
+
+def _hidden_creationflags() -> int:
+    return subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
 
 def _stale_shortcut_paths(active_shortcut: Path) -> list[Path]:

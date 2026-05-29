@@ -15,7 +15,7 @@ from tkinter import BooleanVar, PhotoImage, StringVar, Tk, filedialog, messagebo
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.4"
+APP_VERSION = "1.0.5"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
@@ -412,6 +412,8 @@ def stop_running_app() -> None:
         ["taskkill", "/IM", APP_EXE, "/F"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        startupinfo=hidden_startupinfo(),
+        creationflags=hidden_creationflags(),
         check=False,
     )
 
@@ -479,8 +481,23 @@ def write_lnk_shortcut(path: Path, target: Path, icon: Path) -> None:
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        startupinfo=hidden_startupinfo(),
+        creationflags=hidden_creationflags(),
         check=True,
     )
+
+
+def hidden_startupinfo() -> subprocess.STARTUPINFO | None:
+    if sys.platform != "win32":
+        return None
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = 0
+    return startupinfo
+
+
+def hidden_creationflags() -> int:
+    return subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
 
 def register_uninstall_entry(install_root: Path, target_exe: Path, uninstall_exe: Path, display_icon: Path) -> None:
