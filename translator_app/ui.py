@@ -208,7 +208,8 @@ ABOUT_COPY = {
         ],
         "privacy_title": "Приватность и данные",
         "privacy": [
-            "API-ключи хранятся через Windows Credential Manager, когда это доступно, либо читаются из переменных окружения.",
+            "API-ключи хранятся локально через Windows Credential Manager/keyring, когда это доступно; иначе приложение может читать ключи из переменных окружения.",
+            "Ключи не записываются в историю переводов, базу SQLite, лог-файлы приложения или Git-репозиторий.",
             "История переводов хранится локально на этом компьютере. Текст отправляется только выбранному AI-провайдеру для выполнения текущего перевода.",
             "Не вставляйте конфиденциальные данные, если правила вашей компании или договора запрещают отправку текста внешнему AI-провайдеру.",
         ],
@@ -233,7 +234,8 @@ ABOUT_COPY = {
         ],
         "privacy_title": "Privacy and Data",
         "privacy": [
-            "API keys are stored through Windows Credential Manager when available, or read from environment variables.",
+            "API keys are stored locally through Windows Credential Manager/keyring when available; otherwise the app can read keys from environment variables.",
+            "Keys are not written to translation history, the SQLite database, app logs, or the Git repository.",
             "Translation history is stored locally on this computer. Text is sent only to the selected AI provider for the current translation request.",
             "Do not paste confidential data if your company policy or contracts prohibit sending text to an external AI provider.",
         ],
@@ -258,7 +260,8 @@ ABOUT_COPY = {
         ],
         "privacy_title": "Datenschutz und Daten",
         "privacy": [
-            "API-Schlüssel werden nach Möglichkeit über Windows Credential Manager gespeichert oder aus Umgebungsvariablen gelesen.",
+            "API-Schlüssel werden lokal über Windows Credential Manager/keyring gespeichert, wenn verfügbar; andernfalls kann die App Schlüssel aus Umgebungsvariablen lesen.",
+            "Schlüssel werden nicht im Übersetzungsverlauf, in der SQLite-Datenbank, in App-Logs oder im Git-Repository gespeichert.",
             "Der Übersetzungsverlauf wird lokal auf diesem Computer gespeichert. Text wird nur für die aktuelle Übersetzung an den ausgewählten AI-Anbieter gesendet.",
             "Fügen Sie keine vertraulichen Daten ein, wenn Richtlinien oder Verträge das Senden an externe AI-Anbieter verbieten.",
         ],
@@ -283,7 +286,8 @@ ABOUT_COPY = {
         ],
         "privacy_title": "Privacidad y datos",
         "privacy": [
-            "Las claves API se guardan mediante Windows Credential Manager cuando está disponible, o se leen desde variables de entorno.",
+            "Las claves API se guardan localmente mediante Windows Credential Manager/keyring cuando está disponible; si no, la app puede leerlas desde variables de entorno.",
+            "Las claves no se escriben en el historial de traducciones, la base SQLite, los logs de la app ni el repositorio Git.",
             "El historial de traducciones se guarda localmente en este ordenador. El texto se envía solo al proveedor de AI seleccionado para la traducción actual.",
             "No pegues datos confidenciales si las políticas de tu empresa o contratos prohíben enviar texto a un proveedor externo de AI.",
         ],
@@ -305,7 +309,8 @@ ABOUT_COPY = {
         ],
         "privacy_title": "隐私和数据",
         "privacy": [
-            "API 密钥会在可用时通过 Windows Credential Manager 保存，或从环境变量读取。",
+            "API 密钥会在可用时通过 Windows Credential Manager/keyring 本地保存；否则应用可以从环境变量读取。",
+            "密钥不会写入翻译历史、SQLite 数据库、应用日志或 Git 仓库。",
             "翻译历史保存在本机。文本只会为了当前翻译请求发送给所选 AI 提供商。",
             "如果公司政策或合同禁止向外部 AI 提供商发送文本，请不要粘贴机密数据。",
         ],
