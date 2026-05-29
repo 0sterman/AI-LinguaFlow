@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from html import escape
-from PySide6.QtCore import QDate, QTimer, Qt, Signal
+from PySide6.QtCore import QDate, QSize, QTimer, Qt, Signal
 import ctypes
 import sys
 from pathlib import Path
@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QMenu,
     QPushButton,
+    QSizePolicy,
     QSplitter,
     QTabWidget,
     QTextEdit,
@@ -192,6 +193,7 @@ def star_rating(value: int) -> str:
 
 APP_DISPLAY_NAME = "LinguaFlow AI"
 APP_WINDOW_TITLE = "Oster - LinguaFlow AI - Popup Translator"
+INFO_BUTTON_SIZE = 34
 OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
 GEMINI_KEYS_URL = "https://aistudio.google.com/api-keys"
 ANTHROPIC_KEYS_URL = "https://console.anthropic.com/settings/keys"
@@ -1403,17 +1405,13 @@ class SettingsDialog(QDialog):
         self.about_browser = QTextBrowser()
         self.about_browser.setOpenExternalLinks(False)
 
-        self.guide_button = QPushButton("?")
-        self.guide_button.setObjectName("InfoButton")
-        self.guide_button.setFixedSize(34, 34)
+        self.guide_button = self._create_info_button()
         self.guide_button.clicked.connect(self.show_usage_guide)
         self.guide_label = QLabel()
         self.guide_label.setObjectName("SectionLabel")
         self.guide_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.info_button = QPushButton("?")
-        self.info_button.setObjectName("InfoButton")
-        self.info_button.setFixedSize(34, 34)
+        self.info_button = self._create_info_button()
         self.info_button.clicked.connect(self.show_model_info)
         self.recommendations_label = QLabel()
         self.recommendations_label.setObjectName("SectionLabel")
@@ -1440,6 +1438,13 @@ class SettingsDialog(QDialog):
         self.theme_input.currentIndexChanged.connect(lambda _index=0: self.about_browser.setHtml(self._about_html()))
         self.apply_locale(config.primary_language)
 
+    def _create_info_button(self) -> QPushButton:
+        button = QPushButton("?")
+        button.setObjectName("InfoButton")
+        button.setFixedSize(QSize(INFO_BUTTON_SIZE, INFO_BUTTON_SIZE))
+        button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        return button
+
     def _build_general_tab(self) -> QWidget:
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -1464,6 +1469,7 @@ class SettingsDialog(QDialog):
         guide_row.addStretch(1)
         guide_row.addLayout(guide_box)
         guide_row.addStretch(1)
+        layout.addStretch(1)
         layout.addLayout(guide_row)
         layout.addStretch(1)
         return widget
@@ -1503,6 +1509,7 @@ class SettingsDialog(QDialog):
         recommendations_row.addStretch(1)
         recommendations_row.addLayout(recommendations_box)
         recommendations_row.addStretch(1)
+        layout.addStretch(1)
         layout.addLayout(recommendations_row)
         layout.addStretch(1)
         return widget
