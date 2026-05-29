@@ -5,7 +5,7 @@ SUPPORTED_UI_LANGUAGES = {"ru", "en", "de", "es", "zh"}
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "ru": {
-        "main_subtitle": "Быстрый перевод через Ctrl+C+C или обычный перевод с выбранного языка на выбранный.",
+        "main_subtitle": "Ctrl+C+C — popup. Right Ctrl+Enter — перевести. Esc — очистить поле.",
         "from": "С",
         "to": "На",
         "original": "Оригинал",
@@ -79,7 +79,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Выход",
     },
     "en": {
-        "main_subtitle": "Fast Ctrl+C+C popup translation or normal translation between selected languages.",
+        "main_subtitle": "Ctrl+C+C opens the popup. Right Ctrl+Enter translates. Esc clears the input.",
         "from": "From",
         "to": "To",
         "original": "Original",
@@ -153,7 +153,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Quit",
     },
     "de": {
-        "main_subtitle": "Schnelle Ctrl+C+C-Popup-Übersetzung oder normale Übersetzung zwischen ausgewählten Sprachen.",
+        "main_subtitle": "Ctrl+C+C öffnet das Popup. Rechts-Ctrl+Enter übersetzt. Esc leert das Eingabefeld.",
         "from": "Von",
         "to": "Nach",
         "original": "Original",
@@ -227,7 +227,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Beenden",
     },
     "es": {
-        "main_subtitle": "Traducción rápida con Ctrl+C+C en ventana emergente o traducción normal entre idiomas seleccionados.",
+        "main_subtitle": "Ctrl+C+C abre el popup. Right Ctrl+Enter traduce. Esc limpia el campo.",
         "from": "De",
         "to": "A",
         "original": "Original",
@@ -301,7 +301,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Salir",
     },
     "zh": {
-        "main_subtitle": "使用 Ctrl+C+C 弹窗快速翻译，或在所选语言之间常规翻译。",
+        "main_subtitle": "Ctrl+C+C 打开弹窗。Right Ctrl+Enter 翻译。Esc 清空输入框。",
         "from": "从",
         "to": "到",
         "original": "原文",

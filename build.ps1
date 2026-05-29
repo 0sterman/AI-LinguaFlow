@@ -1,5 +1,7 @@
 $ErrorActionPreference = "Stop"
 
+Get-Process -Name "LinguaFlow AI" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
 python -m PyInstaller `
   --noconfirm `
   --clean `
@@ -11,5 +13,9 @@ python -m PyInstaller `
   --add-data "assets\dropdown_arrow.svg;assets" `
   --hidden-import keyring.backends.Windows `
   translator_app\__main__.py
+
+if ($LASTEXITCODE -ne 0) {
+  throw "PyInstaller failed with exit code $LASTEXITCODE"
+}
 
 Write-Host "Built dist\LinguaFlow AI\LinguaFlow AI.exe"

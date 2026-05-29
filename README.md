@@ -2,6 +2,12 @@
 
 LinguaFlow AI is a small Windows translator built around a fast `Ctrl+C+C` workflow for translating selected text in a popup. It also opens normally from the desktop shortcut for manual translation between selected languages.
 
+Hotkeys:
+
+- `Ctrl+C+C`: copy selected text and open the compact translation popup.
+- Right `Ctrl+Enter`: translate text from the main window input field.
+- `Esc`: clear the main window input field.
+
 Default behavior:
 
 - Use `Ctrl+C+C` as the main speed feature for translating selected text without leaving the current app. On Windows this uses a native key-state listener so it works more reliably in browsers and other apps.
@@ -12,6 +18,7 @@ Default behavior:
 - The interface follows the selected primary language.
 - The popup can retranslate manually to any supported language.
 - In the main window, press right `Ctrl+Enter` to translate pasted text; `Enter` keeps working as a normal new line.
+- Press `Esc` in the main window input field to clear the source text.
 - After text is pasted or loaded into the main window, automatic translation starts after about `0.2` seconds.
 - Translation history is saved locally after installation under your Windows user profile.
 
@@ -49,6 +56,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
 The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
+
+## Build Installer
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
+```
+
+The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It installs the app for the current Windows user and shows a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
 
 ## Notes
 
