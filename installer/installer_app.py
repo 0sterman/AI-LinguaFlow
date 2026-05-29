@@ -15,7 +15,7 @@ from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.7"
+APP_VERSION = "1.0.8"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
@@ -429,7 +429,12 @@ def validate_install_root(install_root: Path, language_code: str = "en") -> None
     if resolved.anchor and str(resolved) == resolved.anchor:
         raise ValueError(copy["root_folder"])
 
-    if resolved.exists() and any(resolved.iterdir()) and not (resolved / MARKER_FILE).exists():
+    if (
+        resolved.exists()
+        and any(resolved.iterdir())
+        and not (resolved / MARKER_FILE).exists()
+        and not is_linguaflow_install_root(resolved)
+    ):
         raise ValueError(copy["occupied_folder"])
 
 
@@ -438,6 +443,13 @@ def prepare_install_root(install_root: Path) -> None:
     if install_root.exists():
         shutil.rmtree(install_root)
     install_root.parent.mkdir(parents=True, exist_ok=True)
+
+
+def is_linguaflow_install_root(path: Path) -> bool:
+    app_exe = path / APP_EXE
+    uninstall_exe = path / UNINSTALL_EXE
+    bundled_icon = path / "_internal" / "assets" / "app_icon.ico"
+    return app_exe.exists() or uninstall_exe.exists() or bundled_icon.exists()
 
 
 def resource_path(name: str) -> Path:
