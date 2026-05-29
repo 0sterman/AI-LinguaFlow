@@ -15,9 +15,10 @@ from tkinter import BooleanVar, PhotoImage, StringVar, Tk, filedialog, messagebo
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
+UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
 WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
 SHORTCUT_NAME = "LinguaFlow AI Translator.lnk"
 URL_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
@@ -367,10 +368,12 @@ def install(options: InstallOptions) -> None:
         (install_root / MARKER_FILE).write_text(APP_NAME, encoding="utf-8")
 
         target_exe = install_root / APP_EXE
+        uninstall_exe = install_root / UNINSTALL_EXE
         installed_icon = install_root / "_internal" / "assets" / "app_icon.ico"
         shortcut_icon = installed_icon if installed_icon.exists() else target_exe
-        write_uninstaller(install_root)
-        register_uninstall_entry(install_root, target_exe, shortcut_icon)
+        if not uninstall_exe.exists():
+            raise FileNotFoundError("Installer payload does not contain LinguaFlow AI Uninstall.exe")
+        register_uninstall_entry(install_root, target_exe, uninstall_exe, shortcut_icon)
         write_shortcuts(target_exe, shortcut_icon, options)
 
         if options.launch_after_install:
@@ -480,44 +483,9 @@ def write_lnk_shortcut(path: Path, target: Path, icon: Path) -> None:
     )
 
 
-def write_uninstaller(install_root: Path) -> None:
-    script_path = install_root / "uninstall_linguaflow.ps1"
-    shortcut_names = (SHORTCUT_NAME, URL_SHORTCUT_NAME)
-    lines = [
-        '$ErrorActionPreference = "SilentlyContinue"',
-        f'Get-Process -Name "{APP_NAME}" -ErrorAction SilentlyContinue | Stop-Process -Force',
-        "$installRoot = Split-Path -Parent $MyInvocation.MyCommand.Path",
-        *[
-            f'Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath("Desktop")) "{name}") -Force'
-            for name in shortcut_names
-        ],
-        *[
-            f'Remove-Item -LiteralPath (Join-Path $env:PUBLIC "Desktop\\{name}") -Force'
-            for name in shortcut_names
-        ],
-        *[
-            f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\{name}") -Force'
-            for name in shortcut_names
-        ],
-        *[
-            f'Remove-Item -LiteralPath (Join-Path $env:ProgramData "Microsoft\\Windows\\Start Menu\\Programs\\{name}") -Force'
-            for name in shortcut_names
-        ],
-        *[
-            f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{name}") -Force'
-            for name in shortcut_names
-        ],
-        f'Remove-Item -LiteralPath "HKLM:\\{UNINSTALL_KEY}" -Recurse -Force',
-        f'Remove-Item -LiteralPath "HKCU:\\{UNINSTALL_KEY}" -Recurse -Force',
-        '$deleteCommand = \'/c timeout /t 2 /nobreak >nul & rmdir /s /q "\' + $installRoot + \'"\'',
-        'Start-Process -FilePath $env:ComSpec -WorkingDirectory $env:TEMP -WindowStyle Hidden -ArgumentList $deleteCommand',
-    ]
-    script_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def register_uninstall_entry(install_root: Path, target_exe: Path, display_icon: Path) -> None:
-    uninstall_script = install_root / "uninstall_linguaflow.ps1"
-    uninstall_command = f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{uninstall_script}"'
+def register_uninstall_entry(install_root: Path, target_exe: Path, uninstall_exe: Path, display_icon: Path) -> None:
+    uninstall_command = f'"{uninstall_exe}"'
+    quiet_uninstall_command = f'"{uninstall_exe}" --quiet'
     estimated_size_kb = sum(file.stat().st_size for file in install_root.rglob("*") if file.is_file()) // 1024
 
     try:
@@ -534,7 +502,7 @@ def register_uninstall_entry(install_root: Path, target_exe: Path, display_icon:
         winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, str(install_root))
         winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, str(display_icon))
         winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, uninstall_command)
-        winreg.SetValueEx(key, "QuietUninstallString", 0, winreg.REG_SZ, uninstall_command)
+        winreg.SetValueEx(key, "QuietUninstallString", 0, winreg.REG_SZ, quiet_uninstall_command)
         winreg.SetValueEx(key, "NoModify", 0, winreg.REG_DWORD, 1)
         winreg.SetValueEx(key, "NoRepair", 0, winreg.REG_DWORD, 1)
         winreg.SetValueEx(key, "EstimatedSize", 0, winreg.REG_DWORD, int(estimated_size_kb))

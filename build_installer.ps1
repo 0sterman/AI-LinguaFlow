@@ -10,9 +10,11 @@ $installerWork = Join-Path $workRoot "pyinstaller"
 $installerDist = Join-Path $workRoot "dist"
 $installerSpec = Join-Path $workRoot "spec"
 $tempInstaller = Join-Path $installerDist "LinguaFlow AI Setup.exe"
+$tempUninstaller = Join-Path $installerDist "LinguaFlow AI Uninstall.exe"
 $targetInstaller = Join-Path $root "dist\LinguaFlow AI Setup.exe"
 
 Get-Process -Name "LinguaFlow AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name "LinguaFlow AI Uninstall" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "build.ps1")
 if ($LASTEXITCODE -ne 0) {
@@ -22,6 +24,36 @@ if ($LASTEXITCODE -ne 0) {
 if (-not (Test-Path -LiteralPath (Join-Path $distApp "LinguaFlow AI.exe"))) {
     throw "Build output is missing: $distApp"
 }
+
+if (Test-Path -LiteralPath $workRoot) {
+    Remove-Item -LiteralPath $workRoot -Recurse -Force
+}
+
+python -m PyInstaller `
+    --noconfirm `
+    --clean `
+    --onefile `
+    --windowed `
+    --uac-admin `
+    --name "LinguaFlow AI Uninstall" `
+    --icon (Join-Path $root "assets\app_icon.ico") `
+    --version-file (Join-Path $root "version_info_setup.txt") `
+    --add-data "$(Join-Path $root "assets\app_icon.ico");assets" `
+    --distpath $installerDist `
+    --workpath $installerWork `
+    --specpath $installerSpec `
+    (Join-Path $root "installer\uninstaller_app.py")
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Uninstaller build failed with exit code $LASTEXITCODE"
+}
+
+if (-not (Test-Path -LiteralPath $tempUninstaller)) {
+    throw "Uninstaller was not created: $tempUninstaller"
+}
+
+Copy-Item -LiteralPath $tempUninstaller -Destination (Join-Path $distApp "LinguaFlow AI Uninstall.exe") -Force
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "code_sign.ps1") -Path (Join-Path $distApp "LinguaFlow AI Uninstall.exe")
 
 if (Test-Path -LiteralPath $workRoot) {
     Remove-Item -LiteralPath $workRoot -Recurse -Force

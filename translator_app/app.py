@@ -7,10 +7,10 @@ import time
 from pathlib import Path
 
 import pyperclip
-from PySide6.QtCore import QObject, QTimer, Qt, Signal
-from PySide6.QtGui import QAction, QIcon, QPainter, QPixmap, QColor
+from PySide6.QtCore import QObject, QProcess, QTimer, Qt, QUrl, Signal
+from PySide6.QtGui import QAction, QDesktopServices, QIcon, QPainter, QPixmap, QColor
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QProgressDialog, QSystemTrayIcon
 
 from translator_app.config import AppConfig, load_config, save_config
 from translator_app.history import HistoryStore
@@ -33,6 +33,8 @@ from translator_app.startup import (
     set_start_with_windows,
 )
 from translator_app.ui import APP_DISPLAY_NAME, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup, app_stylesheet
+from translator_app.update_checker import UpdateInfo, download_installer, fetch_required_update
+from translator_app import __version__
 
 SINGLE_INSTANCE_NAME = "OsterLinguaFlowAITranslator"
 WINDOWS_APP_USER_MODEL_ID = "Oster.LinguaFlowAI.PopupTranslator"
@@ -108,8 +110,7 @@ class TranslatorApplication(QObject):
                 self.config.desktop_shortcut = is_desktop_shortcut_enabled()
             except Exception:
                 pass
-        if not self.key_store.get_api_key(self.config.provider):
-            QTimer.singleShot(350, self.open_settings)
+        self.missing_api_key_notice_shown = False
 
     def _build_menu(self) -> QMenu:
         menu = QMenu()
@@ -665,21 +666,7 @@ class TranslatorApplication(QObject):
         save_config(self.config)
 
     def resolved_theme(self) -> str:
-        if self.config.theme in {"dark", "light"}:
-            return self.config.theme
-        if sys.platform != "win32":
-            return "dark"
-        try:
-            import winreg
-
-            with winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
-            ) as key:
-                apps_use_light_theme, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-                return "light" if int(apps_use_light_theme) else "dark"
-        except Exception:
-            return "dark"
+        return resolve_theme(self.config)
 
 
 def main() -> int:
@@ -692,9 +679,13 @@ def main() -> int:
     single_instance_server = create_single_instance_server()
     if single_instance_server is None:
         return 0
+    update = fetch_required_update(__version__) if getattr(sys, "frozen", False) else None
+    if update is not None:
+        return show_required_update(app, update)
+    config = load_config()
+    app.setStyleSheet(app_stylesheet(resolve_theme(config)))
     controller = TranslatorApplication(app)
     single_instance_server.newConnection.connect(lambda: handle_second_instance(single_instance_server, controller))
-    app.setStyleSheet(app_stylesheet(controller.resolved_theme()))
     controller.open_main_window()
     app.aboutToQuit.connect(controller.shutdown)
     return app.exec()
@@ -729,6 +720,57 @@ def handle_second_instance(server: QLocalServer, controller: TranslatorApplicati
 def resource_path(relative_path: str) -> Path:
     base_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
     return base_path / relative_path
+
+
+def resolve_theme(config: AppConfig) -> str:
+    if config.theme in {"dark", "light"}:
+        return config.theme
+    if sys.platform != "win32":
+        return "dark"
+    try:
+        import winreg
+
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+        ) as key:
+            apps_use_light_theme, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            return "light" if int(apps_use_light_theme) else "dark"
+    except Exception:
+        return "dark"
+
+
+def show_required_update(app: QApplication, update: UpdateInfo) -> int:
+    answer = QMessageBox.warning(
+        None,
+        "LinguaFlow AI update required",
+        (
+            f"This LinguaFlow AI version is outdated.\n\n"
+            f"Installed version: {__version__}\n"
+            f"Required version: {update.version}\n\n"
+            "The app will download the newest installer and open the release page."
+        ),
+        QMessageBox.StandardButton.Ok,
+    )
+    if answer == QMessageBox.StandardButton.Ok:
+        QDesktopServices.openUrl(QUrl(update.release_url))
+        try:
+            progress = QProgressDialog("Downloading LinguaFlow AI update...", "", 0, 0)
+            progress.setWindowTitle("LinguaFlow AI update")
+            progress.setCancelButton(None)
+            progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+            progress.show()
+            app.processEvents()
+            installer_path = download_installer(update)
+            progress.close()
+            QProcess.startDetached(str(installer_path), [])
+        except Exception:
+            QMessageBox.warning(
+                None,
+                "LinguaFlow AI update",
+                "Could not download the installer automatically. Please use the opened GitHub release page.",
+            )
+    return 0
 
 
 def set_windows_app_user_model_id() -> None:
