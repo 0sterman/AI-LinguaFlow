@@ -574,6 +574,66 @@ QTextEdit {
 QTextEdit:focus, QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QListWidget:focus {
     border: 1px solid #60c6ff;
 }
+QScrollBar:vertical {
+    background: #0c1118;
+    border: 1px solid #263142;
+    border-radius: 6px;
+    width: 14px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: #8fd8ff;
+    border: 1px solid #c7efff;
+    border-radius: 6px;
+    min-height: 42px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #b6e8ff;
+}
+QScrollBar::handle:vertical:pressed {
+    background: #65cfff;
+}
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+    background: transparent;
+    border: none;
+}
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: #101722;
+    border-radius: 6px;
+}
+QScrollBar:horizontal {
+    background: #0c1118;
+    border: 1px solid #263142;
+    border-radius: 6px;
+    height: 14px;
+    margin: 0px;
+}
+QScrollBar::handle:horizontal {
+    background: #8fd8ff;
+    border: 1px solid #c7efff;
+    border-radius: 6px;
+    min-width: 42px;
+}
+QScrollBar::handle:horizontal:hover {
+    background: #b6e8ff;
+}
+QScrollBar::handle:horizontal:pressed {
+    background: #65cfff;
+}
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0px;
+    background: transparent;
+    border: none;
+}
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: #101722;
+    border-radius: 6px;
+}
 QComboBox::drop-down, QDateEdit::drop-down {
     width: 30px;
     border-left: 1px solid #344154;
