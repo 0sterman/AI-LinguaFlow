@@ -11,7 +11,7 @@ import winreg
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from tkinter import BooleanVar, StringVar, Tk, filedialog, messagebox, ttk
+from tkinter import BooleanVar, PhotoImage, StringVar, Tk, filedialog, messagebox, ttk
 
 
 APP_NAME = "LinguaFlow AI"
@@ -22,6 +22,99 @@ SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 PAYLOAD_ZIP = "LinguaFlowAI_payload.zip"
 MARKER_FILE = ".linguaflow-install"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
+
+INSTALLER_COPY = {
+    "en": {
+        "language_name": "English",
+        "title": "LinguaFlow AI Setup",
+        "welcome_title": "Welcome to LinguaFlow AI",
+        "language": "Setup language",
+        "welcome": "LinguaFlow AI is a compact Windows translator for selected text.",
+        "highlight": "Select text anywhere, press Ctrl+C+C, and get a fast popup translation.",
+        "details": (
+            "The app also supports normal manual translation, local translation history, "
+            "and your choice of OpenAI, Google Gemini, or Anthropic Claude."
+        ),
+        "api_note": (
+            "After installation, enter your own API key in Settings -> API. "
+            "Usage answers are available in Settings -> General -> Guide."
+        ),
+        "destination_title": "Choose installation options",
+        "install_folder": "Installation folder",
+        "browse": "Browse...",
+        "options": "Options",
+        "desktop_shortcut": "Create a desktop shortcut",
+        "start_menu_shortcut": "Add a Start menu shortcut",
+        "launch_after_install": "Launch LinguaFlow AI after installation",
+        "ready": "Ready to install",
+        "installing": "Installing LinguaFlow AI...",
+        "failed": "Installation was not completed",
+        "completed": "Installation completed",
+        "success": (
+            "LinguaFlow AI has been installed.\n\n"
+            "For correct operation, enter your own API key: Settings -> API.\n\n"
+            "Usage answers are available in Settings -> General -> Guide."
+        ),
+        "startup_error": "Could not start LinguaFlow AI Setup.",
+        "install_error": "Could not install LinguaFlow AI.",
+        "choose_folder": "Choose installation folder",
+        "continue": "Continue",
+        "back": "Back",
+        "install": "Install",
+        "cancel": "Cancel",
+        "empty_folder": "Choose an installation folder.",
+        "root_folder": "The app cannot be installed directly into a drive root.",
+        "occupied_folder": (
+            "The selected folder already contains files from another program or user. "
+            "Choose an empty folder or the previous LinguaFlow AI installation folder."
+        ),
+    },
+    "ru": {
+        "language_name": "Русский",
+        "title": "Установка LinguaFlow AI",
+        "welcome_title": "Добро пожаловать в LinguaFlow AI",
+        "language": "Язык установки",
+        "welcome": "LinguaFlow AI - компактный Windows-переводчик для выделенного текста.",
+        "highlight": "Выделите текст в любом приложении, нажмите Ctrl+C+C и получите быстрый popup-перевод.",
+        "details": (
+            "Приложение также поддерживает обычный ручной перевод, локальную историю переводов "
+            "и выбор OpenAI, Google Gemini или Anthropic Claude."
+        ),
+        "api_note": (
+            "После установки нужно ввести личный API-ключ в Настройки -> API. "
+            "Инструкция находится в Настройки -> Основное -> Инструкция."
+        ),
+        "destination_title": "Выберите параметры установки",
+        "install_folder": "Папка установки",
+        "browse": "Обзор...",
+        "options": "Параметры",
+        "desktop_shortcut": "Создать ярлык на рабочем столе",
+        "start_menu_shortcut": "Добавить ярлык в меню Пуск",
+        "launch_after_install": "Запустить LinguaFlow AI после установки",
+        "ready": "Готово к установке",
+        "installing": "Устанавливаю LinguaFlow AI...",
+        "failed": "Установка не завершена",
+        "completed": "Установка завершена",
+        "success": (
+            "Установка LinguaFlow AI завершена.\n\n"
+            "Для корректной работы необходимо ввести свой API-ключ: Настройки -> API.\n\n"
+            "Ответы по работе с программой можно найти в Настройки -> Основное -> Инструкция."
+        ),
+        "startup_error": "Не удалось запустить установщик LinguaFlow AI.",
+        "install_error": "Не удалось установить LinguaFlow AI.",
+        "choose_folder": "Выберите папку установки",
+        "continue": "Продолжить",
+        "back": "Назад",
+        "install": "Установить",
+        "cancel": "Отмена",
+        "empty_folder": "Выберите папку установки.",
+        "root_folder": "Нельзя устанавливать программу прямо в корень диска.",
+        "occupied_folder": (
+            "Выбранная папка уже содержит файлы другой программы или пользователя. "
+            "Выберите пустую папку или прежнюю папку установки LinguaFlow AI."
+        ),
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -35,89 +128,155 @@ class InstallOptions:
 class InstallerWizard:
     def __init__(self) -> None:
         self.root = Tk()
-        self.root.title("LinguaFlow AI Setup")
-        self.root.geometry("680x430")
-        self.root.minsize(640, 410)
+        self.root.geometry("760x500")
+        self.root.minsize(760, 500)
         self.root.resizable(False, False)
+        self._apply_window_icon()
 
         default_dir = Path(os.environ["LOCALAPPDATA"]) / "Programs" / APP_NAME
+        self.language_code = StringVar(value="en")
         self.install_dir = StringVar(value=str(default_dir))
         self.desktop_shortcut = BooleanVar(value=True)
         self.start_menu_shortcut = BooleanVar(value=True)
         self.launch_after_install = BooleanVar(value=False)
-        self.status = StringVar(value="Готово к установке")
+        self.status = StringVar(value=self.t("ready"))
+        self.logo_image = self._load_logo()
+        self.install_button: ttk.Button | None = None
+        self.progress: ttk.Progressbar | None = None
 
-        self._build_ui()
+        self.container = ttk.Frame(self.root, padding=24)
+        self.container.pack(fill="both", expand=True)
+        self._show_welcome_page()
 
     def run(self) -> int:
         self.root.mainloop()
         return 0
 
-    def _build_ui(self) -> None:
-        outer = ttk.Frame(self.root, padding=22)
-        outer.pack(fill="both", expand=True)
+    def t(self, key: str) -> str:
+        return INSTALLER_COPY[self.language_code.get()].get(key, INSTALLER_COPY["en"][key])
 
-        title = ttk.Label(outer, text="Установка LinguaFlow AI", font=("Segoe UI", 18, "bold"))
-        title.pack(anchor="w")
+    def _clear_container(self) -> None:
+        for child in self.container.winfo_children():
+            child.destroy()
 
-        description = ttk.Label(
-            outer,
-            text=(
-                "LinguaFlow AI - быстрый Windows-переводчик для выделенного текста через Ctrl+C+C "
-                "и обычного ручного перевода. Программа хранит историю локально и работает через "
-                "выбранный вами AI-провайдер."
-            ),
-            wraplength=610,
+    def _show_welcome_page(self) -> None:
+        self.root.title(self.t("title"))
+        self.status.set(self.t("ready"))
+        self._clear_container()
+
+        content = ttk.Frame(self.container)
+        content.pack(fill="both", expand=True)
+        self._build_header(content, self.t("welcome_title"))
+
+        language_row = ttk.Frame(content)
+        language_row.pack(fill="x", pady=(16, 22))
+        ttk.Label(language_row, text=self.t("language")).pack(side="left")
+        language_values = [copy["language_name"] for copy in INSTALLER_COPY.values()]
+        language_input = ttk.Combobox(language_row, state="readonly", width=18, values=language_values)
+        current_index = list(INSTALLER_COPY).index(self.language_code.get())
+        language_input.current(current_index)
+        language_input.pack(side="left", padx=(12, 0))
+        language_input.bind("<<ComboboxSelected>>", lambda event: self._set_language(event.widget.current()))
+
+        ttk.Label(content, text=self.t("welcome"), wraplength=670, justify="left").pack(anchor="w", pady=(0, 10))
+        ttk.Label(
+            content,
+            text=self.t("highlight"),
+            wraplength=670,
             justify="left",
-        )
-        description.pack(anchor="w", pady=(8, 18))
+            font=("Segoe UI", 11, "bold"),
+        ).pack(anchor="w", pady=(0, 10))
+        ttk.Label(content, text=self.t("details"), wraplength=670, justify="left").pack(anchor="w")
 
-        path_label = ttk.Label(outer, text="Папка установки")
-        path_label.pack(anchor="w")
+        self._build_buttons([(self.t("cancel"), self.root.destroy), (self.t("continue"), self._show_options_page)])
 
-        path_row = ttk.Frame(outer)
+    def _show_options_page(self) -> None:
+        self.root.title(self.t("title"))
+        self.status.set(self.t("ready"))
+        self._clear_container()
+
+        content = ttk.Frame(self.container)
+        content.pack(fill="both", expand=True)
+        self._build_header(content, self.t("destination_title"))
+
+        ttk.Label(content, text=self.t("install_folder")).pack(anchor="w", pady=(18, 0))
+        path_row = ttk.Frame(content)
         path_row.pack(fill="x", pady=(4, 12))
-        path_entry = ttk.Entry(path_row, textvariable=self.install_dir)
-        path_entry.pack(side="left", fill="x", expand=True)
-        browse_button = ttk.Button(path_row, text="Обзор...", command=self._choose_folder)
-        browse_button.pack(side="left", padx=(8, 0))
+        ttk.Entry(path_row, textvariable=self.install_dir).pack(side="left", fill="x", expand=True)
+        ttk.Button(path_row, text=self.t("browse"), command=self._choose_folder).pack(side="left", padx=(8, 0))
 
-        options_box = ttk.LabelFrame(outer, text="Параметры")
+        options_box = ttk.LabelFrame(content, text=self.t("options"))
         options_box.pack(fill="x", pady=(0, 14))
-        ttk.Checkbutton(options_box, text="Создать ярлык на рабочем столе", variable=self.desktop_shortcut).pack(
+        ttk.Checkbutton(options_box, text=self.t("desktop_shortcut"), variable=self.desktop_shortcut).pack(
             anchor="w", padx=12, pady=(9, 3)
         )
-        ttk.Checkbutton(options_box, text="Добавить ярлык в меню Пуск", variable=self.start_menu_shortcut).pack(
+        ttk.Checkbutton(options_box, text=self.t("start_menu_shortcut"), variable=self.start_menu_shortcut).pack(
             anchor="w", padx=12, pady=3
         )
-        ttk.Checkbutton(options_box, text="Запустить LinguaFlow AI после установки", variable=self.launch_after_install).pack(
+        ttk.Checkbutton(options_box, text=self.t("launch_after_install"), variable=self.launch_after_install).pack(
             anchor="w", padx=12, pady=(3, 9)
         )
 
-        note = ttk.Label(
-            outer,
-            text=(
-                "После установки нужно ввести личный API-ключ в Настройки -> API. "
-                "Инструкция находится в Настройки -> Основное -> Инструкция."
-            ),
-            wraplength=610,
-            justify="left",
-        )
-        note.pack(anchor="w", pady=(0, 12))
-
-        self.progress = ttk.Progressbar(outer, mode="indeterminate")
+        ttk.Label(content, text=self.t("api_note"), wraplength=670, justify="left").pack(anchor="w", pady=(0, 12))
+        self.progress = ttk.Progressbar(content, mode="indeterminate")
         self.progress.pack(fill="x", pady=(0, 8))
-        ttk.Label(outer, textvariable=self.status).pack(anchor="w")
+        ttk.Label(content, textvariable=self.status).pack(anchor="w")
 
-        buttons = ttk.Frame(outer)
-        buttons.pack(fill="x", pady=(16, 0))
-        ttk.Button(buttons, text="Отмена", command=self.root.destroy).pack(side="right")
-        self.install_button = ttk.Button(buttons, text="Установить", command=self._start_install)
-        self.install_button.pack(side="right", padx=(0, 8))
+        self._build_buttons(
+            [
+                (self.t("cancel"), self.root.destroy),
+                (self.t("install"), self._start_install),
+                (self.t("back"), self._show_welcome_page),
+            ]
+        )
+
+    def _build_header(self, parent: ttk.Frame, title: str) -> None:
+        header = ttk.Frame(parent)
+        header.pack(fill="x")
+        if self.logo_image is not None:
+            ttk.Label(header, image=self.logo_image).pack(side="left", padx=(0, 14))
+        title_box = ttk.Frame(header)
+        title_box.pack(side="left", fill="x", expand=True)
+        ttk.Label(title_box, text=title, font=("Segoe UI", 20, "bold")).pack(anchor="w")
+        ttk.Label(title_box, text=APP_NAME, foreground="#246b92").pack(anchor="w", pady=(2, 0))
+
+    def _build_buttons(self, buttons: list[tuple[str, object]]) -> None:
+        button_row = ttk.Frame(self.container)
+        button_row.pack(fill="x", side="bottom", pady=(18, 0))
+        for text, command in buttons:
+            button = ttk.Button(button_row, text=text, command=command)
+            button.pack(side="right", padx=(8, 0))
+            if text == self.t("install"):
+                self.install_button = button
+
+    def _set_language(self, selected_index: int) -> None:
+        codes = list(INSTALLER_COPY)
+        if 0 <= selected_index < len(codes):
+            self.language_code.set(codes[selected_index])
+        self._show_welcome_page()
+
+    def _apply_window_icon(self) -> None:
+        icon_path = resource_path("app_icon.ico")
+        if icon_path.exists():
+            try:
+                self.root.iconbitmap(str(icon_path))
+            except Exception:
+                pass
+
+    def _load_logo(self) -> PhotoImage | None:
+        image_path = resource_path("app_icon.png")
+        if not image_path.exists():
+            return None
+        try:
+            image = PhotoImage(file=str(image_path))
+        except Exception:
+            return None
+        scale = max(image.width() // 64, image.height() // 64, 1)
+        return image.subsample(scale, scale)
 
     def _choose_folder(self) -> None:
         selected = filedialog.askdirectory(
-            title="Выберите папку установки",
+            title=self.t("choose_folder"),
             initialdir=str(Path(self.install_dir.get()).parent),
         )
         if selected:
@@ -131,14 +290,16 @@ class InstallerWizard:
                 start_menu_shortcut=self.start_menu_shortcut.get(),
                 launch_after_install=self.launch_after_install.get(),
             )
-            validate_install_root(options.install_root)
+            validate_install_root(options.install_root, self.language_code.get())
         except Exception as exc:  # noqa: BLE001 - user-facing validation.
-            messagebox.showerror("LinguaFlow AI Setup", str(exc))
+            messagebox.showerror(self.t("title"), str(exc))
             return
 
-        self.install_button.configure(state="disabled")
-        self.progress.start(12)
-        self.status.set("Устанавливаю LinguaFlow AI...")
+        if self.install_button is not None:
+            self.install_button.configure(state="disabled")
+        if self.progress is not None:
+            self.progress.start(12)
+        self.status.set(self.t("installing"))
 
         thread = threading.Thread(target=self._install_in_background, args=(options,), daemon=True)
         thread.start()
@@ -152,20 +313,18 @@ class InstallerWizard:
         self.root.after(0, self._finish_success)
 
     def _finish_with_error(self, exc: Exception) -> None:
-        self.progress.stop()
-        self.install_button.configure(state="normal")
-        self.status.set("Установка не завершена")
-        messagebox.showerror("LinguaFlow AI Setup", f"Не удалось установить LinguaFlow AI.\n\n{exc}")
+        if self.progress is not None:
+            self.progress.stop()
+        if self.install_button is not None:
+            self.install_button.configure(state="normal")
+        self.status.set(self.t("failed"))
+        messagebox.showerror(self.t("title"), f"{self.t('install_error')}\n\n{exc}")
 
     def _finish_success(self) -> None:
-        self.progress.stop()
-        self.status.set("Установка завершена")
-        messagebox.showinfo(
-            "LinguaFlow AI Setup",
-            "Установка LinguaFlow AI завершена.\n\n"
-            "Для корректной работы необходимо ввести свой API-ключ: Настройки -> API.\n\n"
-            "Ответы по работе с программой можно найти в Настройки -> Основное -> Инструкция.",
-        )
+        if self.progress is not None:
+            self.progress.stop()
+        self.status.set(self.t("completed"))
+        messagebox.showinfo(self.t("title"), self.t("success"))
         self.root.destroy()
 
 
@@ -173,18 +332,14 @@ def main() -> int:
     try:
         return InstallerWizard().run()
     except Exception as exc:  # noqa: BLE001 - last-resort UI fallback.
-        show_message(
-            "LinguaFlow AI Setup",
-            f"Не удалось запустить установщик LinguaFlow AI.\n\n{exc}",
-            icon_error=True,
-        )
+        show_message("LinguaFlow AI Setup", f"Could not start LinguaFlow AI Setup.\n\n{exc}", icon_error=True)
         return 1
 
 
 def install(options: InstallOptions) -> None:
     payload = resource_path(PAYLOAD_ZIP)
     if not payload.exists():
-        raise FileNotFoundError(f"Не найден установочный пакет: {payload}")
+        raise FileNotFoundError(f"Installer payload is missing: {payload}")
 
     install_root = options.install_root.resolve()
     temp_root = Path(tempfile.mkdtemp(prefix="LinguaFlowAIInstall_"))
@@ -198,7 +353,7 @@ def install(options: InstallOptions) -> None:
         source_root = temp_root / APP_NAME
         source_exe = source_root / APP_EXE
         if not source_exe.exists():
-            raise FileNotFoundError("В пакете нет LinguaFlow AI.exe")
+            raise FileNotFoundError("Installer payload does not contain LinguaFlow AI.exe")
 
         prepare_install_root(install_root)
         shutil.copytree(source_root, install_root)
@@ -215,19 +370,17 @@ def install(options: InstallOptions) -> None:
         shutil.rmtree(temp_root, ignore_errors=True)
 
 
-def validate_install_root(install_root: Path) -> None:
+def validate_install_root(install_root: Path, language_code: str = "en") -> None:
+    copy = INSTALLER_COPY.get(language_code, INSTALLER_COPY["en"])
     if not str(install_root).strip():
-        raise ValueError("Выберите папку установки.")
+        raise ValueError(copy["empty_folder"])
 
     resolved = install_root.resolve()
     if resolved.anchor and str(resolved) == resolved.anchor:
-        raise ValueError("Нельзя устанавливать программу прямо в корень диска.")
+        raise ValueError(copy["root_folder"])
 
     if resolved.exists() and any(resolved.iterdir()) and not (resolved / MARKER_FILE).exists():
-        raise ValueError(
-            "Выбранная папка уже содержит файлы другой программы или пользователя. "
-            "Выберите пустую папку или прежнюю папку установки LinguaFlow AI."
-        )
+        raise ValueError(copy["occupied_folder"])
 
 
 def prepare_install_root(install_root: Path) -> None:
@@ -295,9 +448,7 @@ def write_uninstaller(install_root: Path) -> None:
 
 def register_uninstall_entry(install_root: Path, target_exe: Path) -> None:
     uninstall_script = install_root / "uninstall_linguaflow.ps1"
-    uninstall_command = (
-        f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{uninstall_script}"'
-    )
+    uninstall_command = f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{uninstall_script}"'
     estimated_size_kb = sum(file.stat().st_size for file in install_root.rglob("*") if file.is_file()) // 1024
 
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, UNINSTALL_KEY) as key:

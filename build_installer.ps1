@@ -39,6 +39,8 @@ python -m PyInstaller `
     --name "LinguaFlow AI Setup" `
     --icon (Join-Path $root "assets\app_icon.ico") `
     --add-data "$zipPath;." `
+    --add-data "$(Join-Path $root "assets\app_icon.ico");." `
+    --add-data "$(Join-Path $root "assets\app_icon.png");." `
     --distpath $installerDist `
     --workpath $installerWork `
     --specpath $installerSpec `
