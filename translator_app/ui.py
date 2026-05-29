@@ -192,6 +192,9 @@ def star_rating(value: int) -> str:
 
 APP_DISPLAY_NAME = "LinguaFlow AI"
 APP_WINDOW_TITLE = "Oster - LinguaFlow AI - Popup Translator"
+OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
+GEMINI_KEYS_URL = "https://aistudio.google.com/api-keys"
+ANTHROPIC_KEYS_URL = "https://console.anthropic.com/settings/keys"
 
 ABOUT_COPY = {
     "ru": {
@@ -319,6 +322,164 @@ ABOUT_COPY = {
             "AI 翻译可能不准确、不完整或风格不合适。重要的法律、医疗、金融、移民和技术文本应人工复核。",
             "用户自行负责所选提供商、模型、API 密钥、token 成本，以及遵守 OpenAI、Google、Anthropic 或其他服务条款。",
             "LinguaFlow AI 不是 OpenAI、Google、Anthropic 或 Microsoft 的官方产品。第三方服务名称属于其各自所有者。",
+        ],
+    },
+}
+
+GUIDE_COPY = {
+    "ru": {
+        "intro": "Короткая инструкция по настройке и ежедневному использованию LinguaFlow AI.",
+        "sections": [
+            ("Быстрый popup-перевод", [
+                "Выделите текст в браузере, PDF, письме или редакторе.",
+                "Нажмите Ctrl+C, не отпуская Ctrl нажмите C ещё раз. Окно LinguaFlow AI откроется поверх остальных окон.",
+                "Текст вставится автоматически и начнёт переводиться примерно через 1,5 секунды.",
+            ]),
+            ("Обычный перевод", [
+                "Откройте приложение через ярлык, трей или окно программы.",
+                "Выберите язык исходного текста или оставьте Auto, затем выберите язык в поле “На”.",
+                "Вставьте текст и нажмите “Перевести” либо Right Ctrl+Enter. Enter внутри поля оставляет новую строку.",
+            ]),
+            ("API-ключи", [
+                "Откройте вкладку API, вставьте ключ выбранного провайдера, нажмите “Проверить”, затем “Сохранить” или “Применить”.",
+                "Зелёная галочка означает, что ключ прошёл проверку. Крестик означает, что ключ отсутствует или не работает.",
+                "Ключи хранятся локально через Windows Credential Manager/keyring, если это доступно.",
+            ]),
+            ("Безопасность и расходы", [
+                "Не публикуйте API-ключи и не отправляйте их в GitHub, чаты или скриншоты.",
+                "Для экономии выбирайте mini/nano/flash-lite/haiku модели и смотрите рекомендации во вкладке API.",
+                "У провайдера желательно включить лимиты расходов и регулярно проверять usage/billing.",
+            ]),
+        ],
+        "links_title": "Где брать ключи",
+        "links": [
+            ("OpenAI", OPENAI_KEYS_URL, "создать или посмотреть ключ OpenAI API"),
+            ("Google Gemini", GEMINI_KEYS_URL, "создать или посмотреть ключ Gemini в Google AI Studio"),
+            ("Anthropic Claude", ANTHROPIC_KEYS_URL, "создать или посмотреть ключ Claude в Anthropic Console"),
+        ],
+    },
+    "en": {
+        "intro": "A compact guide for setting up and using LinguaFlow AI every day.",
+        "sections": [
+            ("Fast popup translation", [
+                "Select text in a browser, PDF, email, or editor.",
+                "Press Ctrl+C, keep Ctrl held, then press C again. LinguaFlow AI opens above other windows.",
+                "The selected text is inserted automatically and starts translating after about 1.5 seconds.",
+            ]),
+            ("Normal translation", [
+                "Open the app from the shortcut, tray, or main window.",
+                "Choose the source language or keep Auto, then choose the target language in the To field.",
+                "Paste text and press Translate or Right Ctrl+Enter. Enter inside the text field keeps a new line.",
+            ]),
+            ("API keys", [
+                "Open the API tab, paste the key for the selected provider, press Check, then Save or Apply.",
+                "A green check means the key passed validation. A cross means the key is missing or failed.",
+                "Keys are stored locally through Windows Credential Manager/keyring when available.",
+            ]),
+            ("Safety and costs", [
+                "Do not publish API keys or send them to GitHub, chats, or screenshots.",
+                "For lower cost, prefer mini/nano/flash-lite/haiku models and review the API tab recommendations.",
+                "Set provider-side spending limits and check usage/billing regularly.",
+            ]),
+        ],
+        "links_title": "Where to get keys",
+        "links": [
+            ("OpenAI", OPENAI_KEYS_URL, "create or manage an OpenAI API key"),
+            ("Google Gemini", GEMINI_KEYS_URL, "create or manage a Gemini key in Google AI Studio"),
+            ("Anthropic Claude", ANTHROPIC_KEYS_URL, "create or manage a Claude key in Anthropic Console"),
+        ],
+    },
+    "de": {
+        "intro": "Eine kurze Anleitung zur Einrichtung und täglichen Nutzung von LinguaFlow AI.",
+        "sections": [
+            ("Schnelle Popup-Übersetzung", [
+                "Markieren Sie Text im Browser, PDF, in E-Mails oder im Editor.",
+                "Drücken Sie Ctrl+C, halten Sie Ctrl gedrückt und drücken Sie C erneut. LinguaFlow AI öffnet sich über anderen Fenstern.",
+                "Der Text wird automatisch eingefügt und nach etwa 1,5 Sekunden übersetzt.",
+            ]),
+            ("Normale Übersetzung", [
+                "Öffnen Sie die App über Verknüpfung, Tray oder Hauptfenster.",
+                "Wählen Sie die Ausgangssprache oder Auto und danach die Zielsprache im Feld Nach.",
+                "Text einfügen und Übersetzen oder Rechts-Ctrl+Enter drücken. Enter im Textfeld bleibt ein Zeilenumbruch.",
+            ]),
+            ("API-Schlüssel", [
+                "Öffnen Sie die API-Registerkarte, fügen Sie den Schlüssel des Anbieters ein, drücken Sie Prüfen und dann Speichern oder Anwenden.",
+                "Ein grüner Haken bedeutet, dass der Schlüssel gültig ist. Ein Kreuz bedeutet, dass er fehlt oder nicht funktioniert.",
+                "Schlüssel werden lokal über Windows Credential Manager/keyring gespeichert, wenn verfügbar.",
+            ]),
+            ("Sicherheit und Kosten", [
+                "Veröffentlichen Sie API-Schlüssel nicht in GitHub, Chats oder Screenshots.",
+                "Für geringere Kosten nutzen Sie mini/nano/flash-lite/haiku Modelle und prüfen Sie die Empfehlungen im API-Tab.",
+                "Setzen Sie Kostenlimits beim Anbieter und prüfen Sie Nutzung/Abrechnung regelmäßig.",
+            ]),
+        ],
+        "links_title": "Wo man Schlüssel bekommt",
+        "links": [
+            ("OpenAI", OPENAI_KEYS_URL, "OpenAI API-Schlüssel erstellen oder verwalten"),
+            ("Google Gemini", GEMINI_KEYS_URL, "Gemini-Schlüssel in Google AI Studio erstellen oder verwalten"),
+            ("Anthropic Claude", ANTHROPIC_KEYS_URL, "Claude-Schlüssel in Anthropic Console erstellen oder verwalten"),
+        ],
+    },
+    "es": {
+        "intro": "Una guía breve para configurar y usar LinguaFlow AI a diario.",
+        "sections": [
+            ("Traducción rápida emergente", [
+                "Selecciona texto en un navegador, PDF, correo o editor.",
+                "Pulsa Ctrl+C, mantén Ctrl y pulsa C otra vez. LinguaFlow AI se abrirá encima de las demás ventanas.",
+                "El texto se inserta automáticamente y empieza a traducirse tras unos 1,5 segundos.",
+            ]),
+            ("Traducción normal", [
+                "Abre la app desde el acceso directo, la bandeja o la ventana principal.",
+                "Elige el idioma de origen o deja Auto, y después el idioma de destino en el campo A.",
+                "Pega el texto y pulsa Traducir o Right Ctrl+Enter. Enter dentro del campo mantiene una nueva línea.",
+            ]),
+            ("Claves API", [
+                "Abre la pestaña API, pega la clave del proveedor elegido, pulsa Comprobar y luego Guardar o Aplicar.",
+                "Una marca verde significa que la clave pasó la validación. Una cruz significa que falta o no funciona.",
+                "Las claves se guardan localmente mediante Windows Credential Manager/keyring cuando está disponible.",
+            ]),
+            ("Seguridad y costes", [
+                "No publiques claves API ni las envíes a GitHub, chats o capturas.",
+                "Para reducir costes, usa modelos mini/nano/flash-lite/haiku y revisa las recomendaciones en la pestaña API.",
+                "Configura límites de gasto en el proveedor y revisa uso/facturación con regularidad.",
+            ]),
+        ],
+        "links_title": "Dónde obtener claves",
+        "links": [
+            ("OpenAI", OPENAI_KEYS_URL, "crear o gestionar una clave de OpenAI API"),
+            ("Google Gemini", GEMINI_KEYS_URL, "crear o gestionar una clave Gemini en Google AI Studio"),
+            ("Anthropic Claude", ANTHROPIC_KEYS_URL, "crear o gestionar una clave Claude en Anthropic Console"),
+        ],
+    },
+    "zh": {
+        "intro": "LinguaFlow AI 的设置和日常使用简明指南。",
+        "sections": [
+            ("快速弹窗翻译", [
+                "在浏览器、PDF、邮件或编辑器中选择文本。",
+                "按 Ctrl+C，保持 Ctrl 不松开，再按一次 C。LinguaFlow AI 会在其他窗口上方打开。",
+                "所选文本会自动插入，并在约 1.5 秒后开始翻译。",
+            ]),
+            ("普通翻译", [
+                "通过快捷方式、托盘或主窗口打开应用。",
+                "选择源语言或保持 Auto，然后在 To 字段选择目标语言。",
+                "粘贴文本并点击翻译，或按 Right Ctrl+Enter。文本框中的 Enter 会保留换行。",
+            ]),
+            ("API 密钥", [
+                "打开 API 选项卡，粘贴所选提供商的密钥，点击检查，然后保存或应用。",
+                "绿色勾表示密钥验证通过。叉号表示密钥缺失或不可用。",
+                "可用时，密钥会通过 Windows Credential Manager/keyring 本地保存。",
+            ]),
+            ("安全和费用", [
+                "不要公开 API 密钥，也不要把它们发到 GitHub、聊天或截图中。",
+                "为了降低成本，优先选择 mini/nano/flash-lite/haiku 模型，并查看 API 选项卡中的推荐。",
+                "建议在提供商端设置消费限制，并定期查看用量/账单。",
+            ]),
+        ],
+        "links_title": "在哪里获取密钥",
+        "links": [
+            ("OpenAI", OPENAI_KEYS_URL, "创建或管理 OpenAI API 密钥"),
+            ("Google Gemini", GEMINI_KEYS_URL, "在 Google AI Studio 创建或管理 Gemini 密钥"),
+            ("Anthropic Claude", ANTHROPIC_KEYS_URL, "在 Anthropic Console 创建或管理 Claude 密钥"),
         ],
     },
 }
@@ -1242,6 +1403,14 @@ class SettingsDialog(QDialog):
         self.about_browser = QTextBrowser()
         self.about_browser.setOpenExternalLinks(False)
 
+        self.guide_button = QPushButton("?")
+        self.guide_button.setObjectName("InfoButton")
+        self.guide_button.setFixedSize(34, 34)
+        self.guide_button.clicked.connect(self.show_usage_guide)
+        self.guide_label = QLabel()
+        self.guide_label.setObjectName("SectionLabel")
+        self.guide_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         self.info_button = QPushButton("?")
         self.info_button.setObjectName("InfoButton")
         self.info_button.setFixedSize(34, 34)
@@ -1273,7 +1442,8 @@ class SettingsDialog(QDialog):
 
     def _build_general_tab(self) -> QWidget:
         widget = QWidget()
-        form = QFormLayout(widget)
+        layout = QVBoxLayout(widget)
+        form = QFormLayout()
         self.provider_label = QLabel()
         self.primary_language_label = QLabel()
         self.theme_label = QLabel()
@@ -1282,6 +1452,20 @@ class SettingsDialog(QDialog):
         form.addRow(self.theme_label, self.theme_input)
         form.addRow("", self.autostart_checkbox)
         form.addRow("", self.desktop_shortcut_checkbox)
+        layout.addLayout(form)
+
+        guide_box = QVBoxLayout()
+        guide_box.setSpacing(5)
+        guide_box.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        guide_box.addWidget(self.guide_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        guide_box.addWidget(self.guide_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        guide_row = QHBoxLayout()
+        guide_row.addStretch(1)
+        guide_row.addLayout(guide_box)
+        guide_row.addStretch(1)
+        layout.addLayout(guide_row)
+        layout.addStretch(1)
         return widget
 
     def _build_api_tab(self) -> QWidget:
@@ -1338,6 +1522,23 @@ class SettingsDialog(QDialog):
         self.about_browser.setFrameShape(QFrame.Shape.NoFrame)
         layout.addWidget(self.about_browser, 1)
         return widget
+
+    def show_usage_guide(self) -> None:
+        dialog = QDialog(self)
+        dialog.setWindowTitle(t(self.ui_language, "usage_guide"))
+        dialog.resize(880, 620)
+
+        browser = QTextBrowser()
+        browser.setOpenExternalLinks(True)
+        browser.setHtml(self._guide_html())
+
+        close_button = QPushButton(t(self.ui_language, "close"))
+        close_button.clicked.connect(dialog.accept)
+
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(browser, 1)
+        layout.addWidget(close_button, alignment=Qt.AlignmentFlag.AlignRight)
+        dialog.exec()
 
     def show_model_info(self) -> None:
         dialog = QDialog(self)
@@ -1417,6 +1618,53 @@ class SettingsDialog(QDialog):
             "</table>"
         )
 
+    def _guide_html(self) -> str:
+        language_code = self.ui_language if self.ui_language in GUIDE_COPY else "en"
+        copy = GUIDE_COPY.get(language_code, GUIDE_COPY["en"])
+        theme = self.theme
+        dark = theme == "dark" or theme == "system"
+        page_background = "#101620" if dark else "#f6f8fb"
+        text_color = "#eef3f8" if dark else "#07111c"
+        muted_text = "#c8d3df" if dark else "#263241"
+        accent = "#8fd8ff" if dark else "#0b6fa7"
+        panel_background = "#151b24" if dark else "#ffffff"
+        border_color = "#2b3545" if dark else "#c7d3e0"
+        link_color = "#8fd8ff" if dark else "#075f96"
+
+        sections: list[str] = []
+        for section_title, section_items in copy["sections"]:
+            item_html = "".join(f"<li>{escape(item)}</li>" for item in section_items)
+            sections.append(f"<h2>{escape(section_title)}</h2><ul>{item_html}</ul>")
+
+        links = "".join(
+            "<li>"
+            f"<strong>{escape(provider)}</strong>: "
+            f"<a href='{escape(url)}'>{escape(url)}</a>"
+            f"<div class='note'>{escape(description)}</div>"
+            "</li>"
+            for provider, url, description in copy["links"]
+        )
+
+        return (
+            "<style>"
+            f"body{{font-family:Calibri,sans-serif;color:{text_color};background:{page_background};font-size:14px;margin:8px;}}"
+            f".card{{background:{panel_background};border:1px solid {border_color};border-radius:12px;padding:18px 20px;}}"
+            "h1{font-size:24px;margin:0 0 6px 0;font-weight:800;}"
+            f".intro{{color:{muted_text};font-size:15px;line-height:1.35;margin:0 0 16px 0;}}"
+            f"h2{{color:{accent};font-size:17px;margin:17px 0 7px 0;font-weight:800;}}"
+            f"ul{{margin:0 0 4px 19px;padding:0;color:{muted_text};line-height:1.36;}}"
+            "li{margin:5px 0;}"
+            f"a{{color:{link_color};text-decoration:none;font-weight:700;}}"
+            f".note{{color:{muted_text};font-size:12px;margin-top:2px;}}"
+            "</style>"
+            "<div class='card'>"
+            f"<h1>{escape(t(self.ui_language, 'usage_guide'))}</h1>"
+            f"<p class='intro'>{escape(copy['intro'])}</p>"
+            f"{''.join(sections)}"
+            f"<h2>{escape(copy['links_title'])}</h2><ul>{links}</ul>"
+            "</div>"
+        )
+
     def _about_html(self) -> str:
         language_code = self.ui_language if self.ui_language in ABOUT_COPY else "en"
         copy = ABOUT_COPY.get(language_code, ABOUT_COPY["en"])
@@ -1467,6 +1715,8 @@ class SettingsDialog(QDialog):
         self.theme_input.setItemText(2, t(language_code, "theme_light"))
         self.autostart_checkbox.setText(t(language_code, "autostart"))
         self.desktop_shortcut_checkbox.setText(t(language_code, "desktop_shortcut"))
+        self.guide_label.setText(t(language_code, "guide"))
+        self.guide_button.setToolTip(t(language_code, "guide_tooltip"))
         self.api_header_label.setText(t(language_code, "api_keys_models"))
         self.recommendations_label.setText(t(language_code, "recommendations"))
         self.info_button.setToolTip(t(language_code, "info_tooltip"))
