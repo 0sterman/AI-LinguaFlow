@@ -11,11 +11,11 @@ import winreg
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from tkinter import BooleanVar, PhotoImage, StringVar, Tk, filedialog, messagebox, ttk
+from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog, messagebox, ttk
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.7"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
@@ -31,6 +31,7 @@ INSTALLER_COPY = {
         "language_name": "English",
         "title": "LinguaFlow AI Setup",
         "welcome_title": "Welcome to LinguaFlow AI",
+        "release": "Release",
         "language": "Setup language",
         "welcome": "LinguaFlow AI is a compact Windows translator for selected text.",
         "highlight": "Select text anywhere, press Ctrl+C+C, and get a fast popup translation.",
@@ -51,6 +52,12 @@ INSTALLER_COPY = {
         "start_menu_shortcut": "Add a Start menu shortcut",
         "launch_after_install": "Launch LinguaFlow AI after installation",
         "ready": "Ready to install",
+        "stopping": "Closing running app...",
+        "extracting": "Extracting files...",
+        "copying": "Copying application files...",
+        "shortcuts": "Creating shortcuts...",
+        "registering": "Registering Windows uninstall entry...",
+        "launching": "Launching LinguaFlow AI...",
         "installing": "Installing LinguaFlow AI...",
         "failed": "Installation was not completed",
         "completed": "Installation completed",
@@ -77,6 +84,7 @@ INSTALLER_COPY = {
         "language_name": "Русский",
         "title": "Установка LinguaFlow AI",
         "welcome_title": "Добро пожаловать в LinguaFlow AI",
+        "release": "Релиз",
         "language": "Язык установки",
         "welcome": "LinguaFlow AI - компактный Windows-переводчик для выделенного текста.",
         "highlight": "Выделите текст в любом приложении, нажмите Ctrl+C+C и получите быстрый popup-перевод.",
@@ -97,6 +105,12 @@ INSTALLER_COPY = {
         "start_menu_shortcut": "Добавить ярлык в меню Пуск",
         "launch_after_install": "Запустить LinguaFlow AI после установки",
         "ready": "Готово к установке",
+        "stopping": "Закрываю запущенную программу...",
+        "extracting": "Распаковываю файлы...",
+        "copying": "Копирую файлы приложения...",
+        "shortcuts": "Создаю ярлыки...",
+        "registering": "Регистрирую удаление в Windows...",
+        "launching": "Запускаю LinguaFlow AI...",
         "installing": "Устанавливаю LinguaFlow AI...",
         "failed": "Установка не завершена",
         "completed": "Установка завершена",
@@ -132,6 +146,7 @@ class InstallOptions:
 
 class InstallerWizard:
     def __init__(self) -> None:
+        configure_process_dpi_awareness()
         self.root = Tk()
         self.root.geometry("760x500")
         self.root.minsize(760, 500)
@@ -145,6 +160,7 @@ class InstallerWizard:
         self.start_menu_shortcut = BooleanVar(value=True)
         self.launch_after_install = BooleanVar(value=False)
         self.status = StringVar(value=self.t("ready"))
+        self.progress_value = DoubleVar(value=0)
         self.logo_image = self._load_logo()
         self.install_button: ttk.Button | None = None
         self.progress: ttk.Progressbar | None = None
@@ -223,7 +239,7 @@ class InstallerWizard:
         )
 
         ttk.Label(content, text=self.t("api_note"), wraplength=670, justify="left").pack(anchor="w", pady=(0, 12))
-        self.progress = ttk.Progressbar(content, mode="indeterminate")
+        self.progress = ttk.Progressbar(content, mode="determinate", maximum=100, variable=self.progress_value)
         self.progress.pack(fill="x", pady=(0, 8))
         ttk.Label(content, textvariable=self.status).pack(anchor="w")
 
@@ -243,7 +259,11 @@ class InstallerWizard:
         title_box = ttk.Frame(header)
         title_box.pack(side="left", fill="x", expand=True)
         ttk.Label(title_box, text=title, font=("Segoe UI", 20, "bold")).pack(anchor="w")
-        ttk.Label(title_box, text="Popup Translator - © Roman Ostroumov / Oster", foreground="#246b92").pack(
+        ttk.Label(
+            title_box,
+            text=f"{self.t('release')} v{APP_VERSION} · Popup Translator - © Roman Ostroumov / Oster",
+            foreground="#246b92",
+        ).pack(
             anchor="w",
             pady=(2, 0),
         )
@@ -306,7 +326,7 @@ class InstallerWizard:
         if self.install_button is not None:
             self.install_button.configure(state="disabled")
         if self.progress is not None:
-            self.progress.start(12)
+            self.progress_value.set(0)
         self.status.set(self.t("installing"))
 
         thread = threading.Thread(target=self._install_in_background, args=(options,), daemon=True)
@@ -314,37 +334,43 @@ class InstallerWizard:
 
     def _install_in_background(self, options: InstallOptions) -> None:
         try:
-            install(options)
+            install(options, self._report_progress)
         except Exception as exc:  # noqa: BLE001 - user-facing installer.
             self.root.after(0, lambda: self._finish_with_error(exc))
             return
         self.root.after(0, self._finish_success)
 
     def _finish_with_error(self, exc: Exception) -> None:
-        if self.progress is not None:
-            self.progress.stop()
+        self.progress_value.set(0)
         if self.install_button is not None:
             self.install_button.configure(state="normal")
         self.status.set(self.t("failed"))
         messagebox.showerror(self.t("title"), f"{self.t('install_error')}\n\n{exc}")
 
     def _finish_success(self) -> None:
-        if self.progress is not None:
-            self.progress.stop()
+        self.progress_value.set(100)
         self.status.set(self.t("completed"))
         messagebox.showinfo(self.t("title"), self.t("success"))
         self.root.destroy()
 
+    def _report_progress(self, value: int, status_key: str) -> None:
+        self.root.after(0, lambda: self._apply_progress(value, status_key))
+
+    def _apply_progress(self, value: int, status_key: str) -> None:
+        self.progress_value.set(value)
+        self.status.set(self.t(status_key))
+
 
 def main() -> int:
     try:
+        configure_process_dpi_awareness()
         return InstallerWizard().run()
     except Exception as exc:  # noqa: BLE001 - last-resort UI fallback.
         show_message("LinguaFlow AI Setup", f"Could not start LinguaFlow AI Setup.\n\n{exc}", icon_error=True)
         return 1
 
 
-def install(options: InstallOptions) -> None:
+def install(options: InstallOptions, progress: object | None = None) -> None:
     payload = resource_path(PAYLOAD_ZIP)
     if not payload.exists():
         raise FileNotFoundError(f"Installer payload is missing: {payload}")
@@ -353,8 +379,10 @@ def install(options: InstallOptions) -> None:
     temp_root = Path(tempfile.mkdtemp(prefix="LinguaFlowAIInstall_"))
 
     try:
+        _report(progress, 8, "stopping")
         stop_running_app()
 
+        _report(progress, 22, "extracting")
         with zipfile.ZipFile(payload) as archive:
             archive.extractall(temp_root)
 
@@ -363,6 +391,7 @@ def install(options: InstallOptions) -> None:
         if not source_exe.exists():
             raise FileNotFoundError("Installer payload does not contain LinguaFlow AI.exe")
 
+        _report(progress, 46, "copying")
         prepare_install_root(install_root)
         shutil.copytree(source_root, install_root)
         (install_root / MARKER_FILE).write_text(APP_NAME, encoding="utf-8")
@@ -373,13 +402,22 @@ def install(options: InstallOptions) -> None:
         shortcut_icon = installed_icon if installed_icon.exists() else target_exe
         if not uninstall_exe.exists():
             raise FileNotFoundError("Installer payload does not contain LinguaFlow AI Uninstall.exe")
+        _report(progress, 72, "registering")
         register_uninstall_entry(install_root, target_exe, uninstall_exe, shortcut_icon)
+        _report(progress, 86, "shortcuts")
         write_shortcuts(target_exe, shortcut_icon, options)
 
         if options.launch_after_install:
+            _report(progress, 96, "launching")
             subprocess.Popen([str(target_exe)], cwd=str(install_root))
+        _report(progress, 100, "completed")
     finally:
         shutil.rmtree(temp_root, ignore_errors=True)
+
+
+def _report(progress: object | None, value: int, status_key: str) -> None:
+    if callable(progress):
+        progress(value, status_key)
 
 
 def validate_install_root(install_root: Path, language_code: str = "en") -> None:
@@ -528,6 +566,18 @@ def register_uninstall_entry(install_root: Path, target_exe: Path, uninstall_exe
 def show_message(title: str, text: str, icon_error: bool = False) -> None:
     flags = 0x00000010 if icon_error else 0x00000040
     ctypes.windll.user32.MessageBoxW(None, text, title, flags)
+
+
+def configure_process_dpi_awareness() -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
