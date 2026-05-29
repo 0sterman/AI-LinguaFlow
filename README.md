@@ -26,7 +26,7 @@ python -m translator_app
 
 On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart. API keys can be checked with a real provider request and deleted from local secure storage.
 
-The app uses a LinguaFlow AI icon and Apple-inspired interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
+The app uses a LinguaFlow AI icon and a clean dark interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
 
 Supported providers and default models:
 

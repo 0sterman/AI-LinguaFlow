@@ -113,7 +113,7 @@ History should remain compact and searchable. Keep deletion/clear-history behavi
 - In the main window, right Ctrl+Enter submits the translation request and Enter inserts a newline.
 - Automatic translation after pasted/loaded text should start after about 0.2 seconds.
 - Changing the primary language should update the interface language for the main window, popup, settings, history, and tray labels where practical.
-- Keep the visual style close to the logo: dark graphite surfaces, cool blue accents, clean Apple-like spacing, and no noisy decoration.
+- Keep the visual style close to the logo: dark graphite surfaces, cool blue accents, clean spacing, and no noisy decoration.
 - Do not replace the clipboard with translations automatically; keep explicit copy buttons.
 - Keep the `История` button visible and simple.
 - Settings should expose provider, primary language, API keys, model names, desktop shortcut, and autostart.
