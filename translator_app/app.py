@@ -10,7 +10,7 @@ import pyperclip
 from PySide6.QtCore import QObject, QProcess, QTimer, Qt, QUrl, Signal
 from PySide6.QtGui import QAction, QDesktopServices, QIcon, QPainter, QPixmap, QColor
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QProgressDialog, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from translator_app.config import AppConfig, load_config, save_config
 from translator_app.history import HistoryStore
@@ -136,7 +136,7 @@ class TranslatorApplication(QObject):
         return menu
 
     def _build_icon(self) -> QIcon:
-        icon_path = resource_path("assets/app_icon.ico")
+        icon_path = resource_path("assets/app_icon.png")
         if icon_path.exists():
             return QIcon(str(icon_path))
 
@@ -661,7 +661,7 @@ def main() -> int:
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationDisplayName("")
     app.setApplicationName(APP_DISPLAY_NAME)
-    app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.ico"))))
+    app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.png"))))
     single_instance_server = create_single_instance_server()
     if single_instance_server is None:
         return 0
@@ -741,14 +741,12 @@ def show_required_update(app: QApplication, update: UpdateInfo) -> int:
     if answer == QMessageBox.StandardButton.Ok:
         QDesktopServices.openUrl(QUrl(update.release_url))
         try:
-            progress = QProgressDialog("Downloading LinguaFlow AI update...", "", 0, 0)
-            progress.setWindowTitle("LinguaFlow AI update")
-            progress.setCancelButton(None)
-            progress.setWindowModality(Qt.WindowModality.ApplicationModal)
-            progress.show()
-            app.processEvents()
+            QMessageBox.information(
+                None,
+                "LinguaFlow AI update",
+                "The release page has been opened. The installer download will start now.",
+            )
             installer_path = download_installer(update)
-            progress.close()
             QProcess.startDetached(str(installer_path), [])
         except Exception:
             QMessageBox.warning(

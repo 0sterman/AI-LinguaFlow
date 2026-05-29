@@ -58,9 +58,9 @@ def ui_resource_path(relative_path: str) -> Path:
 
 
 def app_icon() -> QIcon:
-    icon = QIcon(str(ui_resource_path("assets/app_icon.ico")))
+    icon = QIcon(str(ui_resource_path("assets/app_icon.png")))
     if icon.isNull():
-        icon = QIcon(str(ui_resource_path("assets/app_icon.png")))
+        icon = QIcon(str(ui_resource_path("assets/app_icon.ico")))
     return icon
 
 MODEL_DESCRIPTIONS = {
