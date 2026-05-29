@@ -12,6 +12,8 @@ $installerSpec = Join-Path $workRoot "spec"
 $tempInstaller = Join-Path $installerDist "LinguaFlow AI Setup.exe"
 $targetInstaller = Join-Path $root "dist\LinguaFlow AI Setup.exe"
 
+Get-Process -Name "LinguaFlow AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "build.ps1")
 if ($LASTEXITCODE -ne 0) {
     throw "Build failed with exit code $LASTEXITCODE"
@@ -50,5 +52,6 @@ if (-not (Test-Path -LiteralPath $tempInstaller)) {
     throw "Installer was not created: $tempInstaller"
 }
 
+Get-Process -Name "LinguaFlow AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Copy-Item -LiteralPath $tempInstaller -Destination $targetInstaller -Force
 Write-Host "Built $targetInstaller"

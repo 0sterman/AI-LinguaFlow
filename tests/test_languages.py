@@ -1,4 +1,10 @@
-from translator_app.languages import default_target_language, detect_language_code, is_probably_chinese, is_probably_russian
+from translator_app.languages import (
+    default_target_language,
+    detect_language_code,
+    is_probably_chinese,
+    is_probably_russian,
+    preferred_target_language,
+)
 
 
 def test_russian_text_routes_to_english() -> None:
@@ -19,6 +25,16 @@ def test_primary_language_controls_default_target() -> None:
 def test_text_in_primary_language_routes_to_fallback() -> None:
     assert default_target_language("Hello, how are you?", "en").code == "ru"
     assert default_target_language("你好，今天怎么样？", "zh").code == "en"
+
+
+def test_preferred_target_language_overrides_default_routing() -> None:
+    assert preferred_target_language("Hello, how are you?", "en", "ru").code == "ru"
+    assert preferred_target_language("Привет, как дела?", "en", "ru").code == "ru"
+
+
+def test_invalid_preferred_target_language_falls_back_to_default_routing() -> None:
+    assert preferred_target_language("Hello, how are you?", "en", "xx").code == "ru"
+    assert preferred_target_language("Hallo, wie geht es dir?", "ru", None).code == "ru"
 
 
 def test_detects_supported_language_hints() -> None:

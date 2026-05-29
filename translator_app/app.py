@@ -21,7 +21,7 @@ from translator_app.hotkey import (
     WindowsKeyStateReader,
 )
 from translator_app.i18n import t
-from translator_app.languages import Language, default_target_language, detect_language_code, get_language
+from translator_app.languages import Language, detect_language_code, get_language, preferred_target_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
 from translator_app.secure_store import ApiKeyStore
 from translator_app.startup import (
@@ -362,7 +362,7 @@ class TranslatorApplication(QObject):
             return
 
         self.original_text = text
-        target_language = default_target_language(text, self.config.primary_language)
+        target_language = preferred_target_language(text, self.config.primary_language, self.config.target_language)
         self.main_window.load_source_text(text, target_language.code)
         self.open_main_window(stay_on_top=True)
 
@@ -378,12 +378,14 @@ class TranslatorApplication(QObject):
             return
 
         self.original_text = text
-        self.translate_text(text, default_target_language(text, self.config.primary_language))
+        target_language = preferred_target_language(text, self.config.primary_language, self.config.target_language)
+        self.translate_text(text, target_language)
 
     def retranslate(self, language_code: str) -> None:
         if not self.original_text.strip():
             self.popup.show_error("Сначала скопируйте текст через Ctrl+C+C")
             return
+        self.save_target_language(language_code)
         self.translate_text(self.original_text, get_language(language_code))
 
     def translate_text(self, text: str, target_language: Language) -> None:

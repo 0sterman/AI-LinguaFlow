@@ -135,6 +135,16 @@ def default_target_language(text: str, primary_language_code: str = "ru") -> Lan
     return primary
 
 
+def preferred_target_language(
+    text: str,
+    primary_language_code: str = "ru",
+    preferred_language_code: str | None = None,
+) -> Language:
+    if preferred_language_code in LANGUAGE_BY_CODE:
+        return get_language(preferred_language_code)
+    return default_target_language(text, primary_language_code)
+
+
 def get_language(code: str) -> Language:
     try:
         return LANGUAGE_BY_CODE[code]
