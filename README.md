@@ -64,7 +64,7 @@ The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
 ```
 
-The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It includes a setup wizard with a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
+The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It defaults to `Program Files`, requests administrator rights, includes a setup wizard with language selection, a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
 
 ## Notes
 

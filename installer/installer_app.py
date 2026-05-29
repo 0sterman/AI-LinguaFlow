@@ -18,6 +18,7 @@ APP_NAME = "LinguaFlow AI"
 APP_VERSION = "0.1.0"
 APP_PUBLISHER = "LinguaFlow AI"
 APP_EXE = "LinguaFlow AI.exe"
+WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
 SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 PAYLOAD_ZIP = "LinguaFlowAI_payload.zip"
 MARKER_FILE = ".linguaflow-install"
@@ -33,7 +34,8 @@ INSTALLER_COPY = {
         "highlight": "Select text anywhere, press Ctrl+C+C, and get a fast popup translation.",
         "details": (
             "The app also supports normal manual translation, local translation history, "
-            "and your choice of OpenAI, Google Gemini, or Anthropic Claude."
+            "and your choice of OpenAI, Google Gemini, or Anthropic Claude. "
+            "Default installation folder: Program Files."
         ),
         "api_note": (
             "After installation, enter your own API key in Settings -> API. "
@@ -78,7 +80,8 @@ INSTALLER_COPY = {
         "highlight": "Выделите текст в любом приложении, нажмите Ctrl+C+C и получите быстрый popup-перевод.",
         "details": (
             "Приложение также поддерживает обычный ручной перевод, локальную историю переводов "
-            "и выбор OpenAI, Google Gemini или Anthropic Claude."
+            "и выбор OpenAI, Google Gemini или Anthropic Claude. "
+            "Папка установки по умолчанию: Program Files."
         ),
         "api_note": (
             "После установки нужно ввести личный API-ключ в Настройки -> API. "
@@ -133,7 +136,7 @@ class InstallerWizard:
         self.root.resizable(False, False)
         self._apply_window_icon()
 
-        default_dir = Path(os.environ["LOCALAPPDATA"]) / "Programs" / APP_NAME
+        default_dir = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / APP_NAME
         self.language_code = StringVar(value="en")
         self.install_dir = StringVar(value=str(default_dir))
         self.desktop_shortcut = BooleanVar(value=True)
@@ -160,7 +163,7 @@ class InstallerWizard:
             child.destroy()
 
     def _show_welcome_page(self) -> None:
-        self.root.title(self.t("title"))
+        self.root.title(WINDOW_TITLE)
         self.status.set(self.t("ready"))
         self._clear_container()
 
@@ -191,7 +194,7 @@ class InstallerWizard:
         self._build_buttons([(self.t("cancel"), self.root.destroy), (self.t("continue"), self._show_options_page)])
 
     def _show_options_page(self) -> None:
-        self.root.title(self.t("title"))
+        self.root.title(WINDOW_TITLE)
         self.status.set(self.t("ready"))
         self._clear_container()
 
@@ -238,7 +241,10 @@ class InstallerWizard:
         title_box = ttk.Frame(header)
         title_box.pack(side="left", fill="x", expand=True)
         ttk.Label(title_box, text=title, font=("Segoe UI", 20, "bold")).pack(anchor="w")
-        ttk.Label(title_box, text=APP_NAME, foreground="#246b92").pack(anchor="w", pady=(2, 0))
+        ttk.Label(title_box, text="Popup Translator - © Roman Ostroumov / Oster", foreground="#246b92").pack(
+            anchor="w",
+            pady=(2, 0),
+        )
 
     def _build_buttons(self, buttons: list[tuple[str, object]]) -> None:
         button_row = ttk.Frame(self.container)
@@ -264,7 +270,7 @@ class InstallerWizard:
                 pass
 
     def _load_logo(self) -> PhotoImage | None:
-        image_path = resource_path("app_icon.png")
+        image_path = resource_path("installer_logo.png")
         if not image_path.exists():
             return None
         try:
@@ -406,11 +412,11 @@ def stop_running_app() -> None:
 
 def write_shortcuts(target_exe: Path, icon_path: Path, options: InstallOptions) -> None:
     if options.desktop_shortcut:
-        desktop = Path(os.path.expanduser("~")) / "Desktop"
+        desktop = Path(os.environ.get("PUBLIC", str(Path.home()))) / "Desktop"
         write_url_shortcut(desktop / SHORTCUT_NAME, target_exe, icon_path)
 
     if options.start_menu_shortcut:
-        start_menu = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+        start_menu = Path(os.environ.get("ProgramData", os.environ["APPDATA"])) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
         write_url_shortcut(start_menu / SHORTCUT_NAME, target_exe, icon_path)
 
 
@@ -437,8 +443,11 @@ def write_uninstaller(install_root: Path) -> None:
         f'Get-Process -Name "{APP_NAME}" -ErrorAction SilentlyContinue | Stop-Process -Force',
         "$installRoot = Split-Path -Parent $MyInvocation.MyCommand.Path",
         f'Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath("Desktop")) "{SHORTCUT_NAME}") -Force',
+        f'Remove-Item -LiteralPath (Join-Path $env:PUBLIC "Desktop\\{SHORTCUT_NAME}") -Force',
         f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\{SHORTCUT_NAME}") -Force',
+        f'Remove-Item -LiteralPath (Join-Path $env:ProgramData "Microsoft\\Windows\\Start Menu\\Programs\\{SHORTCUT_NAME}") -Force',
         f'Remove-Item -LiteralPath (Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{SHORTCUT_NAME}") -Force',
+        f'Remove-Item -LiteralPath "HKLM:\\{UNINSTALL_KEY}" -Recurse -Force',
         f'Remove-Item -LiteralPath "HKCU:\\{UNINSTALL_KEY}" -Recurse -Force',
         '$deleteCommand = \'/c timeout /t 2 /nobreak >nul & rmdir /s /q "\' + $installRoot + \'"\'',
         'Start-Process -FilePath $env:ComSpec -WorkingDirectory $env:TEMP -WindowStyle Hidden -ArgumentList $deleteCommand',
@@ -451,7 +460,14 @@ def register_uninstall_entry(install_root: Path, target_exe: Path) -> None:
     uninstall_command = f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{uninstall_script}"'
     estimated_size_kb = sum(file.stat().st_size for file in install_root.rglob("*") if file.is_file()) // 1024
 
-    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, UNINSTALL_KEY) as key:
+    try:
+        root = winreg.HKEY_LOCAL_MACHINE
+        key = winreg.CreateKey(root, UNINSTALL_KEY)
+    except PermissionError:
+        root = winreg.HKEY_CURRENT_USER
+        key = winreg.CreateKey(root, UNINSTALL_KEY)
+
+    with key:
         winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, APP_NAME)
         winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, APP_VERSION)
         winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, APP_PUBLISHER)
