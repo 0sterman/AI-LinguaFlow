@@ -21,6 +21,7 @@ SHORTCUT_NAMES = ("LinguaFlow AI Translator.lnk", "LinguaFlow AI Translator.url"
 class UninstallerWindow:
     def __init__(self) -> None:
         configure_process_dpi_awareness()
+        self.install_root = determine_install_root()
         self.root = Tk()
         self.root.title(WINDOW_TITLE)
         self.root.geometry("660x460")
@@ -30,7 +31,6 @@ class UninstallerWindow:
         self.status = StringVar(value="Ready to uninstall")
         self.progress_value = DoubleVar(value=0)
 
-        self.install_root = Path(sys.executable).resolve().parent
         frame = ttk.Frame(self.root, padding=24)
         frame.pack(fill="both", expand=True)
         frame.columnconfigure(0, weight=1)
@@ -100,7 +100,10 @@ class UninstallerWindow:
                 pass
 
     def install_root_icon(self) -> Path:
-        return Path(sys.executable).resolve().parent / "_internal" / "assets" / "app_icon.ico"
+        bundled_icon = Path(sys.executable).resolve().parent / "_internal" / "assets" / "app_icon.ico"
+        if bundled_icon.exists():
+            return bundled_icon
+        return self.install_root / "_internal" / "assets" / "app_icon.ico"
 
     def _confirm_uninstall(self) -> None:
         if not messagebox.askyesno(WINDOW_TITLE, "Uninstall LinguaFlow AI now?"):
@@ -184,6 +187,78 @@ def remove_registry_entries() -> None:
             pass
 
 
+def determine_install_root() -> Path:
+    args = sys.argv[1:]
+    for index, arg in enumerate(args):
+        if arg == "--install-root" and index + 1 < len(args):
+            return Path(args[index + 1]).expanduser().resolve()
+        if arg.startswith("--install-root="):
+            return Path(arg.split("=", 1)[1]).expanduser().resolve()
+
+    registered_root = read_registered_install_location()
+    if registered_root is not None:
+        return registered_root
+    return Path(sys.executable).resolve().parent
+
+
+def read_registered_install_location() -> Path | None:
+    if sys.platform != "win32":
+        return None
+    access_masks = (winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0), winreg.KEY_READ)
+    for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+        for access in access_masks:
+            try:
+                with winreg.OpenKey(root, UNINSTALL_KEY, 0, access) as key:
+                    value, _ = winreg.QueryValueEx(key, "InstallLocation")
+            except OSError:
+                continue
+            path = Path(str(value)).expanduser()
+            if path.exists():
+                return path.resolve()
+    return None
+
+
+def is_user_admin() -> bool:
+    if sys.platform != "win32":
+        return True
+    try:
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except Exception:
+        return False
+
+
+def needs_admin_for_path(path: Path) -> bool:
+    if sys.platform != "win32":
+        return False
+    program_dirs = [
+        os.environ.get("ProgramFiles"),
+        os.environ.get("ProgramFiles(x86)"),
+    ]
+    path_text = str(path.resolve()).casefold()
+    for program_dir in program_dirs:
+        if program_dir and path_text.startswith(str(Path(program_dir).resolve()).casefold()):
+            return True
+    return False
+
+
+def relaunch_elevated(install_root: Path, quiet: bool) -> bool:
+    if sys.platform != "win32" or is_user_admin() or not needs_admin_for_path(install_root):
+        return False
+    params = ["--install-root", str(install_root)]
+    if quiet:
+        params.append("--quiet")
+    arguments = subprocess.list2cmdline(params)
+    result = ctypes.windll.shell32.ShellExecuteW(
+        None,
+        "runas",
+        sys.executable,
+        arguments,
+        str(Path(sys.executable).resolve().parent),
+        1,
+    )
+    return int(result) > 32
+
+
 def schedule_install_folder_removal(install_root: Path) -> None:
     script_path = Path(tempfile.gettempdir()) / "uninstall_linguaflow_cleanup.cmd"
     script_path.write_text(
@@ -234,8 +309,12 @@ def configure_process_dpi_awareness() -> None:
 def main() -> int:
     try:
         configure_process_dpi_awareness()
-        if "--quiet" in sys.argv:
-            uninstall(Path(sys.executable).resolve().parent)
+        install_root = determine_install_root()
+        quiet = "--quiet" in sys.argv
+        if relaunch_elevated(install_root, quiet):
+            return 0
+        if quiet:
+            uninstall(install_root)
             return 0
         return UninstallerWindow().run()
     except Exception as exc:  # noqa: BLE001 - last-resort UI fallback.
