@@ -159,9 +159,33 @@ class TranslatorApplication(QObject):
         self.main_window.show()
         self.main_window.raise_()
         self.main_window.activateWindow()
+        if stay_on_top:
+            self._force_main_window_to_front()
 
     def release_main_window_top_hint(self) -> None:
         return
+
+    def _force_main_window_to_front(self) -> None:
+        if not sys.platform.startswith("win"):
+            return
+        try:
+            hwnd = int(self.main_window.winId())
+            if not hwnd:
+                return
+            user32 = ctypes.windll.user32
+            sw_shownormal = 1
+            hwnd_topmost = -1
+            hwnd_notopmost = -2
+            swp_nosize = 0x0001
+            swp_nomove = 0x0002
+            swp_showwindow = 0x0040
+            flags = swp_nomove | swp_nosize | swp_showwindow
+            user32.ShowWindow(hwnd, sw_shownormal)
+            user32.SetWindowPos(hwnd, hwnd_topmost, 0, 0, 0, 0, flags)
+            user32.SetWindowPos(hwnd, hwnd_notopmost, 0, 0, 0, 0, flags)
+            user32.SetForegroundWindow(hwnd)
+        except Exception:
+            return
 
     def save_target_language(self, language_code: str) -> None:
         if language_code not in {"ru", "en", "de", "es", "zh"}:

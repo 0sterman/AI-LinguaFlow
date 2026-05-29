@@ -148,8 +148,8 @@ class InstallerWizard:
     def __init__(self) -> None:
         configure_process_dpi_awareness()
         self.root = Tk()
-        self.root.geometry("760x500")
-        self.root.minsize(760, 500)
+        self.root.geometry("800x600")
+        self.root.minsize(800, 600)
         self.root.resizable(False, False)
         self._apply_window_icon()
 
