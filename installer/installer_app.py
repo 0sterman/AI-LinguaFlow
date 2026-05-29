@@ -16,7 +16,7 @@ from tkinter import BooleanVar, PhotoImage, StringVar, Tk, filedialog, messagebo
 
 APP_NAME = "LinguaFlow AI"
 APP_VERSION = "0.1.0"
-APP_PUBLISHER = "LinguaFlow AI"
+APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
 SHORTCUT_NAME = "LinguaFlow AI Translator.url"

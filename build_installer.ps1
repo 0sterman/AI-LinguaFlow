@@ -39,6 +39,7 @@ python -m PyInstaller `
     --uac-admin `
     --name "LinguaFlow AI Setup" `
     --icon (Join-Path $root "assets\app_icon.ico") `
+    --version-file (Join-Path $root "version_info_setup.txt") `
     --add-data "$zipPath;." `
     --add-data "$(Join-Path $root "assets\app_icon.ico");." `
     --add-data "$(Join-Path $root "assets\app_icon.png");." `
@@ -58,4 +59,5 @@ if (-not (Test-Path -LiteralPath $tempInstaller)) {
 
 Get-Process -Name "LinguaFlow AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Copy-Item -LiteralPath $tempInstaller -Destination $targetInstaller -Force
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "code_sign.ps1") -Path $targetInstaller
 Write-Host "Built $targetInstaller"

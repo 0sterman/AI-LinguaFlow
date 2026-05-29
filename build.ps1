@@ -8,6 +8,7 @@ python -m PyInstaller `
   --windowed `
   --name "LinguaFlow AI" `
   --icon assets\app_icon.ico `
+  --version-file version_info_app.txt `
   --add-data "assets\app_icon.ico;assets" `
   --add-data "assets\app_icon.png;assets" `
   --add-data "assets\dropdown_arrow.svg;assets" `
@@ -17,5 +18,7 @@ python -m PyInstaller `
 if ($LASTEXITCODE -ne 0) {
   throw "PyInstaller failed with exit code $LASTEXITCODE"
 }
+
+& powershell -NoProfile -ExecutionPolicy Bypass -File .\code_sign.ps1 -Path "dist\LinguaFlow AI\LinguaFlow AI.exe"
 
 Write-Host "Built dist\LinguaFlow AI\LinguaFlow AI.exe"

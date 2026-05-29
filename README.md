@@ -64,7 +64,9 @@ The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
 ```
 
-The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It defaults to `Program Files`, requests administrator rights, includes a setup wizard with language selection, a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
+The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It defaults to `Program Files`, requests administrator rights, includes publisher/version metadata, a setup wizard with language selection, a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
+
+To remove the Windows `Unknown publisher` warning, sign the EXE files with a trusted code-signing certificate. The build scripts will sign automatically when either `CODESIGN_CERT_SHA1` or `CODESIGN_CERT_PATH` is set. Optional variables: `CODESIGN_CERT_PASSWORD`, `CODESIGN_TIMESTAMP_URL`.
 
 ## Notes
 
