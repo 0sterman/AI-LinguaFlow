@@ -12,6 +12,7 @@ Default behavior:
 - The interface follows the selected primary language.
 - The popup can retranslate manually to any supported language.
 - In the main window, press right `Ctrl+Enter` to translate pasted text; `Enter` keeps working as a normal new line.
+- After text is pasted or loaded into the main window, automatic translation starts after about `0.2` seconds.
 - Translation history is saved locally after installation under your Windows user profile.
 
 ## Setup

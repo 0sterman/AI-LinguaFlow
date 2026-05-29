@@ -194,6 +194,7 @@ def star_rating(value: int) -> str:
 APP_DISPLAY_NAME = "LinguaFlow AI"
 APP_WINDOW_TITLE = "Oster - LinguaFlow AI - Popup Translator"
 INFO_BUTTON_SIZE = 34
+AUTO_TRANSLATE_DELAY_MS = 200
 OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
 GEMINI_KEYS_URL = "https://aistudio.google.com/api-keys"
 ANTHROPIC_KEYS_URL = "https://console.anthropic.com/settings/keys"
@@ -335,7 +336,7 @@ GUIDE_COPY = {
             ("Быстрый popup-перевод", [
                 "Выделите текст в браузере, PDF, письме или редакторе.",
                 "Нажмите Ctrl+C, не отпуская Ctrl нажмите C ещё раз. Окно LinguaFlow AI откроется поверх остальных окон.",
-                "Текст вставится автоматически и начнёт переводиться примерно через 1,5 секунды.",
+                "Текст вставится автоматически и начнёт переводиться примерно через 0,2 секунды.",
             ]),
             ("Обычный перевод", [
                 "Откройте приложение через ярлык, трей или окно программы.",
@@ -366,7 +367,7 @@ GUIDE_COPY = {
             ("Fast popup translation", [
                 "Select text in a browser, PDF, email, or editor.",
                 "Press Ctrl+C, keep Ctrl held, then press C again. LinguaFlow AI opens above other windows.",
-                "The selected text is inserted automatically and starts translating after about 1.5 seconds.",
+                "The selected text is inserted automatically and starts translating after about 0.2 seconds.",
             ]),
             ("Normal translation", [
                 "Open the app from the shortcut, tray, or main window.",
@@ -397,7 +398,7 @@ GUIDE_COPY = {
             ("Schnelle Popup-Übersetzung", [
                 "Markieren Sie Text im Browser, PDF, in E-Mails oder im Editor.",
                 "Drücken Sie Ctrl+C, halten Sie Ctrl gedrückt und drücken Sie C erneut. LinguaFlow AI öffnet sich über anderen Fenstern.",
-                "Der Text wird automatisch eingefügt und nach etwa 1,5 Sekunden übersetzt.",
+                "Der Text wird automatisch eingefügt und nach etwa 0,2 Sekunden übersetzt.",
             ]),
             ("Normale Übersetzung", [
                 "Öffnen Sie die App über Verknüpfung, Tray oder Hauptfenster.",
@@ -428,7 +429,7 @@ GUIDE_COPY = {
             ("Traducción rápida emergente", [
                 "Selecciona texto en un navegador, PDF, correo o editor.",
                 "Pulsa Ctrl+C, mantén Ctrl y pulsa C otra vez. LinguaFlow AI se abrirá encima de las demás ventanas.",
-                "El texto se inserta automáticamente y empieza a traducirse tras unos 1,5 segundos.",
+                "El texto se inserta automáticamente y empieza a traducirse tras unos 0,2 segundos.",
             ]),
             ("Traducción normal", [
                 "Abre la app desde el acceso directo, la bandeja o la ventana principal.",
@@ -459,7 +460,7 @@ GUIDE_COPY = {
             ("快速弹窗翻译", [
                 "在浏览器、PDF、邮件或编辑器中选择文本。",
                 "按 Ctrl+C，保持 Ctrl 不松开，再按一次 C。LinguaFlow AI 会在其他窗口上方打开。",
-                "所选文本会自动插入，并在约 1.5 秒后开始翻译。",
+                "所选文本会自动插入，并在约 0.2 秒后开始翻译。",
             ]),
             ("普通翻译", [
                 "通过快捷方式、托盘或主窗口打开应用。",
@@ -1018,7 +1019,7 @@ class MainTranslatorWindow(QWidget):
         self.source_text.textChanged.connect(self.schedule_auto_translate)
         self.auto_translate_timer = QTimer(self)
         self.auto_translate_timer.setSingleShot(True)
-        self.auto_translate_timer.setInterval(1500)
+        self.auto_translate_timer.setInterval(AUTO_TRANSLATE_DELAY_MS)
         self.auto_translate_timer.timeout.connect(self.emit_auto_translate_requested)
         self.last_submitted_text = ""
 
