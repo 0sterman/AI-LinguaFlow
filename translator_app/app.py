@@ -136,9 +136,12 @@ class TranslatorApplication(QObject):
         return menu
 
     def _build_icon(self) -> QIcon:
-        icon_path = resource_path("assets/app_icon.png")
+        icon_path = resource_path("assets/app_icon.ico")
         if icon_path.exists():
             return QIcon(str(icon_path))
+        png_icon_path = resource_path("assets/app_icon.png")
+        if png_icon_path.exists():
+            return QIcon(str(png_icon_path))
 
         pixmap = QPixmap(64, 64)
         pixmap.fill(QColor("#2f6f73"))
@@ -685,7 +688,10 @@ def main() -> int:
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationDisplayName("")
     app.setApplicationName(APP_DISPLAY_NAME)
-    app.setWindowIcon(QIcon(str(resource_path("assets/app_icon.png"))))
+    icon = QIcon(str(resource_path("assets/app_icon.ico")))
+    if icon.isNull():
+        icon = QIcon(str(resource_path("assets/app_icon.png")))
+    app.setWindowIcon(icon)
     single_instance_server = create_single_instance_server()
     if single_instance_server is None:
         return 0
