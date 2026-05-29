@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from translator_app.platform_text import platform_text
+
 
 SUPPORTED_UI_LANGUAGES = {"ru", "en", "de", "es", "zh"}
 
@@ -385,6 +387,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 def t(language_code: str, key: str, **values: str) -> str:
     language = language_code if language_code in SUPPORTED_UI_LANGUAGES else "ru"
     text = TRANSLATIONS.get(language, {}).get(key) or TRANSLATIONS["ru"].get(key) or key
+    text = platform_text(text)
     if values:
         return text.format(**values)
     return text

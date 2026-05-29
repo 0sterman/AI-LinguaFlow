@@ -24,6 +24,7 @@ from translator_app.hotkey import (
 from translator_app.i18n import t
 from translator_app.languages import Language, detect_language_code, get_language, preferred_target_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
+from translator_app.platform_text import popup_shortcut
 from translator_app.secure_store import ApiKeyStore
 from translator_app.startup import (
     is_desktop_shortcut_enabled,
@@ -68,6 +69,7 @@ class TranslatorApplication(QObject):
         self.last_ctrl_down_at = 0.0
         self.last_hotkey_at = 0.0
         self.keyboard_hotkey_handle = None
+        self.mac_hotkey_listener = None
         self.signals = AppSignals()
         self.keyboard_hook = None
         self.original_text = ""
@@ -107,6 +109,14 @@ class TranslatorApplication(QObject):
         if self.config.desktop_shortcut:
             self.config.desktop_shortcut = is_desktop_shortcut_enabled()
         self.missing_api_key_notice_shown = False
+
+    def _hotkey_permission_message(self) -> str:
+        if sys.platform == "darwin":
+            return (
+                "Не удалось включить macOS hotkey listener. "
+                "Разрешите LinguaFlow AI доступ в System Settings -> Privacy & Security -> Accessibility."
+            )
+        return "Не удалось включить Windows hotkey listener."
 
     def _build_menu(self) -> QMenu:
         menu = QMenu()
@@ -172,6 +182,23 @@ class TranslatorApplication(QObject):
         return
 
     def _force_main_window_to_front(self) -> None:
+        if sys.platform == "darwin":
+            try:
+                self.main_window.raise_()
+                self.main_window.activateWindow()
+                QProcess.startDetached(
+                    "osascript",
+                    [
+                        "-e",
+                        (
+                            'tell application "System Events" to set frontmost of '
+                            f"(first process whose unix id is {QApplication.applicationPid()}) to true"
+                        ),
+                    ],
+                )
+            except Exception:
+                pass
+            return
         if not sys.platform.startswith("win"):
             return
         try:
@@ -268,7 +295,23 @@ class TranslatorApplication(QObject):
                 and self.hotkey_poll_timer is None
                 and self.clipboard_sequence_timer is None
             ):
-                self.popup.show_error("Не удалось включить Windows hotkey listener.")
+                self.popup.show_error(self._hotkey_permission_message())
+            return
+
+        if sys.platform == "darwin":
+            if self.mac_hotkey_listener is not None:
+                return
+            try:
+                from translator_app.hotkey_macos import MacCommandCHotkeyListener
+
+                self.mac_hotkey_listener = MacCommandCHotkeyListener(lambda: self.signals.hotkeyTriggered.emit())
+                self.mac_hotkey_listener.start()
+            except ImportError:
+                self.mac_hotkey_listener = None
+                self.popup.show_error("Не установлен модуль pynput. Установите macOS-зависимости из requirements-macos.txt.")
+            except Exception:
+                self.mac_hotkey_listener = None
+                self.popup.show_error(self._hotkey_permission_message())
             return
 
         try:
@@ -333,6 +376,12 @@ class TranslatorApplication(QObject):
             self.signals.hotkeyTriggered.emit()
 
     def stop_hotkey_listener(self) -> None:
+        if self.mac_hotkey_listener is not None:
+            try:
+                self.mac_hotkey_listener.stop()
+            except Exception:
+                pass
+            self.mac_hotkey_listener = None
         if self.keyboard_hotkey_handle is not None:
             try:
                 import keyboard
@@ -422,7 +471,7 @@ class TranslatorApplication(QObject):
 
     def retranslate(self, language_code: str) -> None:
         if not self.original_text.strip():
-            self.popup.show_error("Сначала скопируйте текст через Ctrl+C+C")
+            self.popup.show_error(f"Сначала скопируйте текст через {popup_shortcut()}")
             return
         self.save_target_language(language_code)
         self.translate_text(self.original_text, get_language(language_code))

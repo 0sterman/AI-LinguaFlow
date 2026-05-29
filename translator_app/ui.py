@@ -36,6 +36,7 @@ from translator_app.config import AppConfig, DEFAULT_MODELS, MODEL_OPTIONS
 from translator_app.history import HistoryRecord
 from translator_app.i18n import t
 from translator_app.languages import LANGUAGES, Language
+from translator_app.platform_text import is_macos, platform_text
 
 
 PROVIDERS = (
@@ -846,7 +847,12 @@ class SubmitTextEdit(CleanTextEdit):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
-            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            submit_modifier = (
+                Qt.KeyboardModifier.MetaModifier
+                if is_macos()
+                else Qt.KeyboardModifier.ControlModifier
+            )
+            if event.modifiers() & submit_modifier:
                 self.submitRequested.emit()
                 event.accept()
                 return
@@ -1732,14 +1738,14 @@ class SettingsDialog(QDialog):
 
         sections: list[str] = []
         for section_title, section_items in copy["sections"]:
-            item_html = "".join(f"<li>{escape(item)}</li>" for item in section_items)
-            sections.append(f"<h2>{escape(section_title)}</h2><ul>{item_html}</ul>")
+            item_html = "".join(f"<li>{escape(platform_text(item))}</li>" for item in section_items)
+            sections.append(f"<h2>{escape(platform_text(section_title))}</h2><ul>{item_html}</ul>")
 
         links = "".join(
             "<li>"
             f"<strong>{escape(provider)}</strong>: "
             f"<a href='{escape(url)}'>{escape(url)}</a>"
-            f"<div class='note'>{escape(description)}</div>"
+            f"<div class='note'>{escape(platform_text(description))}</div>"
             "</li>"
             for provider, url, description in copy["links"]
         )
@@ -1758,7 +1764,7 @@ class SettingsDialog(QDialog):
             "</style>"
             "<div class='card'>"
             f"<h1>{escape(t(self.ui_language, 'usage_guide'))}</h1>"
-            f"<p class='intro'>{escape(copy['intro'])}</p>"
+            f"<p class='intro'>{escape(platform_text(copy['intro']))}</p>"
             f"{''.join(sections)}"
             f"<h2>{escape(copy['links_title'])}</h2><ul>{links}</ul>"
             "</div>"
@@ -1777,7 +1783,7 @@ class SettingsDialog(QDialog):
         border_color = "#2b3545" if dark else "#c7d3e0"
 
         def items(name: str) -> str:
-            return "".join(f"<li>{escape(item)}</li>" for item in copy[name])
+            return "".join(f"<li>{escape(platform_text(item))}</li>" for item in copy[name])
 
         return (
             "<style>"
@@ -1793,7 +1799,7 @@ class SettingsDialog(QDialog):
             "<div class='card'>"
             f"<h1>{escape(APP_DISPLAY_NAME)}</h1>"
             f"<div class='version'>Version {escape(__version__)} · {escape(APP_WINDOW_TITLE)}</div>"
-            f"<p class='intro'>{escape(copy['intro'])}</p>"
+            f"<p class='intro'>{escape(platform_text(copy['intro']))}</p>"
             f"<h2>{escape(copy['rights_title'])}</h2><ul>{items('rights')}</ul>"
             f"<h2>{escape(copy['privacy_title'])}</h2><ul>{items('privacy')}</ul>"
             f"<h2>{escape(copy['disclaimer_title'])}</h2><ul>{items('disclaimer')}</ul>"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import tempfile
 import urllib.error
 import urllib.request
@@ -92,9 +93,17 @@ def _version_parts(value: str) -> list[int]:
     return [int(part) for part in normalized.split(".")]
 
 
-def _find_installer_asset(payload: dict) -> dict | None:
+def _find_installer_asset(payload: dict, platform: str | None = None) -> dict | None:
     assets = payload.get("assets")
     if not isinstance(assets, list):
+        return None
+    platform = platform or sys.platform
+    if platform == "darwin":
+        for asset in assets:
+            name = str(asset.get("name") or "").lower()
+            url = str(asset.get("browser_download_url") or "")
+            if name.endswith(".dmg") and url:
+                return asset
         return None
     for asset in assets:
         name = str(asset.get("name") or "").lower()

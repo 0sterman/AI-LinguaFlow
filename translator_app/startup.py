@@ -13,14 +13,20 @@ URL_APP_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 LEGACY_SHORTCUT_NAME = "WindowsTranslator.url"
 OLD_APP_SHORTCUT_NAME = "AI-LinguaFlow.url"
 PREVIOUS_APP_SHORTCUT_NAME = "AI LinguaFlow.url"
+MACOS_BUNDLE_ID = "com.oster.linguaflow"
+MACOS_LAUNCH_AGENT_NAME = f"{MACOS_BUNDLE_ID}.plist"
 
 
 def startup_shortcut_path() -> Path:
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "LaunchAgents" / MACOS_LAUNCH_AGENT_NAME
     startup = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
     return startup / APP_SHORTCUT_NAME
 
 
 def desktop_shortcut_path() -> Path:
+    if sys.platform == "darwin":
+        return desktop_dir() / "LinguaFlow AI.app"
     return desktop_dir() / APP_SHORTCUT_NAME
 
 
@@ -34,6 +40,8 @@ def desktop_dir() -> Path:
 def current_launch_target() -> str:
     if getattr(sys, "frozen", False):
         return sys.executable
+    if sys.platform == "darwin":
+        return str(Path(__file__).resolve().parents[1] / "run_macos.sh")
     return str(Path(__file__).resolve().parents[1] / "run_translator.bat")
 
 
@@ -49,6 +57,13 @@ def current_icon_target() -> str:
 
 def set_start_with_windows(enabled: bool) -> None:
     shortcut = startup_shortcut_path()
+    if sys.platform == "darwin":
+        if enabled:
+            shortcut.parent.mkdir(parents=True, exist_ok=True)
+            shortcut.write_text(_macos_launch_agent_plist(current_launch_target()), encoding="utf-8")
+        elif shortcut.exists():
+            shortcut.unlink()
+        return
     if enabled:
         shortcut.parent.mkdir(parents=True, exist_ok=True)
         _write_shortcut(shortcut, current_launch_target(), current_icon_target())
@@ -66,6 +81,18 @@ def is_start_with_windows_enabled() -> bool:
 
 def set_desktop_shortcut(enabled: bool) -> None:
     shortcut = desktop_shortcut_path()
+    if sys.platform == "darwin":
+        if enabled:
+            shortcut.parent.mkdir(parents=True, exist_ok=True)
+            target = _macos_app_bundle_path()
+            if target is None:
+                return
+            if shortcut.exists() or shortcut.is_symlink():
+                shortcut.unlink()
+            shortcut.symlink_to(target, target_is_directory=True)
+        elif shortcut.exists() or shortcut.is_symlink():
+            shortcut.unlink()
+        return
     if enabled:
         shortcut.parent.mkdir(parents=True, exist_ok=True)
         created_shortcut = _write_shortcut(shortcut, current_launch_target(), current_icon_target())
@@ -83,6 +110,34 @@ def is_desktop_shortcut_enabled() -> bool:
 
 def ensure_desktop_shortcut() -> None:
     set_desktop_shortcut(True)
+
+
+def _macos_app_bundle_path() -> Path | None:
+    if getattr(sys, "frozen", False):
+        executable = Path(sys.executable).resolve()
+        for parent in executable.parents:
+            if parent.suffix == ".app":
+                return parent
+    return None
+
+
+def _macos_launch_agent_plist(target: str) -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
+        '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+        '<plist version="1.0">\n'
+        '<dict>\n'
+        f'  <key>Label</key><string>{MACOS_BUNDLE_ID}</string>\n'
+        "  <key>ProgramArguments</key>\n"
+        "  <array>\n"
+        f"    <string>{target}</string>\n"
+        "  </array>\n"
+        "  <key>RunAtLoad</key><true/>\n"
+        "  <key>KeepAlive</key><false/>\n"
+        "</dict>\n"
+        "</plist>\n"
+    )
 
 
 def _write_url_shortcut(path: Path, target: str, icon: str) -> None:
