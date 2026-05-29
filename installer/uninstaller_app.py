@@ -23,8 +23,8 @@ class UninstallerWindow:
         configure_process_dpi_awareness()
         self.root = Tk()
         self.root.title(WINDOW_TITLE)
-        self.root.geometry("620x360")
-        self.root.minsize(620, 360)
+        self.root.geometry("660x460")
+        self.root.minsize(660, 460)
         self.root.resizable(False, False)
         self._apply_window_icon()
         self.status = StringVar(value="Ready to uninstall")
@@ -33,34 +33,59 @@ class UninstallerWindow:
         self.install_root = Path(sys.executable).resolve().parent
         frame = ttk.Frame(self.root, padding=24)
         frame.pack(fill="both", expand=True)
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
 
-        ttk.Label(frame, text="Uninstall LinguaFlow AI", font=("Segoe UI", 18, "bold")).pack(anchor="w")
-        ttk.Label(frame, text=f"Release v{APP_VERSION}", foreground="#246b92").pack(anchor="w", pady=(2, 0))
+        content = ttk.Frame(frame)
+        content.grid(row=0, column=0, sticky="nsew")
+        content.columnconfigure(0, weight=1)
+
+        ttk.Label(content, text="Uninstall LinguaFlow AI", font=("Segoe UI", 18, "bold")).grid(
+            row=0,
+            column=0,
+            sticky="w",
+        )
+        ttk.Label(content, text=f"Release v{APP_VERSION}", foreground="#246b92").grid(
+            row=1,
+            column=0,
+            sticky="w",
+            pady=(2, 0),
+        )
         ttk.Label(
-            frame,
+            content,
             text=(
                 "This will remove LinguaFlow AI from this computer, including Desktop and Start menu shortcuts. "
                 "Your local settings and translation history are kept unless you delete them manually."
             ),
-            wraplength=500,
+            wraplength=580,
             justify="left",
-        ).pack(anchor="w", pady=(16, 0))
-        ttk.Label(frame, text=f"Installed location: {self.install_root}", wraplength=500, justify="left").pack(
-            anchor="w",
+        ).grid(row=2, column=0, sticky="w", pady=(18, 0))
+        ttk.Label(
+            content,
+            text=f"Installed location: {self.install_root}",
+            wraplength=580,
+            justify="left",
+        ).grid(
+            row=3,
+            column=0,
+            sticky="w",
             pady=(14, 0),
         )
-        ttk.Progressbar(frame, mode="determinate", maximum=100, variable=self.progress_value).pack(
-            fill="x",
+        ttk.Progressbar(content, mode="determinate", maximum=100, variable=self.progress_value).grid(
+            row=4,
+            column=0,
+            sticky="ew",
             pady=(18, 0),
         )
-        ttk.Label(frame, textvariable=self.status).pack(anchor="w", pady=(6, 0))
+        ttk.Label(content, textvariable=self.status).grid(row=5, column=0, sticky="w", pady=(8, 0))
 
         button_row = ttk.Frame(frame)
-        button_row.pack(fill="x", side="bottom", pady=(22, 0))
+        button_row.grid(row=1, column=0, sticky="ew", pady=(22, 0))
+        button_row.columnconfigure(0, weight=1)
         self.cancel_button = ttk.Button(button_row, text="Cancel", command=self.root.destroy)
-        self.cancel_button.pack(side="right", padx=(8, 0))
+        self.cancel_button.grid(row=0, column=2, padx=(8, 0))
         self.uninstall_button = ttk.Button(button_row, text="Uninstall", command=self._confirm_uninstall)
-        self.uninstall_button.pack(side="right")
+        self.uninstall_button.grid(row=0, column=1)
 
     def run(self) -> int:
         self.root.mainloop()
