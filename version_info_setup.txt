@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Roman Ostroumov / Oster'),
           StringStruct('FileDescription', 'LinguaFlow AI Setup'),
-          StringStruct('FileVersion', '1.0.8'),
+          StringStruct('FileVersion', '1.0.9'),
           StringStruct('InternalName', 'LinguaFlow AI Setup'),
           StringStruct('LegalCopyright', 'Copyright (c) Roman Ostroumov / Oster'),
           StringStruct('OriginalFilename', 'LinguaFlow AI Setup.exe'),
           StringStruct('ProductName', 'LinguaFlow AI'),
-          StringStruct('ProductVersion', '1.0.8')
+          StringStruct('ProductVersion', '1.0.9')
         ]
       )
     ]),
