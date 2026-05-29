@@ -74,6 +74,7 @@ class TranslatorApplication(QObject):
         self.request_id = 0
         self.manual_request_id = 0
         self.pending_requests: dict[int, tuple[str, str, str, str]] = {}
+        self.raise_main_window_on_next_manual_result = False
 
         self.main_window = MainTranslatorWindow(self.config.primary_language, self.config.target_language)
         self.main_window.set_logo_path(str(resource_path("assets/app_icon.png")))
@@ -164,6 +165,8 @@ class TranslatorApplication(QObject):
         self.main_window.activateWindow()
         if stay_on_top:
             self._force_main_window_to_front()
+            QTimer.singleShot(80, self._force_main_window_to_front)
+            QTimer.singleShot(220, self._force_main_window_to_front)
 
     def release_main_window_top_hint(self) -> None:
         return
@@ -176,17 +179,36 @@ class TranslatorApplication(QObject):
             if not hwnd:
                 return
             user32 = ctypes.windll.user32
-            sw_shownormal = 1
+            kernel32 = ctypes.windll.kernel32
+            sw_restore = 9
             hwnd_topmost = -1
             hwnd_notopmost = -2
             swp_nosize = 0x0001
             swp_nomove = 0x0002
             swp_showwindow = 0x0040
             flags = swp_nomove | swp_nosize | swp_showwindow
-            user32.ShowWindow(hwnd, sw_shownormal)
-            user32.SetWindowPos(hwnd, hwnd_topmost, 0, 0, 0, 0, flags)
-            user32.SetWindowPos(hwnd, hwnd_notopmost, 0, 0, 0, 0, flags)
-            user32.SetForegroundWindow(hwnd)
+            current_thread = kernel32.GetCurrentThreadId()
+            foreground_hwnd = user32.GetForegroundWindow()
+            foreground_thread = user32.GetWindowThreadProcessId(foreground_hwnd, None) if foreground_hwnd else 0
+            target_thread = user32.GetWindowThreadProcessId(hwnd, None)
+            attached_threads: list[int] = []
+            for thread_id in {foreground_thread, target_thread}:
+                if thread_id and thread_id != current_thread:
+                    if user32.AttachThreadInput(current_thread, thread_id, True):
+                        attached_threads.append(thread_id)
+            try:
+                user32.ShowWindow(hwnd, sw_restore)
+                user32.SetWindowPos(hwnd, hwnd_topmost, 0, 0, 0, 0, flags)
+                user32.SetWindowPos(hwnd, hwnd_notopmost, 0, 0, 0, 0, flags)
+                user32.BringWindowToTop(hwnd)
+                user32.SetForegroundWindow(hwnd)
+                user32.SetActiveWindow(hwnd)
+                user32.SetFocus(hwnd)
+                self.main_window.raise_()
+                self.main_window.activateWindow()
+            finally:
+                for thread_id in attached_threads:
+                    user32.AttachThreadInput(current_thread, thread_id, False)
         except Exception:
             return
 
@@ -379,6 +401,7 @@ class TranslatorApplication(QObject):
 
         self.original_text = text
         target_language = preferred_target_language(text, self.config.primary_language, self.config.target_language)
+        self.raise_main_window_on_next_manual_result = True
         self.main_window.load_source_text(text, target_language.code)
         self.open_main_window(stay_on_top=True)
 
@@ -487,11 +510,17 @@ class TranslatorApplication(QObject):
         if request_id != self.manual_request_id:
             return
         self.main_window.set_translation(translated)
+        if self.raise_main_window_on_next_manual_result:
+            self.raise_main_window_on_next_manual_result = False
+            self.open_main_window(stay_on_top=True)
 
     def on_manual_translation_failed(self, request_id: int, message: str, open_settings: bool) -> None:
         if request_id != self.manual_request_id:
             return
         self.main_window.set_error(message)
+        if self.raise_main_window_on_next_manual_result:
+            self.raise_main_window_on_next_manual_result = False
+            self.open_main_window(stay_on_top=True)
         if open_settings:
             QTimer.singleShot(250, self.open_settings)
 
