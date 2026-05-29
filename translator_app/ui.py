@@ -192,7 +192,7 @@ def star_rating(value: int) -> str:
     )
 
 APP_DISPLAY_NAME = "LinguaFlow AI"
-APP_WINDOW_TITLE = "Oster - LinguaFlow AI - Popup Translator"
+APP_WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
 INFO_BUTTON_SIZE = 34
 AUTO_TRANSLATE_DELAY_MS = 200
 OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
