@@ -4,9 +4,10 @@ LinguaFlow AI is a small Windows translator built around a fast `Ctrl+C+C` workf
 
 Hotkeys:
 
-- `Ctrl+C+C`: copy selected text and open the compact translation popup.
-- Right `Ctrl+Enter`: translate text from the main window input field.
-- `Esc`: clear the main window input field.
+`Ctrl+C+C`: fast selected-text translation in the compact popup.
+
+Esc - clear all text
+Ctrl+Enter - translate
 
 Default behavior:
 
@@ -17,7 +18,7 @@ Default behavior:
 - The app supports Russian, English, German, Spanish, and Simplified Chinese.
 - The interface follows the selected primary language.
 - The popup can retranslate manually to any supported language.
-- In the main window, press right `Ctrl+Enter` to translate pasted text; `Enter` keeps working as a normal new line.
+- In the main window, press `Ctrl+Enter` to translate pasted text; `Enter` keeps working as a normal new line.
 - Press `Esc` in the main window input field to clear the source text.
 - After text is pasted or loaded into the main window, automatic translation starts after about `0.2` seconds.
 - Translation history is saved locally after installation under your Windows user profile.
@@ -63,7 +64,7 @@ The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
 ```
 
-The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It installs the app for the current Windows user and shows a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
+The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It includes a setup wizard with a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
 
 ## Notes
 

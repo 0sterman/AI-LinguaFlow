@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from html import escape
 from PySide6.QtCore import QDate, QSize, QTimer, Qt, Signal
-import ctypes
 import sys
 from pathlib import Path
 
@@ -337,12 +336,12 @@ GUIDE_COPY = {
                 "Выделите текст в браузере, PDF, письме или редакторе.",
                 "Нажмите Ctrl+C, не отпуская Ctrl нажмите C ещё раз. Окно LinguaFlow AI откроется поверх остальных окон.",
                 "Текст вставится автоматически и начнёт переводиться примерно через 0,2 секунды.",
-                "В основном окне Right Ctrl+Enter запускает перевод, а Esc очищает поле исходного текста.",
+                "В основном окне Ctrl+Enter запускает перевод, а Esc очищает поле исходного текста.",
             ]),
             ("Обычный перевод", [
                 "Откройте приложение через ярлык, трей или окно программы.",
                 "Выберите язык исходного текста или оставьте Auto, затем выберите язык в поле “На”.",
-                "Вставьте текст и нажмите “Перевести” либо Right Ctrl+Enter. Enter внутри поля оставляет новую строку, Esc очищает поле.",
+                "Вставьте текст и нажмите “Перевести” либо Ctrl+Enter. Enter внутри поля оставляет новую строку, Esc очищает поле.",
             ]),
             ("API-ключи", [
                 "Откройте вкладку API, вставьте ключ выбранного провайдера, нажмите “Проверить”, затем “Сохранить” или “Применить”.",
@@ -369,12 +368,12 @@ GUIDE_COPY = {
                 "Select text in a browser, PDF, email, or editor.",
                 "Press Ctrl+C, keep Ctrl held, then press C again. LinguaFlow AI opens above other windows.",
                 "The selected text is inserted automatically and starts translating after about 0.2 seconds.",
-                "In the main window, Right Ctrl+Enter starts translation and Esc clears the source field.",
+                "In the main window, Ctrl+Enter starts translation and Esc clears the source field.",
             ]),
             ("Normal translation", [
                 "Open the app from the shortcut, tray, or main window.",
                 "Choose the source language or keep Auto, then choose the target language in the To field.",
-                "Paste text and press Translate or Right Ctrl+Enter. Enter inside the text field keeps a new line; Esc clears the field.",
+                "Paste text and press Translate or Ctrl+Enter. Enter inside the text field keeps a new line; Esc clears the field.",
             ]),
             ("API keys", [
                 "Open the API tab, paste the key for the selected provider, press Check, then Save or Apply.",
@@ -401,12 +400,12 @@ GUIDE_COPY = {
                 "Markieren Sie Text im Browser, PDF, in E-Mails oder im Editor.",
                 "Drücken Sie Ctrl+C, halten Sie Ctrl gedrückt und drücken Sie C erneut. LinguaFlow AI öffnet sich über anderen Fenstern.",
                 "Der Text wird automatisch eingefügt und nach etwa 0,2 Sekunden übersetzt.",
-                "Im Hauptfenster startet Rechts-Ctrl+Enter die Übersetzung, Esc leert das Ausgangsfeld.",
+                "Im Hauptfenster startet Ctrl+Enter die Übersetzung, Esc leert das Ausgangsfeld.",
             ]),
             ("Normale Übersetzung", [
                 "Öffnen Sie die App über Verknüpfung, Tray oder Hauptfenster.",
                 "Wählen Sie die Ausgangssprache oder Auto und danach die Zielsprache im Feld Nach.",
-                "Text einfügen und Übersetzen oder Rechts-Ctrl+Enter drücken. Enter bleibt ein Zeilenumbruch, Esc leert das Feld.",
+                "Text einfügen und Übersetzen oder Ctrl+Enter drücken. Enter bleibt ein Zeilenumbruch, Esc leert das Feld.",
             ]),
             ("API-Schlüssel", [
                 "Öffnen Sie die API-Registerkarte, fügen Sie den Schlüssel des Anbieters ein, drücken Sie Prüfen und dann Speichern oder Anwenden.",
@@ -433,12 +432,12 @@ GUIDE_COPY = {
                 "Selecciona texto en un navegador, PDF, correo o editor.",
                 "Pulsa Ctrl+C, mantén Ctrl y pulsa C otra vez. LinguaFlow AI se abrirá encima de las demás ventanas.",
                 "El texto se inserta automáticamente y empieza a traducirse tras unos 0,2 segundos.",
-                "En la ventana principal, Right Ctrl+Enter inicia la traducción y Esc limpia el campo de origen.",
+                "En la ventana principal, Ctrl+Enter inicia la traducción y Esc limpia el campo de origen.",
             ]),
             ("Traducción normal", [
                 "Abre la app desde el acceso directo, la bandeja o la ventana principal.",
                 "Elige el idioma de origen o deja Auto, y después el idioma de destino en el campo A.",
-                "Pega el texto y pulsa Traducir o Right Ctrl+Enter. Enter mantiene una nueva línea; Esc limpia el campo.",
+                "Pega el texto y pulsa Traducir o Ctrl+Enter. Enter mantiene una nueva línea; Esc limpia el campo.",
             ]),
             ("Claves API", [
                 "Abre la pestaña API, pega la clave del proveedor elegido, pulsa Comprobar y luego Guardar o Aplicar.",
@@ -465,12 +464,12 @@ GUIDE_COPY = {
                 "在浏览器、PDF、邮件或编辑器中选择文本。",
                 "按 Ctrl+C，保持 Ctrl 不松开，再按一次 C。LinguaFlow AI 会在其他窗口上方打开。",
                 "所选文本会自动插入，并在约 0.2 秒后开始翻译。",
-                "在主窗口中，Right Ctrl+Enter 开始翻译，Esc 清空源文本框。",
+                "在主窗口中，Ctrl+Enter 开始翻译，Esc 清空源文本框。",
             ]),
             ("普通翻译", [
                 "通过快捷方式、托盘或主窗口打开应用。",
                 "选择源语言或保持 Auto，然后在 To 字段选择目标语言。",
-                "粘贴文本并点击翻译，或按 Right Ctrl+Enter。Enter 保留换行；Esc 清空文本框。",
+                "粘贴文本并点击翻译，或按 Ctrl+Enter。Enter 保留换行；Esc 清空文本框。",
             ]),
             ("API 密钥", [
                 "打开 API 选项卡，粘贴所选提供商的密钥，点击检查，然后保存或应用。",
@@ -491,13 +490,6 @@ GUIDE_COPY = {
         ],
     },
 }
-VK_RCONTROL = 0xA3
-
-
-def is_right_ctrl_down() -> bool:
-    if not hasattr(ctypes, "windll"):
-        return False
-    return bool(ctypes.windll.user32.GetAsyncKeyState(VK_RCONTROL) & 0x8000)
 
 
 def app_stylesheet(theme: str = "dark") -> str:
@@ -540,6 +532,11 @@ QLabel#HotkeyHint {
     color: #f7fbff;
     font-size: 14px;
     font-weight: 800;
+}
+QLabel#ShortcutHint {
+    color: #9caaba;
+    font-size: 12px;
+    font-weight: 650;
 }
 QLabel#SectionLabel {
     color: #8fd8ff;
@@ -842,7 +839,7 @@ class SubmitTextEdit(CleanTextEdit):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
-            if is_right_ctrl_down():
+            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 self.submitRequested.emit()
                 event.accept()
                 return
@@ -1001,6 +998,11 @@ class MainTranslatorWindow(QWidget):
         self.title_label.setObjectName("HeroTitle")
         self.subtitle_label = QLabel()
         self.subtitle_label.setObjectName("HotkeyHint")
+        self.subtitle_label.setWordWrap(True)
+
+        self.shortcut_hint_label = QLabel()
+        self.shortcut_hint_label.setObjectName("ShortcutHint")
+        self.shortcut_hint_label.setWordWrap(True)
         self.logo_label = QLabel()
         self.logo_label.setFixedSize(54, 54)
         self.logo_label.setScaledContents(True)
@@ -1093,10 +1095,16 @@ class MainTranslatorWindow(QWidget):
         text_splitter.addWidget(self._labeled_text(self.translation_section_label, self.translation_text, self.copy_button))
         text_splitter.setSizes([430, 430])
 
+        header_text_layout = QVBoxLayout()
+        header_text_layout.setContentsMargins(0, 0, 0, 0)
+        header_text_layout.setSpacing(3)
+        header_text_layout.addWidget(self.subtitle_label)
+        header_text_layout.addWidget(self.shortcut_hint_label)
+
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
-        header_layout.addWidget(self.subtitle_label, 1)
+        header_layout.addLayout(header_text_layout, 1)
         header_layout.addWidget(self.title_label, 0, Qt.AlignmentFlag.AlignVCenter)
         header_layout.addWidget(self.logo_label)
 
@@ -1118,6 +1126,7 @@ class MainTranslatorWindow(QWidget):
     def apply_locale(self, language_code: str) -> None:
         self.ui_language = language_code
         self.subtitle_label.setText(t(language_code, "main_subtitle"))
+        self.shortcut_hint_label.setText(t(language_code, "main_shortcuts"))
         self.from_label.setText(t(language_code, "from"))
         self.to_label.setText(t(language_code, "to"))
         self.source_section_label.setText(t(language_code, "original"))
