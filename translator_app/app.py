@@ -21,7 +21,7 @@ from translator_app.hotkey import (
     WindowsKeyStateReader,
 )
 from translator_app.i18n import t
-from translator_app.languages import Language, default_target_language, get_language
+from translator_app.languages import Language, default_target_language, detect_language_code, get_language
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
 from translator_app.secure_store import ApiKeyStore
 from translator_app.startup import (
@@ -391,6 +391,7 @@ class TranslatorApplication(QObject):
         current_request_id = self.request_id
         self.pending_requests[current_request_id] = (
             text,
+            detect_language_code(text) or "auto",
             target_language.code,
             self.config.provider,
             self.config.model_for_provider(),
@@ -427,6 +428,7 @@ class TranslatorApplication(QObject):
 
         target_language = get_language(target_language_code)
         source_language = None if source_language_code == "auto" else get_language(source_language_code)
+        history_source_language_code = source_language.code if source_language else detect_language_code(cleaned) or "auto"
         self.manual_request_id += 1
         current_request_id = self.manual_request_id
         provider = self.config.provider
@@ -451,7 +453,14 @@ class TranslatorApplication(QObject):
             except Exception:
                 self.signals.manualTranslationFailed.emit(current_request_id, "Неожиданная ошибка перевода", False)
             else:
-                self.history_store.add(cleaned, translated, target_language.code, provider, model)
+                self.history_store.add(
+                    cleaned,
+                    translated,
+                    target_language.code,
+                    provider,
+                    model,
+                    source_language=history_source_language_code,
+                )
                 self.signals.manualTranslationReady.emit(current_request_id, translated)
 
         threading.Thread(target=run, daemon=True).start()
@@ -474,8 +483,15 @@ class TranslatorApplication(QObject):
             return
         request_context = self.pending_requests.pop(request_id, None)
         if request_context is not None:
-            source_text, target_language_code, provider, model = request_context
-            self.history_store.add(source_text, translated, target_language_code, provider, model)
+            source_text, source_language_code, target_language_code, provider, model = request_context
+            self.history_store.add(
+                source_text,
+                translated,
+                target_language_code,
+                provider,
+                model,
+                source_language=source_language_code,
+            )
         self.popup.show_translation(translated, target_language)  # type: ignore[arg-type]
 
     def on_translation_failed(self, request_id: int, message: str, open_settings: bool) -> None:

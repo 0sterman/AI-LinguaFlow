@@ -1,15 +1,18 @@
+import sqlite3
+
 from translator_app.history import HistoryStore
 
 
 def test_history_store_saves_recent_records(tmp_path) -> None:
     store = HistoryStore(tmp_path / "history.sqlite3", max_records=10)
 
-    store.add("Hello", "Привет", "ru", "openai", "gpt-5-mini")
+    store.add("Hello", "Привет", "ru", "openai", "gpt-5-mini", source_language="en")
 
     records = store.recent()
     assert len(records) == 1
     assert records[0].source_text == "Hello"
     assert records[0].translated_text == "Привет"
+    assert records[0].source_language == "en"
     assert records[0].target_language == "ru"
 
 
@@ -40,6 +43,46 @@ def test_history_store_search_matches_source_and_translation(tmp_path) -> None:
 
     assert [record.source_text for record in store.search("утро")] == ["Good morning"]
     assert [record.source_text for record in store.search("world")] == ["Hello world"]
+
+
+def test_history_store_search_matches_language_route(tmp_path) -> None:
+    store = HistoryStore(tmp_path / "history.sqlite3", max_records=10)
+    store.add("Hallo", "Привет", "ru", "openai", "gpt-5-mini", source_language="de")
+
+    assert [record.source_text for record in store.search("de")] == ["Hallo"]
+
+
+def test_history_store_migrates_old_schema(tmp_path) -> None:
+    path = tmp_path / "history.sqlite3"
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE translations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                source_text TEXT NOT NULL,
+                translated_text TEXT NOT NULL,
+                target_language TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                model TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO translations (
+                created_at, source_text, translated_text, target_language, provider, model
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("2026-05-29T00:00:00+00:00", "Hello", "Привет", "ru", "openai", "gpt-5-mini"),
+        )
+
+    store = HistoryStore(path, max_records=10)
+    records = store.recent()
+
+    assert records[0].source_language == "auto"
+    assert records[0].target_language == "ru"
 
 
 def test_history_store_search_filters_by_date_range(tmp_path) -> None:

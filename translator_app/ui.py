@@ -1358,7 +1358,8 @@ class HistoryDialog(QDialog):
         preview = " ".join(record.translated_text.split())
         if len(preview) > 58:
             preview = f"{preview[:55]}..."
-        return f"{record.local_date_label}  |  {record.target_language.upper()}  |  {preview}"
+        language_route = f"{_history_language_label(record.source_language)} -> {_history_language_label(record.target_language)}"
+        return f"{record.local_date_label}  |  {language_route}  |  {preview}"
 
     def _labeled_text(self, label: QLabel, text_edit: QTextEdit) -> QWidget:
         widget = QWidget()
@@ -1367,6 +1368,11 @@ class HistoryDialog(QDialog):
         layout.addWidget(label)
         layout.addWidget(text_edit, 1)
         return widget
+
+
+def _history_language_label(language_code: str) -> str:
+    cleaned = (language_code or "auto").strip().upper()
+    return cleaned or "AUTO"
 
 
 class SettingsDialog(QDialog):

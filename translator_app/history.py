@@ -17,6 +17,7 @@ class HistoryRecord:
     created_at: str
     source_text: str
     translated_text: str
+    source_language: str
     target_language: str
     provider: str
     model: str
@@ -46,6 +47,7 @@ class HistoryStore:
         target_language: str,
         provider: str,
         model: str,
+        source_language: str = "auto",
     ) -> None:
         if not source_text.strip() or not translated_text.strip():
             return
@@ -57,13 +59,14 @@ class HistoryStore:
                     created_at,
                     source_text,
                     translated_text,
+                    source_language,
                     target_language,
                     provider,
                     model
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (created_at, source_text, translated_text, target_language, provider, model),
+                (created_at, source_text, translated_text, source_language, target_language, provider, model),
             )
             connection.execute(
                 """
@@ -81,7 +84,7 @@ class HistoryStore:
         with self._connect() as connection:
             rows = connection.execute(
                 """
-                SELECT id, created_at, source_text, translated_text, target_language, provider, model
+                SELECT id, created_at, source_text, translated_text, source_language, target_language, provider, model
                 FROM translations
                 ORDER BY id DESC
                 LIMIT ?
@@ -102,9 +105,9 @@ class HistoryStore:
 
         cleaned_query = query.strip()
         if cleaned_query:
-            clauses.append("(source_text LIKE ? OR translated_text LIKE ?)")
+            clauses.append("(source_text LIKE ? OR translated_text LIKE ? OR source_language LIKE ? OR target_language LIKE ?)")
             like_query = f"%{cleaned_query}%"
-            params.extend([like_query, like_query])
+            params.extend([like_query, like_query, like_query, like_query])
 
         if date_from:
             clauses.append("created_at >= ?")
@@ -119,7 +122,7 @@ class HistoryStore:
         with self._connect() as connection:
             rows = connection.execute(
                 f"""
-                SELECT id, created_at, source_text, translated_text, target_language, provider, model
+                SELECT id, created_at, source_text, translated_text, source_language, target_language, provider, model
                 FROM translations
                 {where_sql}
                 ORDER BY id DESC
@@ -146,12 +149,16 @@ class HistoryStore:
                     created_at TEXT NOT NULL,
                     source_text TEXT NOT NULL,
                     translated_text TEXT NOT NULL,
+                    source_language TEXT NOT NULL DEFAULT 'auto',
                     target_language TEXT NOT NULL,
                     provider TEXT NOT NULL,
                     model TEXT NOT NULL
                 )
                 """
             )
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(translations)").fetchall()}
+            if "source_language" not in columns:
+                connection.execute("ALTER TABLE translations ADD COLUMN source_language TEXT NOT NULL DEFAULT 'auto'")
 
 
 def _date_start_iso(date_text: str) -> str:
