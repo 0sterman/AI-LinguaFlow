@@ -6,14 +6,15 @@ cd "$ROOT_DIR"
 
 APP_NAME="LinguaFlow AI"
 BUNDLE_ID="com.oster.linguaflow"
-VERSION="$(python3 - <<'PY'
+PYTHON_BIN="${PYTHON:-python3}"
+VERSION="$("$PYTHON_BIN" - <<'PY'
 from translator_app import __version__
 print(__version__)
 PY
 )"
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-11.0}"
 
-python3 -m pip install -r requirements-macos.txt
+"$PYTHON_BIN" -m pip install --no-compile -r requirements-macos.txt
 
 ICONSET_DIR="build/macos/app_icon.iconset"
 mkdir -p "$ICONSET_DIR"
@@ -31,7 +32,7 @@ iconutil -c icns "$ICONSET_DIR" -o "assets/app_icon.icns"
 
 rm -rf build "$ROOT_DIR/dist/$APP_NAME.app" "$ROOT_DIR/dist/$APP_NAME-$VERSION-macOS-x86_64.dmg"
 
-python3 -m PyInstaller \
+"$PYTHON_BIN" -m PyInstaller \
   --windowed \
   --noconfirm \
   --name "$APP_NAME" \
