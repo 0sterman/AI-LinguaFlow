@@ -1,4 +1,5 @@
 from translator_app.hotkey import CtrlCPollStateDetector, DoubleCtrlCDetector
+from translator_app.hotkey_macos import MacCommandCHotkeyListener
 
 
 def test_double_ctrl_c_triggers_within_interval() -> None:
@@ -38,3 +39,11 @@ def test_poll_detector_resets_when_ctrl_is_released() -> None:
     assert detector.update(ctrl_down=True, c_down=True, now=10.0) is False
     assert detector.update(ctrl_down=False, c_down=False, now=10.2) is False
     assert detector.update(ctrl_down=True, c_down=True, now=10.3) is False
+
+
+def test_macos_listener_accepts_command_and_control_modifiers() -> None:
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.cmd") is True
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.cmd_l") is True
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.ctrl") is True
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.ctrl_r") is True
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.alt") is False

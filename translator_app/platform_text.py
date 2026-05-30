@@ -22,7 +22,6 @@ def platform_text(text: str) -> str:
         "Ctrl+C+C": "Cmd (Ctrl)+C+C",
         "Ctrl+Enter": "Cmd (Ctrl)+Enter",
         "Ctrl+C": "Cmd (Ctrl)+C",
-        "Ctrl": "Cmd",
         "Windows Credential Manager": "macOS Keychain",
         "Windows hotkey listener": "macOS hotkey listener",
         "Windows-переводчик": "macOS-переводчик",

@@ -433,7 +433,18 @@ class TranslatorApplication(QObject):
         if now - self.last_hotkey_at < 0.5:
             return
         self.last_hotkey_at = now
+        if sys.platform == "darwin":
+            self.copy_selection_on_macos()
         QTimer.singleShot(320, self.open_clipboard_in_main_window)
+
+    def copy_selection_on_macos(self) -> None:
+        try:
+            QProcess.startDetached(
+                "osascript",
+                ["-e", 'tell application "System Events" to keystroke "c" using command down'],
+            )
+        except Exception:
+            pass
 
     def open_clipboard_in_main_window(self) -> None:
         try:

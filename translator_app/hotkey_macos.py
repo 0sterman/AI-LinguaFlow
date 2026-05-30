@@ -12,7 +12,7 @@ class MacCommandCHotkeyListener:
         self._on_trigger = on_trigger
         self._detector = DoubleCtrlCDetector()
         self._listener = None
-        self._command_down = False
+        self._modifier_down = False
         self._lock = threading.Lock()
 
     def start(self) -> None:
@@ -29,30 +29,30 @@ class MacCommandCHotkeyListener:
         self._listener.stop()
         self._listener = None
         self._detector.reset()
-        self._command_down = False
+        self._modifier_down = False
 
     def _on_press(self, key: object) -> None:
-        if self._is_command_key(key):
+        if self._is_supported_modifier_key(key):
             with self._lock:
-                self._command_down = True
+                self._modifier_down = True
             return
         if not self._is_c_key(key):
             return
         with self._lock:
-            command_down = self._command_down
-        if self._detector.register_key_press("c", command_down, time.monotonic()):
+            modifier_down = self._modifier_down
+        if self._detector.register_key_press("c", modifier_down, time.monotonic()):
             self._on_trigger()
 
     def _on_release(self, key: object) -> None:
-        if self._is_command_key(key):
+        if self._is_supported_modifier_key(key):
             with self._lock:
-                self._command_down = False
+                self._modifier_down = False
             self._detector.reset()
 
     @staticmethod
-    def _is_command_key(key: object) -> bool:
+    def _is_supported_modifier_key(key: object) -> bool:
         name = str(key).lower()
-        return name in {"key.cmd", "key.cmd_l", "key.cmd_r"}
+        return name in {"key.cmd", "key.cmd_l", "key.cmd_r", "key.ctrl", "key.ctrl_l", "key.ctrl_r"}
 
     @staticmethod
     def _is_c_key(key: object) -> bool:
