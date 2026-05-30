@@ -12,7 +12,7 @@ from translator_app import __version__
 print(__version__)
 PY
 )"
-export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-11.0}"
+export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}"
 
 "$PYTHON_BIN" -m pip install --no-compile -r requirements-macos.txt
 
