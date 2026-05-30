@@ -63,7 +63,11 @@ set_plist_value "LSMinimumSystemVersion" "string" "$MACOSX_DEPLOYMENT_TARGET" "$
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
   codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$APP_PATH"
+else
+  codesign --force --deep --sign - "$APP_PATH"
 fi
+
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
 DMG_DIR="build/macos/dmg"
 rm -rf "$DMG_DIR"
