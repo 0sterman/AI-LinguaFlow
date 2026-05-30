@@ -2,7 +2,7 @@
 
 This is the macOS packaging path for LinguaFlow AI.
 
-Quick popup shortcut on macOS: `Cmd (Ctrl)+C+C`.
+Quick popup shortcut with selected text translation on macOS: `Cmd (Ctrl)+C+C`.
 
 LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
 

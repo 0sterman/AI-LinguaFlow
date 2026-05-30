@@ -2,7 +2,7 @@
 
 LinguaFlow AI is a compact AI translator for Windows and macOS, built around fast selected-text popup translation and a normal manual translator window.
 
-Quick popup shortcut: `Ctrl+C+C` on Windows and `Cmd (Ctrl)+C+C` on macOS.
+Quick popup shortcut with selected text translation: `Ctrl+C+C` on Windows and `Cmd (Ctrl)+C+C` on macOS.
 
 LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
 
