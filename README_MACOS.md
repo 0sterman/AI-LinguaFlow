@@ -12,6 +12,8 @@ LinguaFlow-AI-v1.0.9-macOS-x86_64.dmg
 
 Open the DMG, drag `LinguaFlow AI.app` to `Applications`, then launch it from `Applications`.
 
+After installation, each user must enter their own API key in `Settings -> API`. LinguaFlow AI supports OpenAI, Google Gemini, and Anthropic Claude. API keys and translation history are stored locally on the user's Mac.
+
 ## Supported macOS Versions
 
 - Architecture: Intel x86_64.

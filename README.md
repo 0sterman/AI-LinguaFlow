@@ -19,6 +19,18 @@ Supported and tested status:
 
 The macOS build is currently not Apple Developer ID signed or notarized, so macOS can show a first-launch security warning. Global popup shortcuts on macOS require Accessibility/Input Monitoring permissions.
 
+## API Key Required
+
+LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
+
+Supported providers:
+
+- OpenAI
+- Google Gemini
+- Anthropic Claude
+
+API keys are stored locally through the operating system key storage when available. Translation history is stored locally on the user's computer.
+
 Hotkeys:
 
 `Ctrl+C+C`: fast selected-text translation in the compact popup on Windows.
