@@ -45,10 +45,20 @@ python3 -m PyInstaller \
   translator_app/__main__.py
 
 APP_PATH="$ROOT_DIR/dist/$APP_NAME.app"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_PATH/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_PATH/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Add :LSMinimumSystemVersion string $MACOSX_DEPLOYMENT_TARGET" "$APP_PATH/Contents/Info.plist" 2>/dev/null || \
-  /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion $MACOSX_DEPLOYMENT_TARGET" "$APP_PATH/Contents/Info.plist"
+set_plist_value() {
+  local key="$1"
+  local type="$2"
+  local value="$3"
+  local plist="$4"
+
+  /usr/libexec/PlistBuddy -c "Set :$key $value" "$plist" 2>/dev/null || \
+    /usr/libexec/PlistBuddy -c "Add :$key $type $value" "$plist"
+}
+
+INFO_PLIST="$APP_PATH/Contents/Info.plist"
+set_plist_value "CFBundleShortVersionString" "string" "$VERSION" "$INFO_PLIST"
+set_plist_value "CFBundleVersion" "string" "$VERSION" "$INFO_PLIST"
+set_plist_value "LSMinimumSystemVersion" "string" "$MACOSX_DEPLOYMENT_TARGET" "$INFO_PLIST"
 /usr/libexec/PlistBuddy -c "Add :NSAppleEventsUsageDescription string LinguaFlow AI uses macOS automation only to bring the translator window to the front after Cmd+C+C." "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
