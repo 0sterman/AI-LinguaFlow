@@ -8,20 +8,20 @@ def is_macos() -> bool:
 
 
 def submit_shortcut() -> str:
-    return "Cmd+Enter" if is_macos() else "Ctrl+Enter"
+    return "Cmd (Ctrl)+Enter" if is_macos() else "Ctrl+Enter"
 
 
 def popup_shortcut() -> str:
-    return "Cmd+C+C" if is_macos() else "Ctrl+C+C"
+    return "Cmd (Ctrl)+C+C" if is_macos() else "Ctrl+C+C"
 
 
 def platform_text(text: str) -> str:
     if not is_macos():
         return text
     replacements = {
-        "Ctrl+C+C": "Cmd+C+C",
-        "Ctrl+Enter": "Cmd+Enter",
-        "Ctrl+C": "Cmd+C",
+        "Ctrl+C+C": "Cmd (Ctrl)+C+C",
+        "Ctrl+Enter": "Cmd (Ctrl)+Enter",
+        "Ctrl+C": "Cmd (Ctrl)+C",
         "Ctrl": "Cmd",
         "Windows Credential Manager": "macOS Keychain",
         "Windows hotkey listener": "macOS hotkey listener",
