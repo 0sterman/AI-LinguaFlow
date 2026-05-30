@@ -2,6 +2,10 @@
 
 This is the macOS packaging path for LinguaFlow AI.
 
+Quick popup shortcut on macOS: `Cmd (Ctrl)+C+C`.
+
+LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
+
 ## Download
 
 The current macOS test build is attached to the GitHub `v1.0.9` release:
@@ -12,7 +16,7 @@ LinguaFlow-AI-v1.0.9-macOS-x86_64.dmg
 
 Open the DMG, drag `LinguaFlow AI.app` to `Applications`, then launch it from `Applications`.
 
-After installation, each user must enter their own API key in `Settings -> API`. LinguaFlow AI supports OpenAI, Google Gemini, and Anthropic Claude. API keys and translation history are stored locally on the user's Mac.
+LinguaFlow AI supports OpenAI, Google Gemini, and Anthropic Claude. API keys and translation history are stored locally on the user's Mac.
 
 ## Supported macOS Versions
 
