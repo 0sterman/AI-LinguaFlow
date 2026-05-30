@@ -74,6 +74,60 @@ rm -rf "$DMG_DIR"
 mkdir -p "$DMG_DIR"
 cp -R "$APP_PATH" "$DMG_DIR/"
 ln -s /Applications "$DMG_DIR/Applications"
+cat > "$DMG_DIR/Open LinguaFlow AI with log.command" <<'SH'
+#!/usr/bin/env bash
+set +e
+
+LOG="$HOME/Desktop/LinguaFlow-AI-startup.log"
+APP_PATH="$(cd "$(dirname "$0")" && pwd)/LinguaFlow AI.app"
+EXE_PATH="$APP_PATH/Contents/MacOS/LinguaFlow AI"
+
+{
+  echo "LinguaFlow AI macOS startup diagnostics"
+  echo "Date: $(date)"
+  echo
+  echo "macOS:"
+  sw_vers
+  echo
+  echo "Kernel/CPU:"
+  uname -a
+  echo "Machine: $(uname -m)"
+  echo
+  echo "App path:"
+  echo "$APP_PATH"
+  echo
+  echo "Bundle files:"
+  ls -la "$APP_PATH"
+  ls -la "$APP_PATH/Contents"
+  ls -la "$APP_PATH/Contents/MacOS"
+  echo
+  echo "Executable file info:"
+  file "$EXE_PATH"
+  echo
+  echo "Quarantine attributes:"
+  xattr -lr "$APP_PATH"
+  echo
+  echo "Code signature verification:"
+  codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+  echo "codesign exit code: $?"
+  echo
+  echo "Gatekeeper assessment:"
+  spctl --assess --type execute --verbose=4 "$APP_PATH"
+  echo "spctl exit code: $?"
+  echo
+  echo "Starting executable directly:"
+  "$EXE_PATH"
+  echo "app exit code: $?"
+} >"$LOG" 2>&1
+
+open -R "$LOG"
+echo "Diagnostic log saved to:"
+echo "$LOG"
+echo
+echo "Send this log text back to Roman/Codex."
+read -r -p "Press Enter to close this window..."
+SH
+chmod +x "$DMG_DIR/Open LinguaFlow AI with log.command"
 hdiutil create \
   -volname "$APP_NAME $VERSION" \
   -srcfolder "$DMG_DIR" \
