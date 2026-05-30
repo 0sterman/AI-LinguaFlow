@@ -46,4 +46,14 @@ def test_macos_listener_accepts_command_and_control_modifiers() -> None:
     assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.cmd_l") is True
     assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.ctrl") is True
     assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.ctrl_r") is True
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.super_l") is True
+    assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.meta_r") is True
     assert MacCommandCHotkeyListener._is_supported_modifier_key("Key.alt") is False
+
+
+def test_macos_listener_accepts_ctrl_c_control_character() -> None:
+    class Key:
+        char = "\x03"
+
+    assert MacCommandCHotkeyListener._is_c_key(Key()) is True
+    assert MacCommandCHotkeyListener._is_c_key("'\\x03'") is True

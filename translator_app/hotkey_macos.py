@@ -52,9 +52,24 @@ class MacCommandCHotkeyListener:
     @staticmethod
     def _is_supported_modifier_key(key: object) -> bool:
         name = str(key).lower()
-        return name in {"key.cmd", "key.cmd_l", "key.cmd_r", "key.ctrl", "key.ctrl_l", "key.ctrl_r"}
+        return name in {
+            "key.cmd",
+            "key.cmd_l",
+            "key.cmd_r",
+            "key.ctrl",
+            "key.ctrl_l",
+            "key.ctrl_r",
+            "key.super",
+            "key.super_l",
+            "key.super_r",
+            "key.meta",
+            "key.meta_l",
+            "key.meta_r",
+        }
 
     @staticmethod
     def _is_c_key(key: object) -> bool:
         char = getattr(key, "char", None)
-        return isinstance(char, str) and char.lower() == "c"
+        if isinstance(char, str) and char.lower() in {"c", "\x03"}:
+            return True
+        return str(key).lower() in {"'\\x03'", '"\\x03"', "\\x03"}
