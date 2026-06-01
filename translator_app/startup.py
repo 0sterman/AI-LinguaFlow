@@ -96,10 +96,12 @@ def set_desktop_shortcut(enabled: bool) -> None:
     if enabled:
         shortcut.parent.mkdir(parents=True, exist_ok=True)
         created_shortcut = _write_shortcut(shortcut, current_launch_target(), current_icon_target())
-    elif shortcut.exists():
-        shortcut.unlink()
-        created_shortcut = shortcut
-    for stale_shortcut in _stale_desktop_shortcut_paths(created_shortcut):
+        stale_shortcuts = _stale_desktop_shortcut_paths(created_shortcut)
+    else:
+        if shortcut.exists():
+            shortcut.unlink()
+        stale_shortcuts = _stale_desktop_shortcut_paths(shortcut)
+    for stale_shortcut in stale_shortcuts:
         if stale_shortcut.exists():
             stale_shortcut.unlink()
 

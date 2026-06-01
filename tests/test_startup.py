@@ -42,3 +42,12 @@ def test_current_icon_target_prefers_installed_ico_when_frozen(monkeypatch, tmp_
     monkeypatch.setattr(sys, "executable", str(exe))
 
     assert startup.current_icon_target() == str(icon)
+
+
+def test_disabling_missing_desktop_shortcut_does_not_crash(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(startup, "_known_desktop_path", lambda: tmp_path)
+    monkeypatch.setattr(startup.sys, "platform", "win32")
+
+    startup.set_desktop_shortcut(False)
+
+    assert not (tmp_path / "LinguaFlow AI Translator.lnk").exists()
