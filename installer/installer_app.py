@@ -15,7 +15,7 @@ from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.9"
+APP_VERSION = "1.0.10"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
