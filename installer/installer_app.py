@@ -15,7 +15,7 @@ from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.10"
+APP_VERSION = "1.0.11"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
@@ -25,6 +25,9 @@ URL_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 PAYLOAD_ZIP = "LinguaFlowAI_payload.zip"
 MARKER_FILE = ".linguaflow-install"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
+WINDOW_WIDTH = 760
+WINDOW_HEIGHT = 520
+CONTENT_WRAP = 540
 
 INSTALLER_COPY = {
     "en": {
@@ -37,8 +40,7 @@ INSTALLER_COPY = {
         "highlight": "Select text anywhere, press Ctrl+C+C, and get a fast popup translation.",
         "details": (
             "The app also supports normal manual translation, local translation history, "
-            "and your choice of OpenAI, Google Gemini, or Anthropic Claude. "
-            "Default installation folder: Program Files."
+            "and your choice of OpenAI, Google Gemini, or Anthropic Claude."
         ),
         "api_note": (
             "After installation, enter your own API key in Settings -> API. "
@@ -90,8 +92,7 @@ INSTALLER_COPY = {
         "highlight": "Выделите текст в любом приложении, нажмите Ctrl+C+C и получите быстрый popup-перевод.",
         "details": (
             "Приложение также поддерживает обычный ручной перевод, локальную историю переводов "
-            "и выбор OpenAI, Google Gemini или Anthropic Claude. "
-            "Папка установки по умолчанию: Program Files."
+            "и выбор OpenAI, Google Gemini или Anthropic Claude."
         ),
         "api_note": (
             "После установки нужно ввести личный API-ключ в Настройки -> API. "
@@ -148,9 +149,11 @@ class InstallerWizard:
     def __init__(self) -> None:
         configure_process_dpi_awareness()
         self.root = Tk()
-        self.root.geometry("800x600")
-        self.root.minsize(800, 600)
-        self.root.resizable(False, False)
+        self.dpi_scale = self._detect_dpi_scale()
+        self.root.geometry(f"{self._px(WINDOW_WIDTH)}x{self._px(WINDOW_HEIGHT)}")
+        self.root.minsize(self._px(680), self._px(460))
+        self.root.resizable(True, True)
+        self._center_window()
         self._apply_window_icon()
 
         default_dir = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / APP_NAME
@@ -165,7 +168,7 @@ class InstallerWizard:
         self.install_button: ttk.Button | None = None
         self.progress: ttk.Progressbar | None = None
 
-        self.container = ttk.Frame(self.root, padding=24)
+        self.container = ttk.Frame(self.root, padding=self._px(18))
         self.container.pack(fill="both", expand=True)
         self._show_welcome_page()
 
@@ -184,13 +187,14 @@ class InstallerWizard:
         self.root.title(WINDOW_TITLE)
         self.status.set(self.t("ready"))
         self._clear_container()
+        self._build_buttons([(self.t("cancel"), self.root.destroy), (self.t("continue"), self._show_options_page)])
 
         content = ttk.Frame(self.container)
         content.pack(fill="both", expand=True)
         self._build_header(content, self.t("welcome_title"))
 
         language_row = ttk.Frame(content)
-        language_row.pack(fill="x", pady=(16, 22))
+        language_row.pack(fill="x", pady=(12, 16))
         ttk.Label(language_row, text=self.t("language")).pack(side="left")
         language_values = [copy["language_name"] for copy in INSTALLER_COPY.values()]
         language_input = ttk.Combobox(language_row, state="readonly", width=18, values=language_values)
@@ -199,50 +203,20 @@ class InstallerWizard:
         language_input.pack(side="left", padx=(12, 0))
         language_input.bind("<<ComboboxSelected>>", lambda event: self._set_language(event.widget.current()))
 
-        ttk.Label(content, text=self.t("welcome"), wraplength=670, justify="left").pack(anchor="w", pady=(0, 10))
+        ttk.Label(content, text=self.t("welcome"), wraplength=self._px(CONTENT_WRAP), justify="left").pack(anchor="w", pady=(0, self._px(8)))
         ttk.Label(
             content,
             text=self.t("highlight"),
-            wraplength=670,
+            wraplength=self._px(CONTENT_WRAP),
             justify="left",
-            font=("Segoe UI", 11, "bold"),
-        ).pack(anchor="w", pady=(0, 10))
-        ttk.Label(content, text=self.t("details"), wraplength=670, justify="left").pack(anchor="w")
-
-        self._build_buttons([(self.t("cancel"), self.root.destroy), (self.t("continue"), self._show_options_page)])
+            font=("Segoe UI", 10, "bold"),
+        ).pack(anchor="w", pady=(0, self._px(8)))
+        ttk.Label(content, text=self.t("details"), wraplength=self._px(CONTENT_WRAP), justify="left").pack(anchor="w")
 
     def _show_options_page(self) -> None:
         self.root.title(WINDOW_TITLE)
         self.status.set(self.t("ready"))
         self._clear_container()
-
-        content = ttk.Frame(self.container)
-        content.pack(fill="both", expand=True)
-        self._build_header(content, self.t("destination_title"))
-
-        ttk.Label(content, text=self.t("install_folder")).pack(anchor="w", pady=(18, 0))
-        path_row = ttk.Frame(content)
-        path_row.pack(fill="x", pady=(4, 12))
-        ttk.Entry(path_row, textvariable=self.install_dir).pack(side="left", fill="x", expand=True)
-        ttk.Button(path_row, text=self.t("browse"), command=self._choose_folder).pack(side="left", padx=(8, 0))
-
-        options_box = ttk.LabelFrame(content, text=self.t("options"))
-        options_box.pack(fill="x", pady=(0, 14))
-        ttk.Checkbutton(options_box, text=self.t("desktop_shortcut"), variable=self.desktop_shortcut).pack(
-            anchor="w", padx=12, pady=(9, 3)
-        )
-        ttk.Checkbutton(options_box, text=self.t("start_menu_shortcut"), variable=self.start_menu_shortcut).pack(
-            anchor="w", padx=12, pady=3
-        )
-        ttk.Checkbutton(options_box, text=self.t("launch_after_install"), variable=self.launch_after_install).pack(
-            anchor="w", padx=12, pady=(3, 9)
-        )
-
-        ttk.Label(content, text=self.t("api_note"), wraplength=670, justify="left").pack(anchor="w", pady=(0, 12))
-        self.progress = ttk.Progressbar(content, mode="determinate", maximum=100, variable=self.progress_value)
-        self.progress.pack(fill="x", pady=(0, 8))
-        ttk.Label(content, textvariable=self.status).pack(anchor="w")
-
         self._build_buttons(
             [
                 (self.t("cancel"), self.root.destroy),
@@ -251,6 +225,33 @@ class InstallerWizard:
             ]
         )
 
+        content = ttk.Frame(self.container)
+        content.pack(fill="both", expand=True)
+        self._build_header(content, self.t("destination_title"))
+
+        ttk.Label(content, text=self.t("install_folder")).pack(anchor="w", pady=(12, 0))
+        path_row = ttk.Frame(content)
+        path_row.pack(fill="x", pady=(4, 8))
+        ttk.Entry(path_row, textvariable=self.install_dir).pack(side="left", fill="x", expand=True)
+        ttk.Button(path_row, text=self.t("browse"), command=self._choose_folder).pack(side="left", padx=(8, 0))
+
+        options_box = ttk.LabelFrame(content, text=self.t("options"))
+        options_box.pack(fill="x", pady=(0, 10))
+        ttk.Checkbutton(options_box, text=self.t("desktop_shortcut"), variable=self.desktop_shortcut).pack(
+            anchor="w", padx=12, pady=(7, 2)
+        )
+        ttk.Checkbutton(options_box, text=self.t("start_menu_shortcut"), variable=self.start_menu_shortcut).pack(
+            anchor="w", padx=12, pady=2
+        )
+        ttk.Checkbutton(options_box, text=self.t("launch_after_install"), variable=self.launch_after_install).pack(
+            anchor="w", padx=12, pady=(2, 7)
+        )
+
+        ttk.Label(content, text=self.t("api_note"), wraplength=self._px(CONTENT_WRAP), justify="left").pack(anchor="w", pady=(0, self._px(8)))
+        self.progress = ttk.Progressbar(content, mode="determinate", maximum=100, variable=self.progress_value)
+        self.progress.pack(fill="x", pady=(0, 8))
+        ttk.Label(content, textvariable=self.status).pack(anchor="w")
+
     def _build_header(self, parent: ttk.Frame, title: str) -> None:
         header = ttk.Frame(parent)
         header.pack(fill="x")
@@ -258,11 +259,19 @@ class InstallerWizard:
             ttk.Label(header, image=self.logo_image).pack(side="left", padx=(0, 14))
         title_box = ttk.Frame(header)
         title_box.pack(side="left", fill="x", expand=True)
-        ttk.Label(title_box, text=title, font=("Segoe UI", 20, "bold")).pack(anchor="w")
         ttk.Label(
             title_box,
-            text=f"{self.t('release')} v{APP_VERSION} · Popup Translator - © Roman Ostroumov / Oster",
+            text=title,
+            font=("Segoe UI", 14, "bold"),
+            wraplength=self._px(CONTENT_WRAP - 80),
+            justify="left",
+        ).pack(anchor="w")
+        ttk.Label(
+            title_box,
+            text=f"{self.t('release')} v{APP_VERSION} · Popup Translator · © Roman Ostroumov / Oster",
             foreground="#246b92",
+            wraplength=self._px(CONTENT_WRAP - 80),
+            justify="left",
         ).pack(
             anchor="w",
             pady=(2, 0),
@@ -270,7 +279,7 @@ class InstallerWizard:
 
     def _build_buttons(self, buttons: list[tuple[str, object]]) -> None:
         button_row = ttk.Frame(self.container)
-        button_row.pack(fill="x", side="bottom", pady=(18, 0))
+        button_row.pack(fill="x", side="bottom", pady=(10, 0))
         for text, command in buttons:
             button = ttk.Button(button_row, text=text, command=command)
             button.pack(side="right", padx=(8, 0))
@@ -299,8 +308,29 @@ class InstallerWizard:
             image = PhotoImage(file=str(image_path))
         except Exception:
             return None
-        scale = max(image.width() // 64, image.height() // 64, 1)
+        target_size = self._px(52)
+        scale = max(image.width() // target_size, image.height() // target_size, 1)
         return image.subsample(scale, scale)
+
+    def _center_window(self) -> None:
+        self.root.update_idletasks()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = self._px(WINDOW_WIDTH)
+        window_height = self._px(WINDOW_HEIGHT)
+        x = max((screen_width - window_width) // 2, 0)
+        y = max((screen_height - window_height) // 2, 0)
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    def _detect_dpi_scale(self) -> float:
+        try:
+            dpi = float(self.root.winfo_fpixels("1i"))
+        except Exception:
+            return 1.0
+        return max(dpi / 96.0, 1.0)
+
+    def _px(self, value: int) -> int:
+        return max(int(round(value * self.dpi_scale)), 1)
 
     def _choose_folder(self) -> None:
         selected = filedialog.askdirectory(

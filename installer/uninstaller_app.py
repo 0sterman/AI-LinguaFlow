@@ -11,11 +11,14 @@ from tkinter import DoubleVar, StringVar, Tk, messagebox, ttk
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.10"
+APP_VERSION = "1.0.11"
 APP_EXE = "LinguaFlow AI.exe"
 WINDOW_TITLE = "LinguaFlow AI Uninstall"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
 SHORTCUT_NAMES = ("LinguaFlow AI Translator.lnk", "LinguaFlow AI Translator.url")
+WINDOW_WIDTH = 660
+WINDOW_HEIGHT = 460
+CONTENT_WRAP = 580
 
 
 class UninstallerWindow:
@@ -23,15 +26,17 @@ class UninstallerWindow:
         configure_process_dpi_awareness()
         self.install_root = determine_install_root()
         self.root = Tk()
+        self.dpi_scale = self._detect_dpi_scale()
         self.root.title(WINDOW_TITLE)
-        self.root.geometry("660x460")
-        self.root.minsize(660, 460)
-        self.root.resizable(False, False)
+        self.root.geometry(f"{self._px(WINDOW_WIDTH)}x{self._px(WINDOW_HEIGHT)}")
+        self.root.minsize(self._px(600), self._px(420))
+        self.root.resizable(True, True)
+        self._center_window()
         self._apply_window_icon()
         self.status = StringVar(value="Ready to uninstall")
         self.progress_value = DoubleVar(value=0)
 
-        frame = ttk.Frame(self.root, padding=24)
+        frame = ttk.Frame(self.root, padding=self._px(24))
         frame.pack(fill="both", expand=True)
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(0, weight=1)
@@ -40,7 +45,7 @@ class UninstallerWindow:
         content.grid(row=0, column=0, sticky="nsew")
         content.columnconfigure(0, weight=1)
 
-        ttk.Label(content, text="Uninstall LinguaFlow AI", font=("Segoe UI", 18, "bold")).grid(
+        ttk.Label(content, text="Uninstall LinguaFlow AI", font=("Segoe UI", 16, "bold")).grid(
             row=0,
             column=0,
             sticky="w",
@@ -57,13 +62,13 @@ class UninstallerWindow:
                 "This will remove LinguaFlow AI from this computer, including Desktop and Start menu shortcuts. "
                 "Your local settings and translation history are kept unless you delete them manually."
             ),
-            wraplength=580,
+            wraplength=self._px(CONTENT_WRAP),
             justify="left",
         ).grid(row=2, column=0, sticky="w", pady=(18, 0))
         ttk.Label(
             content,
             text=f"Installed location: {self.install_root}",
-            wraplength=580,
+            wraplength=self._px(CONTENT_WRAP),
             justify="left",
         ).grid(
             row=3,
@@ -104,6 +109,26 @@ class UninstallerWindow:
         if bundled_icon.exists():
             return bundled_icon
         return self.install_root / "_internal" / "assets" / "app_icon.ico"
+
+    def _center_window(self) -> None:
+        self.root.update_idletasks()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = self._px(WINDOW_WIDTH)
+        window_height = self._px(WINDOW_HEIGHT)
+        x = max((screen_width - window_width) // 2, 0)
+        y = max((screen_height - window_height) // 2, 0)
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    def _detect_dpi_scale(self) -> float:
+        try:
+            dpi = float(self.root.winfo_fpixels("1i"))
+        except Exception:
+            return 1.0
+        return max(dpi / 96.0, 1.0)
+
+    def _px(self, value: int) -> int:
+        return max(int(round(value * self.dpi_scale)), 1)
 
     def _confirm_uninstall(self) -> None:
         if not messagebox.askyesno(WINDOW_TITLE, "Uninstall LinguaFlow AI now?"):
