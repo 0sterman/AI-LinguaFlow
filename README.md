@@ -36,6 +36,21 @@ After installation, enter your own API key for the selected provider in:
 
 `Settings -> API`
 
+## API Key Storage
+
+Your API key is stored locally on your computer. LinguaFlow AI uses the system key storage through `keyring`:
+
+- **Windows:** Windows Credential Manager
+- **macOS:** the system keychain/keyring available to the app
+
+The key is saved under the LinguaFlow AI service entry used by the app and is not included in the installer, not published in this repository, and not shared with other users.
+
+If no saved key is found, LinguaFlow AI can also read provider keys from environment variables:
+
+- `OPENAI_API_KEY`
+- `GEMINI_API_KEY` or `GOOGLE_API_KEY`
+- `ANTHROPIC_API_KEY`
+
 Usage help is available inside the app in:
 
 `Settings -> General -> Guide`
