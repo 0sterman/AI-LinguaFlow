@@ -1,37 +1,49 @@
 # LinguaFlow AI
 
-LinguaFlow AI is a popup translator for selected text.
+Fast popup translation for selected text on Windows and macOS.
 
-Quick popup shortcut with selected text translation:
+LinguaFlow AI helps you translate text without breaking your workflow: select text anywhere, press the shortcut, and get a quick translation popup. You can also open the main translator window for normal manual translation, choose your preferred target language, and keep local translation history on your computer.
 
-- Windows: `Ctrl+C+C`
-- macOS: `Cmd (Ctrl)+C+C`
+## Download
 
-## Downloads
+Choose the installer for your system:
 
-Download the latest public installers from GitHub Releases:
+- **Windows:** [LinguaFlow AI v1.0.11](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.11)
+- **macOS Intel:** [LinguaFlow AI v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
 
-- Windows: [LinguaFlow AI v1.0.11](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.11)
-- macOS Intel: [LinguaFlow AI v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
+## Shortcuts
+
+- **Windows popup translation:** `Ctrl+C+C`
+- **macOS popup translation:** `Cmd (Ctrl)+C+C`
+- **Clear text:** `Esc`
+- **Translate in the main window:** `Ctrl+Enter` on Windows, `Cmd (Ctrl)+Enter` on macOS
+
+## What It Supports
+
+- Popup translation for selected text
+- Manual translation in the main app window
+- Local translation history
+- Configurable primary language
+- OpenAI, Google Gemini, and Anthropic Claude providers
 
 ## API Key Required
 
-LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
+LinguaFlow AI does not include a shared translation API key.
 
-Supported providers:
+After installation, enter your own API key for the selected provider in:
 
-- OpenAI
-- Google Gemini
-- Anthropic Claude
+`Settings -> API`
 
-## Notes
+Usage help is available inside the app in:
 
-- Windows users should install the newest Windows release.
-- macOS users should use the current macOS DMG release.
-- Local settings and translation history are stored on the user's computer.
+`Settings -> General -> Guide`
 
-## Copyright
+## Privacy
 
-Copyright (c) Roman Ostroumov / Oster.
+Your settings and translation history are stored locally on your computer. Text is sent only to the AI provider you choose for the current translation request.
 
-This public repository is for downloads and product information only. The LinguaFlow AI source code is proprietary and is not published here. Copying, redistribution, reverse engineering, or modification is not permitted without written permission from Roman Ostroumov / Oster.
+## Source Code
+
+This public repository is only for downloads and product information. The LinguaFlow AI source code is private and proprietary.
+
+Copyright (c) Roman Ostroumov / Oster. Copying, redistribution, reverse engineering, or modification is not permitted without written permission from Roman Ostroumov / Oster.
