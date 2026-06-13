@@ -17,7 +17,6 @@ from translator_app.history import HistoryStore
 from translator_app.hotkey import (
     CtrlCPollStateDetector,
     DoubleCtrlCDetector,
-    WindowsClipboardSequenceReader,
     WindowsCtrlCHook,
     WindowsKeyStateReader,
 )
@@ -62,13 +61,8 @@ class TranslatorApplication(QObject):
         self.hotkey_poll_timer: QTimer | None = None
         self.hotkey_poll_detector = CtrlCPollStateDetector(DoubleCtrlCDetector())
         self.key_state_reader: WindowsKeyStateReader | None = None
-        self.clipboard_sequence_reader: WindowsClipboardSequenceReader | None = None
-        self.clipboard_sequence_timer: QTimer | None = None
-        self.clipboard_sequence_detector = DoubleCtrlCDetector()
-        self.last_clipboard_sequence: int | None = None
         self.last_ctrl_down_at = 0.0
         self.last_hotkey_at = 0.0
-        self.keyboard_hotkey_handle = None
         self.mac_hotkey_listener = None
         self.signals = AppSignals()
         self.keyboard_hook = None
@@ -247,18 +241,6 @@ class TranslatorApplication(QObject):
 
     def start_hotkey_listener(self) -> None:
         if sys.platform.startswith("win"):
-            if self.keyboard_hotkey_handle is None:
-                try:
-                    import keyboard
-
-                    self.keyboard_hotkey_handle = keyboard.add_hotkey(
-                        "ctrl+c",
-                        self.on_ctrl_c_hotkey_press,
-                        suppress=False,
-                        trigger_on_release=False,
-                    )
-                except Exception:
-                    self.keyboard_hotkey_handle = None
             if self.hotkey_listener is None:
                 try:
                     self.hotkey_listener = WindowsCtrlCHook(lambda: self.signals.hotkeyTriggered.emit())
@@ -276,24 +258,9 @@ class TranslatorApplication(QObject):
                 except Exception:
                     self.key_state_reader = None
                     self.hotkey_poll_timer = None
-            if self.clipboard_sequence_timer is None:
-                try:
-                    self.clipboard_sequence_reader = WindowsClipboardSequenceReader()
-                    self.last_clipboard_sequence = self.clipboard_sequence_reader.sequence_number()
-                    self.clipboard_sequence_detector.reset()
-                    self.clipboard_sequence_timer = QTimer(self)
-                    self.clipboard_sequence_timer.setInterval(35)
-                    self.clipboard_sequence_timer.timeout.connect(self.poll_clipboard_sequence)
-                    self.clipboard_sequence_timer.start()
-                except Exception:
-                    self.clipboard_sequence_reader = None
-                    self.clipboard_sequence_timer = None
-                    self.last_clipboard_sequence = None
             if (
-                self.keyboard_hotkey_handle is None
-                and self.hotkey_listener is None
+                self.hotkey_listener is None
                 and self.hotkey_poll_timer is None
-                and self.clipboard_sequence_timer is None
             ):
                 self.popup.show_error(self._hotkey_permission_message())
             return
@@ -335,10 +302,6 @@ class TranslatorApplication(QObject):
             self.keyboard_hook = None
             self.popup.show_error("Не удалось включить глобальный хоткей. Попробуйте запустить приложение от администратора.")
 
-    def on_ctrl_c_hotkey_press(self) -> None:
-        if self.detector.register_key_press("c", True, time.monotonic()):
-            self.signals.hotkeyTriggered.emit()
-
     def poll_hotkey_state(self) -> None:
         if self.key_state_reader is None:
             return
@@ -352,29 +315,6 @@ class TranslatorApplication(QObject):
         ):
             self.signals.hotkeyTriggered.emit()
 
-    def poll_clipboard_sequence(self) -> None:
-        if self.clipboard_sequence_reader is None:
-            return
-        current_sequence = self.clipboard_sequence_reader.sequence_number()
-        if self.last_clipboard_sequence is None:
-            self.last_clipboard_sequence = current_sequence
-            return
-        if current_sequence == self.last_clipboard_sequence:
-            return
-        self.last_clipboard_sequence = current_sequence
-
-        now = time.monotonic()
-        ctrl_down = False
-        if self.key_state_reader is not None:
-            ctrl_down = self.key_state_reader.ctrl_down()
-        if ctrl_down:
-            self.last_ctrl_down_at = now
-        if not ctrl_down and now - self.last_ctrl_down_at > 0.35:
-            self.clipboard_sequence_detector.reset()
-            return
-        if self.clipboard_sequence_detector.register_key_press("c", True, now):
-            self.signals.hotkeyTriggered.emit()
-
     def stop_hotkey_listener(self) -> None:
         if self.mac_hotkey_listener is not None:
             try:
@@ -382,14 +322,6 @@ class TranslatorApplication(QObject):
             except Exception:
                 pass
             self.mac_hotkey_listener = None
-        if self.keyboard_hotkey_handle is not None:
-            try:
-                import keyboard
-
-                keyboard.remove_hotkey(self.keyboard_hotkey_handle)
-            except Exception:
-                pass
-            self.keyboard_hotkey_handle = None
         if self.hotkey_listener is not None:
             self.hotkey_listener.stop()
             self.hotkey_listener = None
@@ -397,15 +329,8 @@ class TranslatorApplication(QObject):
             self.hotkey_poll_timer.stop()
             self.hotkey_poll_timer.deleteLater()
             self.hotkey_poll_timer = None
-        if self.clipboard_sequence_timer is not None:
-            self.clipboard_sequence_timer.stop()
-            self.clipboard_sequence_timer.deleteLater()
-            self.clipboard_sequence_timer = None
         self.key_state_reader = None
-        self.clipboard_sequence_reader = None
-        self.last_clipboard_sequence = None
         self.hotkey_poll_detector.reset()
-        self.clipboard_sequence_detector.reset()
         self.detector.reset()
         if self.keyboard_hook is None:
             return

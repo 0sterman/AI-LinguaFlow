@@ -10,7 +10,7 @@ LinguaFlow AI does not include a shared translation API key. Each user must ente
 
 Download installers from the GitHub Releases page:
 
-- Windows: `LinguaFlow-AI-Setup-v1.0.11.exe`
+- Windows: `LinguaFlow-AI-Setup-v1.0.12.exe`
 - macOS Intel: `LinguaFlow-AI-v1.0.9-macOS-x86_64.dmg`
 
 Supported and tested status:
