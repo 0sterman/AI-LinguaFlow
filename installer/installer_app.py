@@ -16,7 +16,7 @@ from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.14"
+APP_VERSION = "1.0.15"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
@@ -56,6 +56,7 @@ INSTALLER_COPY = {
         "launch_after_install": "Launch LinguaFlow AI after installation",
         "ready": "Ready to install",
         "stopping": "Closing running app...",
+        "uninstalling": "Removing previous LinguaFlow AI installation...",
         "extracting": "Extracting files...",
         "copying": "Copying application files...",
         "shortcuts": "Creating shortcuts...",
@@ -108,6 +109,7 @@ INSTALLER_COPY = {
         "launch_after_install": "Запустить LinguaFlow AI после установки",
         "ready": "Готово к установке",
         "stopping": "Закрываю запущенную программу...",
+        "uninstalling": "Удаляю предыдущую установку LinguaFlow AI...",
         "extracting": "Распаковываю файлы...",
         "copying": "Копирую файлы приложения...",
         "shortcuts": "Создаю ярлыки...",
@@ -413,7 +415,13 @@ def install(options: InstallOptions, progress: object | None = None) -> None:
         _report(progress, 8, "stopping")
         stop_running_app()
 
-        _report(progress, 22, "extracting")
+        existing_root = find_existing_install_root(install_root)
+        if existing_root is not None:
+            _report(progress, 16, "uninstalling")
+            run_existing_uninstaller(existing_root)
+            wait_for_install_root_removed(existing_root)
+
+        _report(progress, 26, "extracting")
         with zipfile.ZipFile(payload) as archive:
             archive.extractall(temp_root)
 
@@ -422,7 +430,7 @@ def install(options: InstallOptions, progress: object | None = None) -> None:
         if not source_exe.exists():
             raise FileNotFoundError("Installer payload does not contain LinguaFlow AI.exe")
 
-        _report(progress, 46, "copying")
+        _report(progress, 48, "copying")
         prepare_install_root(install_root)
         shutil.copytree(source_root, install_root)
         (install_root / MARKER_FILE).write_text(APP_NAME, encoding="utf-8")
@@ -481,6 +489,74 @@ def is_linguaflow_install_root(path: Path) -> bool:
     uninstall_exe = path / UNINSTALL_EXE
     bundled_icon = path / "_internal" / "assets" / "app_icon.ico"
     return app_exe.exists() or uninstall_exe.exists() or bundled_icon.exists()
+
+
+def find_existing_install_root(target_root: Path) -> Path | None:
+    candidates: list[Path] = []
+    registered_root = read_registered_install_location()
+    if registered_root is not None:
+        candidates.append(registered_root)
+    candidates.append(target_root)
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        try:
+            resolved = candidate.expanduser().resolve()
+        except OSError:
+            continue
+        key = str(resolved).casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        if resolved.exists() and is_linguaflow_install_root(resolved):
+            return resolved
+    return None
+
+
+def read_registered_install_location() -> Path | None:
+    if sys.platform != "win32":
+        return None
+    access_masks = (winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0), winreg.KEY_READ)
+    for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+        for access in access_masks:
+            try:
+                with winreg.OpenKey(root, UNINSTALL_KEY, 0, access) as key:
+                    value, _ = winreg.QueryValueEx(key, "InstallLocation")
+            except OSError:
+                continue
+            path = Path(str(value)).expanduser()
+            if path.exists():
+                return path.resolve()
+    return None
+
+
+def run_existing_uninstaller(install_root: Path) -> None:
+    uninstaller = install_root / UNINSTALL_EXE
+    if not uninstaller.exists():
+        return
+    subprocess.run(
+        [
+            str(uninstaller),
+            "--quiet",
+            "--preserve-autostart",
+            "--install-root",
+            str(install_root),
+        ],
+        cwd=str(install_root),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        startupinfo=hidden_startupinfo(),
+        creationflags=hidden_creationflags(),
+        check=False,
+    )
+
+
+def wait_for_install_root_removed(install_root: Path, timeout_seconds: float = 45.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if not install_root.exists():
+            return
+        time.sleep(0.5)
 
 
 def resource_path(name: str) -> Path:

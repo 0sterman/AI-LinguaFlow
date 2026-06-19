@@ -12,7 +12,7 @@ from tkinter import DoubleVar, StringVar, Tk, messagebox, ttk
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.14"
+APP_VERSION = "1.0.15"
 APP_EXE = "LinguaFlow AI.exe"
 WINDOW_TITLE = "LinguaFlow AI Uninstall"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"

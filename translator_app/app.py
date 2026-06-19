@@ -31,7 +31,15 @@ from translator_app.startup import (
     set_desktop_shortcut,
     set_start_with_windows,
 )
-from translator_app.ui import APP_DISPLAY_NAME, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup, app_stylesheet
+from translator_app.ui import (
+    APP_DISPLAY_NAME,
+    HistoryDialog,
+    MainTranslatorWindow,
+    SettingsDialog,
+    TranslationPopup,
+    app_stylesheet,
+    initialize_windows_dark_mode,
+)
 from translator_app.update_checker import UpdateInfo, create_windows_update_helper, download_installer, fetch_required_update
 from translator_app import __version__
 
@@ -712,6 +720,7 @@ class TranslatorApplication(QObject):
 
 def main() -> int:
     set_windows_app_user_model_id()
+    initialize_windows_dark_mode()
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationDisplayName("")

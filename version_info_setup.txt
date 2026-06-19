@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 0, 14, 0),
-    prodvers=(1, 0, 14, 0),
+    filevers=(1, 0, 15, 0),
+    prodvers=(1, 0, 15, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Roman Ostroumov / Oster'),
           StringStruct('FileDescription', 'LinguaFlow AI Setup'),
-          StringStruct('FileVersion', '1.0.14'),
+          StringStruct('FileVersion', '1.0.15'),
           StringStruct('InternalName', 'LinguaFlow AI Setup'),
           StringStruct('LegalCopyright', 'Copyright (c) Roman Ostroumov / Oster'),
           StringStruct('OriginalFilename', 'LinguaFlow AI Setup.exe'),
           StringStruct('ProductName', 'LinguaFlow AI'),
-          StringStruct('ProductVersion', '1.0.14')
+          StringStruct('ProductVersion', '1.0.15')
         ]
       )
     ]),

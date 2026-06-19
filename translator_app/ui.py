@@ -46,6 +46,8 @@ PROVIDERS = (
     ("anthropic", "Anthropic Claude"),
 )
 
+_WINDOWS_DARK_MODE_INITIALIZED = False
+
 
 def provider_label_for_ui(provider: str) -> str:
     for provider_code, label in PROVIDERS:
@@ -66,15 +68,71 @@ def app_icon() -> QIcon:
     return icon
 
 
+def initialize_windows_dark_mode() -> None:
+    global _WINDOWS_DARK_MODE_INITIALIZED
+    if sys.platform != "win32" or _WINDOWS_DARK_MODE_INITIALIZED:
+        return
+    _WINDOWS_DARK_MODE_INITIALIZED = True
+    try:
+        uxtheme = ctypes.WinDLL("uxtheme", use_last_error=True)
+        try:
+            set_preferred_app_mode = uxtheme.SetPreferredAppMode
+        except AttributeError:
+            set_preferred_app_mode = uxtheme[135]
+        set_preferred_app_mode.argtypes = [ctypes.c_int]
+        set_preferred_app_mode.restype = ctypes.c_int
+        set_preferred_app_mode(2)
+        try:
+            refresh_policy = uxtheme[104]
+            refresh_policy.argtypes = []
+            refresh_policy.restype = None
+            refresh_policy()
+        except Exception:
+            pass
+    except Exception:
+        return
+
+
 def apply_windows_title_bar_theme(widget: QWidget, dark: bool = True) -> None:
     if sys.platform != "win32":
         return
+    initialize_windows_dark_mode()
     try:
         hwnd = int(widget.winId())
         if not hwnd:
             return
         enabled = ctypes.c_int(1 if dark else 0)
         dwmapi = ctypes.WinDLL("dwmapi", use_last_error=True)
+        uxtheme = ctypes.WinDLL("uxtheme", use_last_error=True)
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        try:
+            allow_dark_mode_for_window = uxtheme[133]
+            allow_dark_mode_for_window.argtypes = [ctypes.c_void_p, ctypes.c_bool]
+            allow_dark_mode_for_window.restype = ctypes.c_bool
+            allow_dark_mode_for_window(ctypes.c_void_p(hwnd), bool(dark))
+        except Exception:
+            pass
+        try:
+            set_window_theme = uxtheme.SetWindowTheme
+            set_window_theme.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_wchar_p]
+            set_window_theme.restype = ctypes.c_long
+            set_window_theme(
+                ctypes.c_void_p(hwnd),
+                "DarkMode_Explorer" if dark else "Explorer",
+                None,
+            )
+        except Exception:
+            pass
+        try:
+            user32.SetPropW.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_void_p]
+            user32.SetPropW.restype = ctypes.c_int
+            user32.SetPropW(
+                ctypes.c_void_p(hwnd),
+                "UseImmersiveDarkModeColors",
+                ctypes.c_void_p(1 if dark else 0),
+            )
+        except Exception:
+            pass
         for attribute in (20, 19):
             result = dwmapi.DwmSetWindowAttribute(
                 ctypes.c_void_p(hwnd),
@@ -84,6 +142,19 @@ def apply_windows_title_bar_theme(widget: QWidget, dark: bool = True) -> None:
             )
             if result == 0:
                 break
+        caption_color = ctypes.c_uint(0x00111111 if dark else 0x00FFFFFF)
+        text_color = ctypes.c_uint(0x00FFFFFF if dark else 0x00000000)
+        border_color = ctypes.c_uint(0x002B3545 if dark else 0x00D6D6D6)
+        for attribute, value in ((35, caption_color), (36, text_color), (34, border_color)):
+            try:
+                dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_void_p(hwnd),
+                    ctypes.c_uint(attribute),
+                    ctypes.byref(value),
+                    ctypes.sizeof(value),
+                )
+            except Exception:
+                pass
     except Exception:
         return
 

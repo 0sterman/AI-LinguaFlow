@@ -35,7 +35,7 @@ def test_find_installer_asset_uses_dmg_on_macos() -> None:
 def test_create_windows_update_helper_runs_uninstall_before_installer(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("translator_app.update_checker.tempfile.gettempdir", lambda: str(tmp_path))
     helper = create_windows_update_helper(
-        tmp_path / "LinguaFlow-AI-Setup-v1.0.14.exe",
+        tmp_path / "LinguaFlow-AI-Setup-v1.0.15.exe",
         tmp_path / "LinguaFlow AI Uninstall.exe",
         tmp_path / "LinguaFlow AI",
     )
