@@ -4,6 +4,10 @@ Fast popup translation for selected text on Windows and macOS.
 
 LinguaFlow AI helps you translate text without breaking your workflow: select text anywhere, press the shortcut, and get a quick translation popup. It automatically translates selected text into your chosen target language, including mixed-language text, while preserving the meaning as clearly as possible. You can also open the main translator window for normal manual translation, choose your preferred target language, and keep local translation history on your computer.
 
+<p align="center">
+  <img src="assets/linguaflow-ai-main-window.png" alt="LinguaFlow AI main translator window" width="900">
+</p>
+
 ## Download
 
 Choose the installer for your system:
