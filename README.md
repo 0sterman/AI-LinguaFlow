@@ -12,7 +12,7 @@ LinguaFlow AI helps you translate text without breaking your workflow: select te
 
 Choose the installer for your system:
 
-- **Windows:** [LinguaFlow AI v1.0.14](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.14)
+- **Windows:** [LinguaFlow AI v1.0.15](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.15)
 - **macOS Intel:** [LinguaFlow AI v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
 
 ## Shortcuts
