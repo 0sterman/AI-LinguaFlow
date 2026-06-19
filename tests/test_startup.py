@@ -51,3 +51,24 @@ def test_disabling_missing_desktop_shortcut_does_not_crash(monkeypatch, tmp_path
     startup.set_desktop_shortcut(False)
 
     assert not (tmp_path / "LinguaFlow AI Translator.lnk").exists()
+
+
+def test_start_with_windows_detects_url_fallback(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setattr(startup.sys, "platform", "win32")
+    startup_path = startup.startup_shortcut_path()
+    startup_path.parent.mkdir(parents=True)
+    startup_path.with_name("LinguaFlow AI Translator.url").write_text("[InternetShortcut]\n", encoding="utf-8")
+
+    assert startup.is_start_with_windows_enabled()
+
+
+def test_desktop_shortcut_detects_url_fallback(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(startup, "_known_desktop_path", lambda: tmp_path)
+    monkeypatch.setattr(startup.sys, "platform", "win32")
+    startup.desktop_shortcut_path().with_name("LinguaFlow AI Translator.url").write_text(
+        "[InternetShortcut]\n",
+        encoding="utf-8",
+    )
+
+    assert startup.is_desktop_shortcut_enabled()

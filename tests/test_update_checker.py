@@ -1,4 +1,10 @@
-from translator_app.update_checker import _find_installer_asset, compare_versions, normalize_version, safe_filename
+from translator_app.update_checker import (
+    _find_installer_asset,
+    compare_versions,
+    create_windows_update_helper,
+    normalize_version,
+    safe_filename,
+)
 
 
 def test_normalize_version_accepts_github_tags() -> None:
@@ -24,3 +30,17 @@ def test_find_installer_asset_uses_dmg_on_macos() -> None:
         ]
     }
     assert _find_installer_asset(payload, platform="darwin")["name"].endswith(".dmg")
+
+
+def test_create_windows_update_helper_runs_uninstall_before_installer(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr("translator_app.update_checker.tempfile.gettempdir", lambda: str(tmp_path))
+    helper = create_windows_update_helper(
+        tmp_path / "LinguaFlow-AI-Setup-v1.0.14.exe",
+        tmp_path / "LinguaFlow AI Uninstall.exe",
+        tmp_path / "LinguaFlow AI",
+    )
+
+    content = helper.read_text(encoding="utf-8")
+    assert "--preserve-autostart" in content
+    assert "--install-root" in content
+    assert "Start-Process -FilePath $installer" in content

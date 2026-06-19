@@ -66,14 +66,14 @@ def app_icon() -> QIcon:
     return icon
 
 
-def apply_windows_dark_title_bar(widget: QWidget) -> None:
+def apply_windows_title_bar_theme(widget: QWidget, dark: bool = True) -> None:
     if sys.platform != "win32":
         return
     try:
         hwnd = int(widget.winId())
         if not hwnd:
             return
-        enabled = ctypes.c_int(1)
+        enabled = ctypes.c_int(1 if dark else 0)
         dwmapi = ctypes.WinDLL("dwmapi", use_last_error=True)
         for attribute in (20, 19):
             result = dwmapi.DwmSetWindowAttribute(
@@ -88,8 +88,21 @@ def apply_windows_dark_title_bar(widget: QWidget) -> None:
         return
 
 
-def schedule_windows_dark_title_bar(widget: QWidget) -> None:
-    QTimer.singleShot(0, lambda: apply_windows_dark_title_bar(widget))
+def schedule_windows_title_bar_theme(widget: QWidget, dark: bool = True) -> None:
+    for delay_ms in (0, 50, 250):
+        QTimer.singleShot(delay_ms, lambda widget=widget, dark=dark: apply_windows_title_bar_theme(widget, dark))
+
+
+class WindowsTitleBarMixin:
+    _windows_dark_title_bar = True
+
+    def set_windows_dark_title_bar(self, enabled: bool) -> None:
+        self._windows_dark_title_bar = enabled
+        schedule_windows_title_bar_theme(self, enabled)
+
+    def showEvent(self, event) -> None:  # noqa: N802 - Qt override.
+        super().showEvent(event)
+        schedule_windows_title_bar_theme(self, self._windows_dark_title_bar)
 
 MODEL_DESCRIPTIONS = {
     "ru": {
@@ -1021,7 +1034,7 @@ class TranslationPopup(QWidget):
         )
 
 
-class MainTranslatorWindow(QWidget):
+class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
     translateRequested = Signal(str, str, str)
     copyRequested = Signal()
     historyRequested = Signal()
@@ -1035,7 +1048,6 @@ class MainTranslatorWindow(QWidget):
         self.setWindowIcon(app_icon())
         self.setObjectName("MainTranslatorWindow")
         self.resize(900, 600)
-        schedule_windows_dark_title_bar(self)
 
         self.title_label = QLabel(APP_DISPLAY_NAME)
         self.title_label.setObjectName("HeroTitle")
@@ -1260,7 +1272,7 @@ class MainTranslatorWindow(QWidget):
         return widget
 
 
-class HistoryDialog(QDialog):
+class HistoryDialog(WindowsTitleBarMixin, QDialog):
     filtersChanged = Signal(str, object, object)
 
     def __init__(self, records: list[HistoryRecord], ui_language: str = "ru", parent: QWidget | None = None) -> None:
@@ -1269,7 +1281,6 @@ class HistoryDialog(QDialog):
         self.setWindowIcon(app_icon())
         self.setObjectName("SurfaceDialog")
         self.resize(900, 560)
-        schedule_windows_dark_title_bar(self)
         self.records_by_id: dict[int, HistoryRecord] = {}
 
         self.search_input = QLineEdit()
@@ -1435,7 +1446,7 @@ def _history_language_label(language_code: str) -> str:
     return cleaned or "AUTO"
 
 
-class SettingsDialog(QDialog):
+class SettingsDialog(WindowsTitleBarMixin, QDialog):
     apiKeyCheckRequested = Signal(str, str, str)
     apiKeyDeleteRequested = Signal(str)
     applyRequested = Signal()
@@ -1455,7 +1466,6 @@ class SettingsDialog(QDialog):
         self.setObjectName("SurfaceDialog")
         self.setModal(True)
         self.resize(690, 500)
-        schedule_windows_dark_title_bar(self)
 
         self.provider_input = QComboBox()
         for provider, label in PROVIDERS:
@@ -1662,7 +1672,7 @@ class SettingsDialog(QDialog):
         dialog = QDialog(self)
         dialog.setWindowTitle(t(self.ui_language, "usage_guide"))
         dialog.resize(880, 620)
-        schedule_windows_dark_title_bar(dialog)
+        schedule_windows_title_bar_theme(dialog, self._windows_dark_title_bar)
 
         browser = QTextBrowser()
         browser.setOpenExternalLinks(True)
@@ -1680,7 +1690,7 @@ class SettingsDialog(QDialog):
         dialog = QDialog(self)
         dialog.setWindowTitle(t(self.ui_language, "recommended_models"))
         dialog.resize(900, 520)
-        schedule_windows_dark_title_bar(dialog)
+        schedule_windows_title_bar_theme(dialog, self._windows_dark_title_bar)
 
         browser = QTextBrowser()
         browser.setOpenExternalLinks(False)

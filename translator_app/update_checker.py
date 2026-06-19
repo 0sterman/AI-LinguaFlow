@@ -60,6 +60,38 @@ def download_installer(update: UpdateInfo, timeout_seconds: int = DOWNLOAD_TIMEO
     return target
 
 
+def create_windows_update_helper(installer_path: Path, uninstaller_path: Path, install_root: Path) -> Path:
+    script_path = Path(tempfile.gettempdir()) / "LinguaFlowAI_update_helper.ps1"
+    script_path.write_text(
+        "\n".join(
+            [
+                "$ErrorActionPreference = 'SilentlyContinue'",
+                "Start-Sleep -Seconds 1",
+                f"$uninstaller = {powershell_literal(str(uninstaller_path))}",
+                f"$installRoot = {powershell_literal(str(install_root))}",
+                f"$installer = {powershell_literal(str(installer_path))}",
+                "if (Test-Path -LiteralPath $uninstaller) {",
+                "    Start-Process -FilePath $uninstaller -ArgumentList @('--quiet', '--preserve-autostart', '--install-root', $installRoot) -Wait -WindowStyle Hidden",
+                "}",
+                "$deadline = (Get-Date).AddSeconds(45)",
+                "while ((Test-Path -LiteralPath $installRoot) -and ((Get-Date) -lt $deadline)) {",
+                "    Start-Sleep -Milliseconds 500",
+                "}",
+                "Start-Process -FilePath $installer -WorkingDirectory (Split-Path -Parent $installer)",
+                "Start-Sleep -Seconds 2",
+                "Remove-Item -LiteralPath $PSCommandPath -Force",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return script_path
+
+
+def powershell_literal(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
 def normalize_version(value: str) -> str:
     cleaned = value.strip().lower()
     if cleaned.startswith("v"):

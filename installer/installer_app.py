@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import winreg
 import zipfile
 from dataclasses import dataclass
@@ -15,7 +16,7 @@ from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.13"
+APP_VERSION = "1.0.14"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaFlow AI.exe"
 UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
@@ -471,7 +472,7 @@ def validate_install_root(install_root: Path, language_code: str = "en") -> None
 def prepare_install_root(install_root: Path) -> None:
     validate_install_root(install_root)
     if install_root.exists():
-        shutil.rmtree(install_root)
+        remove_tree_with_retries(install_root)
     install_root.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -496,6 +497,39 @@ def stop_running_app() -> None:
         creationflags=hidden_creationflags(),
         check=False,
     )
+    wait_for_app_exit()
+
+
+def wait_for_app_exit(timeout_seconds: float = 10.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        result = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {APP_EXE}", "/NH"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            startupinfo=hidden_startupinfo(),
+            creationflags=hidden_creationflags(),
+            check=False,
+        )
+        if APP_EXE.lower() not in result.stdout.lower():
+            return
+        time.sleep(0.25)
+
+
+def remove_tree_with_retries(path: Path, attempts: int = 12) -> None:
+    last_error: Exception | None = None
+    for _attempt in range(attempts):
+        try:
+            shutil.rmtree(path)
+            return
+        except FileNotFoundError:
+            return
+        except OSError as exc:
+            last_error = exc
+            time.sleep(0.5)
+    if last_error is not None:
+        raise last_error
 
 
 def write_shortcuts(target_exe: Path, icon_path: Path, options: InstallOptions) -> None:

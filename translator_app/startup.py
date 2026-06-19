@@ -24,10 +24,24 @@ def startup_shortcut_path() -> Path:
     return startup / APP_SHORTCUT_NAME
 
 
+def startup_shortcut_paths() -> tuple[Path, ...]:
+    shortcut = startup_shortcut_path()
+    if sys.platform == "darwin":
+        return (shortcut,)
+    return (shortcut, shortcut.with_name(URL_APP_SHORTCUT_NAME))
+
+
 def desktop_shortcut_path() -> Path:
     if sys.platform == "darwin":
         return desktop_dir() / "LinguaFlow AI.app"
     return desktop_dir() / APP_SHORTCUT_NAME
+
+
+def desktop_shortcut_paths() -> tuple[Path, ...]:
+    shortcut = desktop_shortcut_path()
+    if sys.platform == "darwin":
+        return (shortcut,)
+    return (shortcut, shortcut.with_name(URL_APP_SHORTCUT_NAME))
 
 
 def desktop_dir() -> Path:
@@ -66,9 +80,15 @@ def set_start_with_windows(enabled: bool) -> None:
         return
     if enabled:
         shortcut.parent.mkdir(parents=True, exist_ok=True)
-        _write_shortcut(shortcut, current_launch_target(), current_icon_target())
-    elif shortcut.exists():
-        shortcut.unlink()
+        created_shortcut = _write_shortcut(shortcut, current_launch_target(), current_icon_target())
+        stale_shortcuts = [path for path in startup_shortcut_paths() if path != created_shortcut]
+        for stale_shortcut in stale_shortcuts:
+            if stale_shortcut.exists():
+                stale_shortcut.unlink()
+    else:
+        for candidate in startup_shortcut_paths():
+            if candidate.exists():
+                candidate.unlink()
     if not enabled:
         for stale_shortcut in _stale_shortcut_paths(shortcut):
             if stale_shortcut.exists():
@@ -76,7 +96,7 @@ def set_start_with_windows(enabled: bool) -> None:
 
 
 def is_start_with_windows_enabled() -> bool:
-    return startup_shortcut_path().exists()
+    return any(path.exists() for path in startup_shortcut_paths())
 
 
 def set_desktop_shortcut(enabled: bool) -> None:
@@ -98,8 +118,9 @@ def set_desktop_shortcut(enabled: bool) -> None:
         created_shortcut = _write_shortcut(shortcut, current_launch_target(), current_icon_target())
         stale_shortcuts = _stale_desktop_shortcut_paths(created_shortcut)
     else:
-        if shortcut.exists():
-            shortcut.unlink()
+        for candidate in desktop_shortcut_paths():
+            if candidate.exists():
+                candidate.unlink()
         stale_shortcuts = _stale_desktop_shortcut_paths(shortcut)
     for stale_shortcut in stale_shortcuts:
         if stale_shortcut.exists():
@@ -107,7 +128,7 @@ def set_desktop_shortcut(enabled: bool) -> None:
 
 
 def is_desktop_shortcut_enabled() -> bool:
-    return desktop_shortcut_path().exists()
+    return any(path.exists() for path in desktop_shortcut_paths())
 
 
 def ensure_desktop_shortcut() -> None:

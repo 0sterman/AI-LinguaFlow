@@ -5,13 +5,14 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import winreg
 from pathlib import Path
 from tkinter import DoubleVar, StringVar, Tk, messagebox, ttk
 
 
 APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.13"
+APP_VERSION = "1.0.14"
 APP_EXE = "LinguaFlow AI.exe"
 WINDOW_TITLE = "LinguaFlow AI Uninstall"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
@@ -153,11 +154,11 @@ class UninstallerWindow:
         self.root.update_idletasks()
 
 
-def uninstall(install_root: Path, progress: object | None = None) -> None:
+def uninstall(install_root: Path, progress: object | None = None, preserve_autostart: bool = False) -> None:
     _report(progress, 15, "Closing running app...")
     stop_running_app()
     _report(progress, 35, "Removing shortcuts...")
-    remove_shortcuts()
+    remove_shortcuts(preserve_autostart=preserve_autostart)
     _report(progress, 58, "Removing Windows uninstall entry...")
     remove_registry_entries()
     _report(progress, 82, "Scheduling application folder removal...")
@@ -184,16 +185,40 @@ def stop_running_app() -> None:
         creationflags=hidden_creationflags(),
         check=False,
     )
+    wait_for_app_exit(current_pid)
 
 
-def remove_shortcuts() -> None:
+def wait_for_app_exit(current_pid: int, timeout_seconds: float = 10.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    process_name = Path(APP_EXE).stem
+    while time.monotonic() < deadline:
+        command = (
+            f"@(Get-Process -Name '{process_name}' -ErrorAction SilentlyContinue | "
+            f"Where-Object {{ $_.Id -ne {current_pid} }}).Count"
+        )
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            startupinfo=hidden_startupinfo(),
+            creationflags=hidden_creationflags(),
+            check=False,
+        )
+        if result.stdout.strip() in {"", "0"}:
+            return
+        time.sleep(0.25)
+
+
+def remove_shortcuts(preserve_autostart: bool = False) -> None:
     locations = [
         Path(os.environ.get("PUBLIC", str(Path.home()))) / "Desktop",
         Path.home() / "Desktop",
         Path(os.environ.get("ProgramData", os.environ.get("APPDATA", ""))) / "Microsoft" / "Windows" / "Start Menu" / "Programs",
         Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs",
-        Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup",
     ]
+    if not preserve_autostart:
+        locations.append(Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup")
     for location in locations:
         for shortcut_name in SHORTCUT_NAMES:
             shortcut = location / shortcut_name
@@ -266,12 +291,14 @@ def needs_admin_for_path(path: Path) -> bool:
     return False
 
 
-def relaunch_elevated(install_root: Path, quiet: bool) -> bool:
+def relaunch_elevated(install_root: Path, quiet: bool, preserve_autostart: bool = False) -> bool:
     if sys.platform != "win32" or is_user_admin() or not needs_admin_for_path(install_root):
         return False
     params = ["--install-root", str(install_root)]
     if quiet:
         params.append("--quiet")
+    if preserve_autostart:
+        params.append("--preserve-autostart")
     arguments = subprocess.list2cmdline(params)
     result = ctypes.windll.shell32.ShellExecuteW(
         None,
@@ -336,10 +363,11 @@ def main() -> int:
         configure_process_dpi_awareness()
         install_root = determine_install_root()
         quiet = "--quiet" in sys.argv
-        if relaunch_elevated(install_root, quiet):
+        preserve_autostart = "--preserve-autostart" in sys.argv
+        if relaunch_elevated(install_root, quiet, preserve_autostart=preserve_autostart):
             return 0
         if quiet:
-            uninstall(install_root)
+            uninstall(install_root, preserve_autostart=preserve_autostart)
             return 0
         return UninstallerWindow().run()
     except Exception as exc:  # noqa: BLE001 - last-resort UI fallback.

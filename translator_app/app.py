@@ -32,7 +32,7 @@ from translator_app.startup import (
     set_start_with_windows,
 )
 from translator_app.ui import APP_DISPLAY_NAME, HistoryDialog, MainTranslatorWindow, SettingsDialog, TranslationPopup, app_stylesheet
-from translator_app.update_checker import UpdateInfo, download_installer, fetch_required_update
+from translator_app.update_checker import UpdateInfo, create_windows_update_helper, download_installer, fetch_required_update
 from translator_app import __version__
 
 SINGLE_INSTANCE_NAME = "OsterLinguaFlowAITranslator"
@@ -79,6 +79,7 @@ class TranslatorApplication(QObject):
         self.main_window.historyRequested.connect(self.open_history)
         self.main_window.settingsRequested.connect(self.open_settings)
         self.main_window.targetLanguageChanged.connect(self.save_target_language)
+        self.apply_visual_theme()
 
         self.popup = TranslationPopup(self.config.popup_width, self.config.popup_height, self.config.primary_language)
         self.popup.languageSelected.connect(self.retranslate)
@@ -548,6 +549,7 @@ class TranslatorApplication(QObject):
 
     def open_history(self) -> None:
         dialog = HistoryDialog(self.history_store.recent(), self.config.primary_language)
+        dialog.set_windows_dark_title_bar(self.resolved_theme() == "dark")
         dialog.filtersChanged.connect(lambda query, date_from, date_to: self.filter_history(dialog, query, date_from, date_to))
         dialog.copy_source_button.clicked.connect(
             lambda: self.copy_history_text(dialog, copy_translation=False)
@@ -596,6 +598,7 @@ class TranslatorApplication(QObject):
             "anthropic": self.config.key_status_for_provider("anthropic"),
         }
         dialog = SettingsDialog(self.config, saved_key_status=saved_key_status, key_valid_status=key_valid_status)
+        dialog.set_windows_dark_title_bar(self.resolved_theme() == "dark")
         self.active_settings_dialog = dialog
         dialog.apiKeyCheckRequested.connect(self.check_api_key)
         dialog.apiKeyDeleteRequested.connect(self.delete_api_key)
@@ -638,17 +641,19 @@ class TranslatorApplication(QObject):
         self.config.theme = dialog.theme
         try:
             set_start_with_windows(self.config.autostart)
+            self.config.autostart = is_start_with_windows_enabled()
         except Exception as exc:
             QMessageBox.warning(None, "Settings", f"Не удалось изменить автозапуск: {exc}")
         try:
             set_desktop_shortcut(self.config.desktop_shortcut)
+            self.config.desktop_shortcut = is_desktop_shortcut_enabled()
         except Exception as exc:
             QMessageBox.warning(None, "Settings", f"Не удалось изменить ярлык на рабочем столе: {exc}")
         save_config(self.config)
         self.main_window.apply_locale(self.config.primary_language)
         self.popup.apply_locale(self.config.primary_language)
         self.tray.setContextMenu(self._build_menu())
-        self.qt_app.setStyleSheet(app_stylesheet(self.resolved_theme()))
+        self.apply_visual_theme()
         if close_dialog:
             return
 
@@ -694,6 +699,15 @@ class TranslatorApplication(QObject):
 
     def resolved_theme(self) -> str:
         return resolve_theme(self.config)
+
+    def apply_visual_theme(self) -> None:
+        resolved_theme = self.resolved_theme()
+        self.qt_app.setStyleSheet(app_stylesheet(resolved_theme))
+        use_dark_title_bar = resolved_theme == "dark"
+        self.main_window.set_windows_dark_title_bar(use_dark_title_bar)
+        active_settings_dialog = getattr(self, "active_settings_dialog", None)
+        if active_settings_dialog is not None:
+            active_settings_dialog.set_windows_dark_title_bar(use_dark_title_bar)
 
 
 def main() -> int:
@@ -791,7 +805,24 @@ def show_required_update(app: QApplication, update: UpdateInfo) -> int:
                 "The release page has been opened. The installer download will start now.",
             )
             installer_path = download_installer(update)
-            QProcess.startDetached(str(installer_path), [])
+            if sys.platform == "win32" and getattr(sys, "frozen", False):
+                install_root = Path(sys.executable).resolve().parent
+                uninstaller_path = install_root / "LinguaFlow AI Uninstall.exe"
+                helper_path = create_windows_update_helper(installer_path, uninstaller_path, install_root)
+                QProcess.startDetached(
+                    "powershell.exe",
+                    [
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-WindowStyle",
+                        "Hidden",
+                        "-File",
+                        str(helper_path),
+                    ],
+                )
+            else:
+                QProcess.startDetached(str(installer_path), [])
         except Exception:
             QMessageBox.warning(
                 None,
