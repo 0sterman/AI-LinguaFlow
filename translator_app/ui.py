@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import ctypes
 from html import escape
-from PySide6.QtCore import QDate, QSize, QTimer, Qt, Signal
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import QDate, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QGuiApplication, QIcon, QKeyEvent, QKeySequence, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -63,6 +64,32 @@ def app_icon() -> QIcon:
     if icon.isNull():
         icon = QIcon(str(ui_resource_path("assets/app_icon.png")))
     return icon
+
+
+def apply_windows_dark_title_bar(widget: QWidget) -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        hwnd = int(widget.winId())
+        if not hwnd:
+            return
+        enabled = ctypes.c_int(1)
+        dwmapi = ctypes.WinDLL("dwmapi", use_last_error=True)
+        for attribute in (20, 19):
+            result = dwmapi.DwmSetWindowAttribute(
+                ctypes.c_void_p(hwnd),
+                ctypes.c_uint(attribute),
+                ctypes.byref(enabled),
+                ctypes.sizeof(enabled),
+            )
+            if result == 0:
+                break
+    except Exception:
+        return
+
+
+def schedule_windows_dark_title_bar(widget: QWidget) -> None:
+    QTimer.singleShot(0, lambda: apply_windows_dark_title_bar(widget))
 
 MODEL_DESCRIPTIONS = {
     "ru": {
@@ -1008,6 +1035,7 @@ class MainTranslatorWindow(QWidget):
         self.setWindowIcon(app_icon())
         self.setObjectName("MainTranslatorWindow")
         self.resize(900, 600)
+        schedule_windows_dark_title_bar(self)
 
         self.title_label = QLabel(APP_DISPLAY_NAME)
         self.title_label.setObjectName("HeroTitle")
@@ -1241,6 +1269,7 @@ class HistoryDialog(QDialog):
         self.setWindowIcon(app_icon())
         self.setObjectName("SurfaceDialog")
         self.resize(900, 560)
+        schedule_windows_dark_title_bar(self)
         self.records_by_id: dict[int, HistoryRecord] = {}
 
         self.search_input = QLineEdit()
@@ -1426,6 +1455,7 @@ class SettingsDialog(QDialog):
         self.setObjectName("SurfaceDialog")
         self.setModal(True)
         self.resize(690, 500)
+        schedule_windows_dark_title_bar(self)
 
         self.provider_input = QComboBox()
         for provider, label in PROVIDERS:
@@ -1632,6 +1662,7 @@ class SettingsDialog(QDialog):
         dialog = QDialog(self)
         dialog.setWindowTitle(t(self.ui_language, "usage_guide"))
         dialog.resize(880, 620)
+        schedule_windows_dark_title_bar(dialog)
 
         browser = QTextBrowser()
         browser.setOpenExternalLinks(True)
@@ -1649,6 +1680,7 @@ class SettingsDialog(QDialog):
         dialog = QDialog(self)
         dialog.setWindowTitle(t(self.ui_language, "recommended_models"))
         dialog.resize(900, 520)
+        schedule_windows_dark_title_bar(dialog)
 
         browser = QTextBrowser()
         browser.setOpenExternalLinks(False)
