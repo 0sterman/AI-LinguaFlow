@@ -11,12 +11,19 @@ from pathlib import Path
 from tkinter import DoubleVar, StringVar, Tk, messagebox, ttk
 
 
-APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.15"
-APP_EXE = "LinguaFlow AI.exe"
-WINDOW_TITLE = "LinguaFlow AI Uninstall"
-UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
-SHORTCUT_NAMES = ("LinguaFlow AI Translator.lnk", "LinguaFlow AI Translator.url")
+APP_NAME = "LinguaPopUp AI"
+APP_VERSION = "2.0.1"
+APP_EXE = "LinguaPopUp AI.exe"
+WINDOW_TITLE = "LinguaPopUp AI Uninstall"
+UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaPopUp AI"
+LEGACY_APP_EXE = "LinguaFlow AI.exe"
+LEGACY_UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
+SHORTCUT_NAMES = (
+    "LinguaPopUp AI Translator.lnk",
+    "LinguaPopUp AI Translator.url",
+    "LinguaFlow AI Translator.lnk",
+    "LinguaFlow AI Translator.url",
+)
 WINDOW_WIDTH = 660
 WINDOW_HEIGHT = 460
 CONTENT_WRAP = 580
@@ -46,7 +53,7 @@ class UninstallerWindow:
         content.grid(row=0, column=0, sticky="nsew")
         content.columnconfigure(0, weight=1)
 
-        ttk.Label(content, text="Uninstall LinguaFlow AI", font=("Segoe UI", 16, "bold")).grid(
+        ttk.Label(content, text="Uninstall LinguaPopUp AI", font=("Segoe UI", 16, "bold")).grid(
             row=0,
             column=0,
             sticky="w",
@@ -60,7 +67,7 @@ class UninstallerWindow:
         ttk.Label(
             content,
             text=(
-                "This will remove LinguaFlow AI from this computer, including Desktop and Start menu shortcuts. "
+                "This will remove LinguaPopUp AI from this computer, including Desktop and Start menu shortcuts. "
                 "Your local settings and translation history are kept unless you delete them manually."
             ),
             wraplength=self._px(CONTENT_WRAP),
@@ -132,7 +139,7 @@ class UninstallerWindow:
         return max(int(round(value * self.dpi_scale)), 1)
 
     def _confirm_uninstall(self) -> None:
-        if not messagebox.askyesno(WINDOW_TITLE, "Uninstall LinguaFlow AI now?"):
+        if not messagebox.askyesno(WINDOW_TITLE, "Uninstall LinguaPopUp AI now?"):
             return
         self.cancel_button.configure(state="disabled")
         self.uninstall_button.configure(state="disabled")
@@ -141,11 +148,11 @@ class UninstallerWindow:
         except Exception as exc:  # noqa: BLE001 - user-facing uninstaller.
             self.cancel_button.configure(state="normal")
             self.uninstall_button.configure(state="normal")
-            messagebox.showerror(WINDOW_TITLE, f"Could not uninstall LinguaFlow AI.\n\n{exc}")
+            messagebox.showerror(WINDOW_TITLE, f"Could not uninstall LinguaPopUp AI.\n\n{exc}")
             return
         self.progress_value.set(100)
         self.status.set("Completed")
-        messagebox.showinfo(WINDOW_TITLE, "LinguaFlow AI has been uninstalled.")
+        messagebox.showinfo(WINDOW_TITLE, "LinguaPopUp AI has been uninstalled.")
         self.root.destroy()
 
     def _apply_progress(self, value: int, status: str) -> None:
@@ -173,8 +180,9 @@ def _report(progress: object | None, value: int, status: str) -> None:
 
 def stop_running_app() -> None:
     current_pid = os.getpid()
+    process_names = "', '".join(Path(exe_name).stem for exe_name in (APP_EXE, LEGACY_APP_EXE))
     command = (
-        f"Get-Process -Name '{Path(APP_EXE).stem}' -ErrorAction SilentlyContinue | "
+        f"Get-Process -Name '{process_names}' -ErrorAction SilentlyContinue | "
         f"Where-Object {{ $_.Id -ne {current_pid} }} | Stop-Process -Force"
     )
     subprocess.run(
@@ -190,10 +198,10 @@ def stop_running_app() -> None:
 
 def wait_for_app_exit(current_pid: int, timeout_seconds: float = 10.0) -> None:
     deadline = time.monotonic() + timeout_seconds
-    process_name = Path(APP_EXE).stem
+    process_names = "', '".join(Path(exe_name).stem for exe_name in (APP_EXE, LEGACY_APP_EXE))
     while time.monotonic() < deadline:
         command = (
-            f"@(Get-Process -Name '{process_name}' -ErrorAction SilentlyContinue | "
+            f"@(Get-Process -Name '{process_names}' -ErrorAction SilentlyContinue | "
             f"Where-Object {{ $_.Id -ne {current_pid} }}).Count"
         )
         result = subprocess.run(
@@ -231,10 +239,11 @@ def remove_shortcuts(preserve_autostart: bool = False) -> None:
 
 def remove_registry_entries() -> None:
     for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-        try:
-            winreg.DeleteKey(root, UNINSTALL_KEY)
-        except OSError:
-            pass
+        for key_name in (UNINSTALL_KEY, LEGACY_UNINSTALL_KEY):
+            try:
+                winreg.DeleteKey(root, key_name)
+            except OSError:
+                pass
 
 
 def determine_install_root() -> Path:
@@ -255,16 +264,17 @@ def read_registered_install_location() -> Path | None:
     if sys.platform != "win32":
         return None
     access_masks = (winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0), winreg.KEY_READ)
-    for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-        for access in access_masks:
-            try:
-                with winreg.OpenKey(root, UNINSTALL_KEY, 0, access) as key:
-                    value, _ = winreg.QueryValueEx(key, "InstallLocation")
-            except OSError:
-                continue
-            path = Path(str(value)).expanduser()
-            if path.exists():
-                return path.resolve()
+    for key_name in (UNINSTALL_KEY, LEGACY_UNINSTALL_KEY):
+        for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+            for access in access_masks:
+                try:
+                    with winreg.OpenKey(root, key_name, 0, access) as key:
+                        value, _ = winreg.QueryValueEx(key, "InstallLocation")
+                except OSError:
+                    continue
+                path = Path(str(value)).expanduser()
+                if path.exists():
+                    return path.resolve()
     return None
 
 
@@ -312,7 +322,7 @@ def relaunch_elevated(install_root: Path, quiet: bool, preserve_autostart: bool 
 
 
 def schedule_install_folder_removal(install_root: Path) -> None:
-    script_path = Path(tempfile.gettempdir()) / "uninstall_linguaflow_cleanup.cmd"
+    script_path = Path(tempfile.gettempdir()) / "uninstall_linguapopup_cleanup.cmd"
     script_path.write_text(
         "@echo off\n"
         "timeout /t 2 /nobreak >nul\n"
@@ -371,9 +381,10 @@ def main() -> int:
             return 0
         return UninstallerWindow().run()
     except Exception as exc:  # noqa: BLE001 - last-resort UI fallback.
-        show_message(WINDOW_TITLE, f"Could not uninstall LinguaFlow AI.\n\n{exc}", icon_error=True)
+        show_message(WINDOW_TITLE, f"Could not uninstall LinguaPopUp AI.\n\n{exc}", icon_error=True)
         return 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

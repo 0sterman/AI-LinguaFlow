@@ -1,17 +1,17 @@
-# LinguaFlow AI
+# LinguaPopUp AI
 
-LinguaFlow AI is a compact AI translator for Windows and macOS, built around fast selected-text popup translation and a normal manual translator window.
+LinguaPopUp AI is a compact AI translator for Windows and macOS, built around fast selected-text popup translation and a normal manual translator window.
 
 Quick popup shortcut with selected text translation: `Ctrl+C+C` on Windows and `Cmd (Ctrl)+C+C` on macOS.
 
-LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
+LinguaPopUp AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
 
 ## Downloads And Supported Systems
 
 Download installers from the GitHub Releases page:
 
-- Windows: `LinguaFlow-AI-Setup-v1.0.15.exe`
-- macOS Intel: `LinguaFlow-AI-v1.0.9-macOS-x86_64.dmg`
+- Windows: `LinguaPopUp-AI-Setup-v2.0.1.exe`
+- macOS Intel: `LinguaPopUp-AI-v1.0.9-macOS-x86_64.dmg`
 
 Supported and tested status:
 
@@ -68,7 +68,7 @@ python -m translator_app
 
 On first run, the settings window opens automatically if the selected provider has no saved key. Open tray menu -> `Settings` any time to change provider, primary language, models, API keys, desktop shortcut, or autostart. API keys can be checked with a real provider request and deleted from local secure storage.
 
-The app uses a LinguaFlow AI icon and a clean dark interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
+The app uses a LinguaPopUp AI icon and a clean dark interface based on the repository/avatar style. A desktop shortcut is created automatically on first run and can be toggled in Settings.
 
 Supported providers and default models:
 
@@ -90,7 +90,7 @@ Environment variable fallbacks:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
+The executable will be created under `dist\LinguaPopUp AI\LinguaPopUp AI.exe`.
 
 ## Build Installer
 
@@ -98,7 +98,7 @@ The executable will be created under `dist\LinguaFlow AI\LinguaFlow AI.exe`.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
 ```
 
-The one-file installer will be created as `dist\LinguaFlow AI Setup.exe`. It defaults to `Program Files`, requests administrator rights, includes publisher/version metadata, a setup wizard with language selection, a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
+The one-file installer will be created as `dist\LinguaPopUp AI Setup.exe`. It defaults to `Program Files`, requests administrator rights, includes publisher/version metadata, a setup wizard with language selection, a short product description, destination-folder selection, desktop and Start menu shortcut options, Windows uninstall registration, and a final reminder that a personal provider API key is required in `Settings -> API`; the built-in guide is available in `Settings -> General -> Guide`.
 
 To remove the Windows `Unknown publisher` warning, sign the EXE files with a trusted code-signing certificate. The build scripts will sign automatically when either `CODESIGN_CERT_SHA1` or `CODESIGN_CERT_PATH` is set. Optional variables: `CODESIGN_CERT_PASSWORD`, `CODESIGN_TIMESTAMP_URL`.
 
@@ -112,7 +112,7 @@ source .venv/bin/activate
 ./macos/build_macos.sh
 ```
 
-The DMG is created in `dist/` as `LinguaFlow AI-<version>-macOS-x86_64.dmg`.
+The DMG is created in `dist/` as `LinguaPopUp AI-<version>-macOS-x86_64.dmg`.
 
 ## Notes
 
@@ -122,3 +122,4 @@ The DMG is created in `dist/` as `LinguaFlow AI-<version>-macOS-x86_64.dmg`.
 - Language detection before translation is lightweight local detection. Russian and Chinese are detected more reliably than English, German, and Spanish, so the manual language buttons remain useful.
 - The app does not replace your clipboard with the translation automatically. Use the popup copy button.
 - The global keyboard hook may be blocked by some security tools or elevated apps. If it does not trigger inside an elevated app, run the translator with the same privilege level.
+

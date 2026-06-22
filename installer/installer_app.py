@@ -15,17 +15,23 @@ from pathlib import Path
 from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog, messagebox, ttk
 
 
-APP_NAME = "LinguaFlow AI"
-APP_VERSION = "1.0.15"
+APP_NAME = "LinguaPopUp AI"
+APP_VERSION = "2.0.1"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
-APP_EXE = "LinguaFlow AI.exe"
-UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
-WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
-SHORTCUT_NAME = "LinguaFlow AI Translator.lnk"
-URL_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
-PAYLOAD_ZIP = "LinguaFlowAI_payload.zip"
-MARKER_FILE = ".linguaflow-install"
-UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
+APP_EXE = "LinguaPopUp AI.exe"
+UNINSTALL_EXE = "LinguaPopUp AI Uninstall.exe"
+WINDOW_TITLE = "LinguaPopUp AI - Popup Translator - © Roman Ostroumov / Oster"
+SHORTCUT_NAME = "LinguaPopUp AI Translator.lnk"
+URL_SHORTCUT_NAME = "LinguaPopUp AI Translator.url"
+PAYLOAD_ZIP = "LinguaPopUpAI_payload.zip"
+MARKER_FILE = ".linguapopup-install"
+UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaPopUp AI"
+LEGACY_APP_NAME = "LinguaFlow AI"
+LEGACY_APP_EXE = "LinguaFlow AI.exe"
+LEGACY_UNINSTALL_EXE = "LinguaFlow AI Uninstall.exe"
+LEGACY_MARKER_FILE = ".linguaflow-install"
+LEGACY_UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaFlow AI"
+LEGACY_SHORTCUT_NAMES = ("LinguaFlow AI Translator.lnk", "LinguaFlow AI Translator.url")
 WINDOW_WIDTH = 760
 WINDOW_HEIGHT = 520
 CONTENT_WRAP = 540
@@ -33,11 +39,11 @@ CONTENT_WRAP = 540
 INSTALLER_COPY = {
     "en": {
         "language_name": "English",
-        "title": "LinguaFlow AI Setup",
-        "welcome_title": "Welcome to LinguaFlow AI",
+        "title": "LinguaPopUp AI Setup",
+        "welcome_title": "Welcome to LinguaPopUp AI",
         "release": "Release",
         "language": "Setup language",
-        "welcome": "LinguaFlow AI is a compact Windows translator for selected text.",
+        "welcome": "LinguaPopUp AI is a compact Windows translator for selected text.",
         "highlight": "Select text anywhere, press Ctrl+C+C, and get a fast popup translation.",
         "details": (
             "The app also supports normal manual translation, local translation history, "
@@ -53,25 +59,25 @@ INSTALLER_COPY = {
         "options": "Options",
         "desktop_shortcut": "Create a desktop shortcut",
         "start_menu_shortcut": "Add a Start menu shortcut",
-        "launch_after_install": "Launch LinguaFlow AI after installation",
+        "launch_after_install": "Launch LinguaPopUp AI after installation",
         "ready": "Ready to install",
         "stopping": "Closing running app...",
-        "uninstalling": "Removing previous LinguaFlow AI installation...",
+        "uninstalling": "Removing previous LinguaPopUp AI installation...",
         "extracting": "Extracting files...",
         "copying": "Copying application files...",
         "shortcuts": "Creating shortcuts...",
         "registering": "Registering Windows uninstall entry...",
-        "launching": "Launching LinguaFlow AI...",
-        "installing": "Installing LinguaFlow AI...",
+        "launching": "Launching LinguaPopUp AI...",
+        "installing": "Installing LinguaPopUp AI...",
         "failed": "Installation was not completed",
         "completed": "Installation completed",
         "success": (
-            "LinguaFlow AI has been installed.\n\n"
+            "LinguaPopUp AI has been installed.\n\n"
             "For correct operation, enter your own API key: Settings -> API.\n\n"
             "Usage answers are available in Settings -> General -> Guide."
         ),
-        "startup_error": "Could not start LinguaFlow AI Setup.",
-        "install_error": "Could not install LinguaFlow AI.",
+        "startup_error": "Could not start LinguaPopUp AI Setup.",
+        "install_error": "Could not install LinguaPopUp AI.",
         "choose_folder": "Choose installation folder",
         "continue": "Continue",
         "back": "Back",
@@ -81,16 +87,16 @@ INSTALLER_COPY = {
         "root_folder": "The app cannot be installed directly into a drive root.",
         "occupied_folder": (
             "The selected folder already contains files from another program or user. "
-            "Choose an empty folder or the previous LinguaFlow AI installation folder."
+            "Choose an empty folder or the previous LinguaPopUp AI installation folder."
         ),
     },
     "ru": {
         "language_name": "Русский",
-        "title": "Установка LinguaFlow AI",
-        "welcome_title": "Добро пожаловать в LinguaFlow AI",
+        "title": "Установка LinguaPopUp AI",
+        "welcome_title": "Добро пожаловать в LinguaPopUp AI",
         "release": "Релиз",
         "language": "Язык установки",
-        "welcome": "LinguaFlow AI - компактный Windows-переводчик для выделенного текста.",
+        "welcome": "LinguaPopUp AI - компактный Windows-переводчик для выделенного текста.",
         "highlight": "Выделите текст в любом приложении, нажмите Ctrl+C+C и получите быстрый popup-перевод.",
         "details": (
             "Приложение также поддерживает обычный ручной перевод, локальную историю переводов "
@@ -106,25 +112,25 @@ INSTALLER_COPY = {
         "options": "Параметры",
         "desktop_shortcut": "Создать ярлык на рабочем столе",
         "start_menu_shortcut": "Добавить ярлык в меню Пуск",
-        "launch_after_install": "Запустить LinguaFlow AI после установки",
+        "launch_after_install": "Запустить LinguaPopUp AI после установки",
         "ready": "Готово к установке",
         "stopping": "Закрываю запущенную программу...",
-        "uninstalling": "Удаляю предыдущую установку LinguaFlow AI...",
+        "uninstalling": "Удаляю предыдущую установку LinguaPopUp AI...",
         "extracting": "Распаковываю файлы...",
         "copying": "Копирую файлы приложения...",
         "shortcuts": "Создаю ярлыки...",
         "registering": "Регистрирую удаление в Windows...",
-        "launching": "Запускаю LinguaFlow AI...",
-        "installing": "Устанавливаю LinguaFlow AI...",
+        "launching": "Запускаю LinguaPopUp AI...",
+        "installing": "Устанавливаю LinguaPopUp AI...",
         "failed": "Установка не завершена",
         "completed": "Установка завершена",
         "success": (
-            "Установка LinguaFlow AI завершена.\n\n"
+            "Установка LinguaPopUp AI завершена.\n\n"
             "Для корректной работы необходимо ввести свой API-ключ: Настройки -> API.\n\n"
             "Ответы по работе с программой можно найти в Настройки -> Основное -> Инструкция."
         ),
-        "startup_error": "Не удалось запустить установщик LinguaFlow AI.",
-        "install_error": "Не удалось установить LinguaFlow AI.",
+        "startup_error": "Не удалось запустить установщик LinguaPopUp AI.",
+        "install_error": "Не удалось установить LinguaPopUp AI.",
         "choose_folder": "Выберите папку установки",
         "continue": "Продолжить",
         "back": "Назад",
@@ -134,7 +140,7 @@ INSTALLER_COPY = {
         "root_folder": "Нельзя устанавливать программу прямо в корень диска.",
         "occupied_folder": (
             "Выбранная папка уже содержит файлы другой программы или пользователя. "
-            "Выберите пустую папку или прежнюю папку установки LinguaFlow AI."
+            "Выберите пустую папку или прежнюю папку установки LinguaPopUp AI."
         ),
     },
 }
@@ -399,7 +405,7 @@ def main() -> int:
         configure_process_dpi_awareness()
         return InstallerWizard().run()
     except Exception as exc:  # noqa: BLE001 - last-resort UI fallback.
-        show_message("LinguaFlow AI Setup", f"Could not start LinguaFlow AI Setup.\n\n{exc}", icon_error=True)
+        show_message("LinguaPopUp AI Setup", f"Could not start LinguaPopUp AI Setup.\n\n{exc}", icon_error=True)
         return 1
 
 
@@ -409,7 +415,7 @@ def install(options: InstallOptions, progress: object | None = None) -> None:
         raise FileNotFoundError(f"Installer payload is missing: {payload}")
 
     install_root = options.install_root.resolve()
-    temp_root = Path(tempfile.mkdtemp(prefix="LinguaFlowAIInstall_"))
+    temp_root = Path(tempfile.mkdtemp(prefix="LinguaPopUpAIInstall_"))
 
     try:
         _report(progress, 8, "stopping")
@@ -428,7 +434,7 @@ def install(options: InstallOptions, progress: object | None = None) -> None:
         source_root = temp_root / APP_NAME
         source_exe = source_root / APP_EXE
         if not source_exe.exists():
-            raise FileNotFoundError("Installer payload does not contain LinguaFlow AI.exe")
+            raise FileNotFoundError("Installer payload does not contain LinguaPopUp AI.exe")
 
         _report(progress, 48, "copying")
         prepare_install_root(install_root)
@@ -440,7 +446,7 @@ def install(options: InstallOptions, progress: object | None = None) -> None:
         installed_icon = install_root / "_internal" / "assets" / "app_icon.ico"
         shortcut_icon = installed_icon if installed_icon.exists() else target_exe
         if not uninstall_exe.exists():
-            raise FileNotFoundError("Installer payload does not contain LinguaFlow AI Uninstall.exe")
+            raise FileNotFoundError("Installer payload does not contain LinguaPopUp AI Uninstall.exe")
         _report(progress, 72, "registering")
         register_uninstall_entry(install_root, target_exe, uninstall_exe, shortcut_icon)
         _report(progress, 86, "shortcuts")
@@ -472,6 +478,7 @@ def validate_install_root(install_root: Path, language_code: str = "en") -> None
         resolved.exists()
         and any(resolved.iterdir())
         and not (resolved / MARKER_FILE).exists()
+        and not (resolved / LEGACY_MARKER_FILE).exists()
         and not is_linguaflow_install_root(resolved)
     ):
         raise ValueError(copy["occupied_folder"])
@@ -486,9 +493,11 @@ def prepare_install_root(install_root: Path) -> None:
 
 def is_linguaflow_install_root(path: Path) -> bool:
     app_exe = path / APP_EXE
+    legacy_app_exe = path / LEGACY_APP_EXE
     uninstall_exe = path / UNINSTALL_EXE
+    legacy_uninstall_exe = path / LEGACY_UNINSTALL_EXE
     bundled_icon = path / "_internal" / "assets" / "app_icon.ico"
-    return app_exe.exists() or uninstall_exe.exists() or bundled_icon.exists()
+    return app_exe.exists() or legacy_app_exe.exists() or uninstall_exe.exists() or legacy_uninstall_exe.exists() or bundled_icon.exists()
 
 
 def find_existing_install_root(target_root: Path) -> Path | None:
@@ -517,21 +526,24 @@ def read_registered_install_location() -> Path | None:
     if sys.platform != "win32":
         return None
     access_masks = (winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0), winreg.KEY_READ)
-    for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-        for access in access_masks:
-            try:
-                with winreg.OpenKey(root, UNINSTALL_KEY, 0, access) as key:
-                    value, _ = winreg.QueryValueEx(key, "InstallLocation")
-            except OSError:
-                continue
-            path = Path(str(value)).expanduser()
-            if path.exists():
-                return path.resolve()
+    for key_name in (UNINSTALL_KEY, LEGACY_UNINSTALL_KEY):
+        for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+            for access in access_masks:
+                try:
+                    with winreg.OpenKey(root, key_name, 0, access) as key:
+                        value, _ = winreg.QueryValueEx(key, "InstallLocation")
+                except OSError:
+                    continue
+                path = Path(str(value)).expanduser()
+                if path.exists():
+                    return path.resolve()
     return None
 
 
 def run_existing_uninstaller(install_root: Path) -> None:
     uninstaller = install_root / UNINSTALL_EXE
+    if not uninstaller.exists():
+        uninstaller = install_root / LEGACY_UNINSTALL_EXE
     if not uninstaller.exists():
         return
     subprocess.run(
@@ -565,30 +577,34 @@ def resource_path(name: str) -> Path:
 
 
 def stop_running_app() -> None:
-    subprocess.run(
-        ["taskkill", "/IM", APP_EXE, "/F"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        startupinfo=hidden_startupinfo(),
-        creationflags=hidden_creationflags(),
-        check=False,
-    )
+    for exe_name in (APP_EXE, LEGACY_APP_EXE):
+        subprocess.run(
+            ["taskkill", "/IM", exe_name, "/F"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            startupinfo=hidden_startupinfo(),
+            creationflags=hidden_creationflags(),
+            check=False,
+        )
     wait_for_app_exit()
 
 
 def wait_for_app_exit(timeout_seconds: float = 10.0) -> None:
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
-        result = subprocess.run(
-            ["tasklist", "/FI", f"IMAGENAME eq {APP_EXE}", "/NH"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            startupinfo=hidden_startupinfo(),
-            creationflags=hidden_creationflags(),
-            check=False,
-        )
-        if APP_EXE.lower() not in result.stdout.lower():
+        running = False
+        for exe_name in (APP_EXE, LEGACY_APP_EXE):
+            result = subprocess.run(
+                ["tasklist", "/FI", f"IMAGENAME eq {exe_name}", "/NH"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                startupinfo=hidden_startupinfo(),
+                creationflags=hidden_creationflags(),
+                check=False,
+            )
+            running = running or exe_name.lower() in result.stdout.lower()
+        if not running:
             return
         time.sleep(0.25)
 
@@ -636,9 +652,10 @@ def write_url_shortcut(path: Path, target: Path, icon: Path) -> None:
 
 def write_shortcut(path: Path, target: Path, icon: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    stale_url_shortcut = path.with_name(URL_SHORTCUT_NAME)
-    if stale_url_shortcut.exists():
-        stale_url_shortcut.unlink()
+    for stale_name in (URL_SHORTCUT_NAME, *LEGACY_SHORTCUT_NAMES):
+        stale_shortcut = path.with_name(stale_name)
+        if stale_shortcut.exists():
+            stale_shortcut.unlink()
     try:
         write_lnk_shortcut(path, target, icon)
     except Exception:
@@ -713,6 +730,15 @@ def register_uninstall_entry(install_root: Path, target_exe: Path, uninstall_exe
         winreg.SetValueEx(key, "NoModify", 0, winreg.REG_DWORD, 1)
         winreg.SetValueEx(key, "NoRepair", 0, winreg.REG_DWORD, 1)
         winreg.SetValueEx(key, "EstimatedSize", 0, winreg.REG_DWORD, int(estimated_size_kb))
+    remove_legacy_uninstall_entries()
+
+
+def remove_legacy_uninstall_entries() -> None:
+    for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+        try:
+            winreg.DeleteKey(root, LEGACY_UNINSTALL_KEY)
+        except OSError:
+            pass
 
 
 def show_message(title: str, text: str, icon_error: bool = False) -> None:
@@ -734,3 +760,4 @@ def configure_process_dpi_awareness() -> None:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

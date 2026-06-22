@@ -309,8 +309,8 @@ def star_rating(value: int) -> str:
         "</span>"
     )
 
-APP_DISPLAY_NAME = "LinguaFlow AI"
-APP_WINDOW_TITLE = "LinguaFlow AI - Popup Translator - © Roman Ostroumov / Oster"
+APP_DISPLAY_NAME = "LinguaPopUp AI"
+APP_WINDOW_TITLE = "LinguaPopUp AI - Popup Translator - © Roman Ostroumov / Oster"
 INFO_BUTTON_SIZE = 34
 AUTO_TRANSLATE_DELAY_MS = 200
 OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
@@ -321,13 +321,13 @@ ABOUT_COPY = {
     "ru": {
         "title": "О программе",
         "intro": (
-            "LinguaFlow AI - Windows-переводчик для быстрого popup-перевода выделенного текста "
+            "LinguaPopUp AI - Windows-переводчик для быстрого popup-перевода выделенного текста "
             "через Ctrl+C+C и обычного ручного перевода между выбранными языками."
         ),
         "rights_title": "Права и бренд",
         "rights": [
             "Copyright © 2026 Roman Ostroumov / OSTER. Все права защищены, если отдельная LICENSE не говорит иначе.",
-            "Название LinguaFlow AI, OSTER-стиль, логотип, иконки, визуальные материалы, интерфейс, исходный код, сборки и документация защищены правами владельца.",
+            "Название LinguaPopUp AI, OSTER-стиль, логотип, иконки, визуальные материалы, интерфейс, исходный код, сборки и документация защищены правами владельца.",
             "Публичный репозиторий сам по себе не означает разрешение копировать, продавать, распространять, переименовывать или использовать бренд/логотип без письменного разрешения владельца.",
         ],
         "privacy_title": "Приватность и данные",
@@ -341,19 +341,19 @@ ABOUT_COPY = {
         "disclaimer": [
             "AI-переводы могут быть неточными, неполными или неподходящими по стилю. Важные юридические, медицинские, финансовые, миграционные и технические тексты нужно проверять вручную.",
             "Пользователь сам отвечает за выбранного провайдера, модель, API-ключ, расходы токенов и соблюдение условий OpenAI, Google, Anthropic или другого сервиса.",
-            "LinguaFlow AI не является официальным продуктом OpenAI, Google, Anthropic или Microsoft. Названия сторонних сервисов принадлежат их владельцам.",
+            "LinguaPopUp AI не является официальным продуктом OpenAI, Google, Anthropic или Microsoft. Названия сторонних сервисов принадлежат их владельцам.",
         ],
     },
     "en": {
         "title": "About",
         "intro": (
-            "LinguaFlow AI is a Windows translator for fast selected-text popup translation "
+            "LinguaPopUp AI is a Windows translator for fast selected-text popup translation "
             "with Ctrl+C+C and normal manual translation between chosen languages."
         ),
         "rights_title": "Rights and Brand",
         "rights": [
             "Copyright © 2026 Roman Ostroumov / OSTER. All rights reserved unless a separate LICENSE states otherwise.",
-            "The LinguaFlow AI name, OSTER style, logo, icons, visual assets, interface, source code, builds, and documentation are protected by the owner's rights.",
+            "The LinguaPopUp AI name, OSTER style, logo, icons, visual assets, interface, source code, builds, and documentation are protected by the owner's rights.",
             "A public repository does not by itself grant permission to copy, sell, redistribute, rename, or use the brand/logo without the owner's written permission.",
         ],
         "privacy_title": "Privacy and Data",
@@ -367,19 +367,19 @@ ABOUT_COPY = {
         "disclaimer": [
             "AI translations can be inaccurate, incomplete, or stylistically unsuitable. Important legal, medical, financial, immigration, and technical texts should be reviewed manually.",
             "The user is responsible for the chosen provider, model, API key, token costs, and compliance with OpenAI, Google, Anthropic, or other service terms.",
-            "LinguaFlow AI is not an official product of OpenAI, Google, Anthropic, or Microsoft. Third-party service names belong to their owners.",
+            "LinguaPopUp AI is not an official product of OpenAI, Google, Anthropic, or Microsoft. Third-party service names belong to their owners.",
         ],
     },
     "de": {
         "title": "Über das Programm",
         "intro": (
-            "LinguaFlow AI ist ein Windows-Übersetzer für schnelle Popup-Übersetzung markierter Texte "
+            "LinguaPopUp AI ist ein Windows-Übersetzer für schnelle Popup-Übersetzung markierter Texte "
             "mit Ctrl+C+C und normale manuelle Übersetzung zwischen ausgewählten Sprachen."
         ),
         "rights_title": "Rechte und Marke",
         "rights": [
             "Copyright © 2026 Roman Ostroumov / OSTER. Alle Rechte vorbehalten, sofern keine separate LICENSE etwas anderes regelt.",
-            "Name LinguaFlow AI, OSTER-Stil, Logo, Icons, visuelle Materialien, Oberfläche, Quellcode, Builds und Dokumentation sind durch Rechte des Eigentümers geschützt.",
+            "Name LinguaPopUp AI, OSTER-Stil, Logo, Icons, visuelle Materialien, Oberfläche, Quellcode, Builds und Dokumentation sind durch Rechte des Eigentümers geschützt.",
             "Ein öffentliches Repository erlaubt nicht automatisch das Kopieren, Verkaufen, Weiterverbreiten, Umbenennen oder Nutzen von Marke/Logo ohne schriftliche Erlaubnis des Eigentümers.",
         ],
         "privacy_title": "Datenschutz und Daten",
@@ -393,19 +393,19 @@ ABOUT_COPY = {
         "disclaimer": [
             "AI-Übersetzungen können ungenau, unvollständig oder stilistisch ungeeignet sein. Wichtige juristische, medizinische, finanzielle, migrationsbezogene und technische Texte sollten manuell geprüft werden.",
             "Der Nutzer ist verantwortlich für Anbieter, Modell, API-Schlüssel, Token-Kosten und die Einhaltung der Bedingungen von OpenAI, Google, Anthropic oder anderen Diensten.",
-            "LinguaFlow AI ist kein offizielles Produkt von OpenAI, Google, Anthropic oder Microsoft. Namen von Drittanbieterdiensten gehören ihren Eigentümern.",
+            "LinguaPopUp AI ist kein offizielles Produkt von OpenAI, Google, Anthropic oder Microsoft. Namen von Drittanbieterdiensten gehören ihren Eigentümern.",
         ],
     },
     "es": {
         "title": "Acerca de",
         "intro": (
-            "LinguaFlow AI es un traductor para Windows con traducción emergente rápida de texto seleccionado "
+            "LinguaPopUp AI es un traductor para Windows con traducción emergente rápida de texto seleccionado "
             "mediante Ctrl+C+C y traducción manual normal entre idiomas elegidos."
         ),
         "rights_title": "Derechos y marca",
         "rights": [
             "Copyright © 2026 Roman Ostroumov / OSTER. Todos los derechos reservados salvo que una LICENSE separada indique lo contrario.",
-            "El nombre LinguaFlow AI, el estilo OSTER, el logotipo, los iconos, materiales visuales, interfaz, código fuente, compilaciones y documentación están protegidos por los derechos del propietario.",
+            "El nombre LinguaPopUp AI, el estilo OSTER, el logotipo, los iconos, materiales visuales, interfaz, código fuente, compilaciones y documentación están protegidos por los derechos del propietario.",
             "Un repositorio público no concede por sí solo permiso para copiar, vender, redistribuir, renombrar o usar la marca/logotipo sin permiso escrito del propietario.",
         ],
         "privacy_title": "Privacidad y datos",
@@ -419,16 +419,16 @@ ABOUT_COPY = {
         "disclaimer": [
             "Las traducciones con AI pueden ser inexactas, incompletas o inadecuadas en estilo. Textos legales, médicos, financieros, migratorios y técnicos importantes deben revisarse manualmente.",
             "El usuario es responsable del proveedor, modelo, clave API, costes de tokens y cumplimiento de los términos de OpenAI, Google, Anthropic u otros servicios.",
-            "LinguaFlow AI no es un producto oficial de OpenAI, Google, Anthropic ni Microsoft. Los nombres de servicios de terceros pertenecen a sus propietarios.",
+            "LinguaPopUp AI no es un producto oficial de OpenAI, Google, Anthropic ni Microsoft. Los nombres de servicios de terceros pertenecen a sus propietarios.",
         ],
     },
     "zh": {
         "title": "关于",
-        "intro": "LinguaFlow AI 是一款 Windows 翻译器，支持通过 Ctrl+C+C 快速弹窗翻译所选文本，也支持在所选语言之间进行普通手动翻译。",
+        "intro": "LinguaPopUp AI 是一款 Windows 翻译器，支持通过 Ctrl+C+C 快速弹窗翻译所选文本，也支持在所选语言之间进行普通手动翻译。",
         "rights_title": "权利和品牌",
         "rights": [
             "Copyright © 2026 Roman Ostroumov / OSTER。除非单独的 LICENSE 另有说明，否则保留所有权利。",
-            "LinguaFlow AI 名称、OSTER 风格、标志、图标、视觉素材、界面、源代码、构建文件和文档均受所有者权利保护。",
+            "LinguaPopUp AI 名称、OSTER 风格、标志、图标、视觉素材、界面、源代码、构建文件和文档均受所有者权利保护。",
             "公开仓库本身并不表示允许在未经所有者书面许可的情况下复制、销售、再分发、改名或使用品牌/标志。",
         ],
         "privacy_title": "隐私和数据",
@@ -442,18 +442,18 @@ ABOUT_COPY = {
         "disclaimer": [
             "AI 翻译可能不准确、不完整或风格不合适。重要的法律、医疗、金融、移民和技术文本应人工复核。",
             "用户自行负责所选提供商、模型、API 密钥、token 成本，以及遵守 OpenAI、Google、Anthropic 或其他服务条款。",
-            "LinguaFlow AI 不是 OpenAI、Google、Anthropic 或 Microsoft 的官方产品。第三方服务名称属于其各自所有者。",
+            "LinguaPopUp AI 不是 OpenAI、Google、Anthropic 或 Microsoft 的官方产品。第三方服务名称属于其各自所有者。",
         ],
     },
 }
 
 GUIDE_COPY = {
     "ru": {
-        "intro": "Короткая инструкция по настройке и ежедневному использованию LinguaFlow AI.",
+        "intro": "Короткая инструкция по настройке и ежедневному использованию LinguaPopUp AI.",
         "sections": [
             ("Быстрый popup-перевод", [
                 "Выделите текст в браузере, PDF, письме или редакторе.",
-                "Нажмите Ctrl+C, не отпуская Ctrl нажмите C ещё раз. Окно LinguaFlow AI откроется поверх остальных окон.",
+                "Нажмите Ctrl+C, не отпуская Ctrl нажмите C ещё раз. Окно LinguaPopUp AI откроется поверх остальных окон.",
                 "Текст вставится автоматически и начнёт переводиться примерно через 0,2 секунды.",
                 "В основном окне Ctrl+Enter запускает перевод, а Esc очищает поле исходного текста.",
             ]),
@@ -481,11 +481,11 @@ GUIDE_COPY = {
         ],
     },
     "en": {
-        "intro": "A compact guide for setting up and using LinguaFlow AI every day.",
+        "intro": "A compact guide for setting up and using LinguaPopUp AI every day.",
         "sections": [
             ("Fast popup translation", [
                 "Select text in a browser, PDF, email, or editor.",
-                "Press Ctrl+C, keep Ctrl held, then press C again. LinguaFlow AI opens above other windows.",
+                "Press Ctrl+C, keep Ctrl held, then press C again. LinguaPopUp AI opens above other windows.",
                 "The selected text is inserted automatically and starts translating after about 0.2 seconds.",
                 "In the main window, Ctrl+Enter starts translation and Esc clears the source field.",
             ]),
@@ -513,11 +513,11 @@ GUIDE_COPY = {
         ],
     },
     "de": {
-        "intro": "Eine kurze Anleitung zur Einrichtung und täglichen Nutzung von LinguaFlow AI.",
+        "intro": "Eine kurze Anleitung zur Einrichtung und täglichen Nutzung von LinguaPopUp AI.",
         "sections": [
             ("Schnelle Popup-Übersetzung", [
                 "Markieren Sie Text im Browser, PDF, in E-Mails oder im Editor.",
-                "Drücken Sie Ctrl+C, halten Sie Ctrl gedrückt und drücken Sie C erneut. LinguaFlow AI öffnet sich über anderen Fenstern.",
+                "Drücken Sie Ctrl+C, halten Sie Ctrl gedrückt und drücken Sie C erneut. LinguaPopUp AI öffnet sich über anderen Fenstern.",
                 "Der Text wird automatisch eingefügt und nach etwa 0,2 Sekunden übersetzt.",
                 "Im Hauptfenster startet Ctrl+Enter die Übersetzung, Esc leert das Ausgangsfeld.",
             ]),
@@ -545,11 +545,11 @@ GUIDE_COPY = {
         ],
     },
     "es": {
-        "intro": "Una guía breve para configurar y usar LinguaFlow AI a diario.",
+        "intro": "Una guía breve para configurar y usar LinguaPopUp AI a diario.",
         "sections": [
             ("Traducción rápida emergente", [
                 "Selecciona texto en un navegador, PDF, correo o editor.",
-                "Pulsa Ctrl+C, mantén Ctrl y pulsa C otra vez. LinguaFlow AI se abrirá encima de las demás ventanas.",
+                "Pulsa Ctrl+C, mantén Ctrl y pulsa C otra vez. LinguaPopUp AI se abrirá encima de las demás ventanas.",
                 "El texto se inserta automáticamente y empieza a traducirse tras unos 0,2 segundos.",
                 "En la ventana principal, Ctrl+Enter inicia la traducción y Esc limpia el campo de origen.",
             ]),
@@ -577,11 +577,11 @@ GUIDE_COPY = {
         ],
     },
     "zh": {
-        "intro": "LinguaFlow AI 的设置和日常使用简明指南。",
+        "intro": "LinguaPopUp AI 的设置和日常使用简明指南。",
         "sections": [
             ("快速弹窗翻译", [
                 "在浏览器、PDF、邮件或编辑器中选择文本。",
-                "按 Ctrl+C，保持 Ctrl 不松开，再按一次 C。LinguaFlow AI 会在其他窗口上方打开。",
+                "按 Ctrl+C，保持 Ctrl 不松开，再按一次 C。LinguaPopUp AI 会在其他窗口上方打开。",
                 "所选文本会自动插入，并在约 0.2 秒后开始翻译。",
                 "在主窗口中，Ctrl+Enter 开始翻译，Esc 清空源文本框。",
             ]),
@@ -2059,3 +2059,4 @@ class SettingsDialog(WindowsTitleBarMixin, QDialog):
     @property
     def global_hotkey_enabled(self) -> bool:
         return self.hotkey_enabled_checkbox.isChecked()
+

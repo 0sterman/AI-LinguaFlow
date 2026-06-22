@@ -8,12 +8,14 @@ import uuid
 from pathlib import Path
 
 
-APP_SHORTCUT_NAME = "LinguaFlow AI Translator.lnk"
-URL_APP_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
+APP_SHORTCUT_NAME = "LinguaPopUp AI Translator.lnk"
+URL_APP_SHORTCUT_NAME = "LinguaPopUp AI Translator.url"
+LEGACY_PRODUCT_SHORTCUT_NAME = "LinguaFlow AI Translator.lnk"
+LEGACY_PRODUCT_URL_SHORTCUT_NAME = "LinguaFlow AI Translator.url"
 LEGACY_SHORTCUT_NAME = "WindowsTranslator.url"
 OLD_APP_SHORTCUT_NAME = "AI-LinguaFlow.url"
 PREVIOUS_APP_SHORTCUT_NAME = "AI LinguaFlow.url"
-MACOS_BUNDLE_ID = "com.oster.linguaflow"
+MACOS_BUNDLE_ID = "com.oster.linguapopup"
 MACOS_LAUNCH_AGENT_NAME = f"{MACOS_BUNDLE_ID}.plist"
 
 
@@ -28,12 +30,17 @@ def startup_shortcut_paths() -> tuple[Path, ...]:
     shortcut = startup_shortcut_path()
     if sys.platform == "darwin":
         return (shortcut,)
-    return (shortcut, shortcut.with_name(URL_APP_SHORTCUT_NAME))
+    return (
+        shortcut,
+        shortcut.with_name(URL_APP_SHORTCUT_NAME),
+        shortcut.with_name(LEGACY_PRODUCT_SHORTCUT_NAME),
+        shortcut.with_name(LEGACY_PRODUCT_URL_SHORTCUT_NAME),
+    )
 
 
 def desktop_shortcut_path() -> Path:
     if sys.platform == "darwin":
-        return desktop_dir() / "LinguaFlow AI.app"
+        return desktop_dir() / "LinguaPopUp AI.app"
     return desktop_dir() / APP_SHORTCUT_NAME
 
 
@@ -41,7 +48,12 @@ def desktop_shortcut_paths() -> tuple[Path, ...]:
     shortcut = desktop_shortcut_path()
     if sys.platform == "darwin":
         return (shortcut,)
-    return (shortcut, shortcut.with_name(URL_APP_SHORTCUT_NAME))
+    return (
+        shortcut,
+        shortcut.with_name(URL_APP_SHORTCUT_NAME),
+        shortcut.with_name(LEGACY_PRODUCT_SHORTCUT_NAME),
+        shortcut.with_name(LEGACY_PRODUCT_URL_SHORTCUT_NAME),
+    )
 
 
 def desktop_dir() -> Path:
@@ -222,6 +234,8 @@ def _hidden_creationflags() -> int:
 def _stale_shortcut_paths(active_shortcut: Path) -> list[Path]:
     candidates = [
         active_shortcut.with_name(URL_APP_SHORTCUT_NAME),
+        active_shortcut.with_name(LEGACY_PRODUCT_SHORTCUT_NAME),
+        active_shortcut.with_name(LEGACY_PRODUCT_URL_SHORTCUT_NAME),
         active_shortcut.with_name(OLD_APP_SHORTCUT_NAME),
         active_shortcut.with_name(PREVIOUS_APP_SHORTCUT_NAME),
         active_shortcut.with_name(LEGACY_SHORTCUT_NAME),
@@ -237,6 +251,8 @@ def _stale_desktop_shortcut_paths(active_shortcut: Path) -> list[Path]:
         active_shortcut.with_name(LEGACY_SHORTCUT_NAME),
         Path.home() / "Desktop" / APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / URL_APP_SHORTCUT_NAME,
+        Path.home() / "Desktop" / LEGACY_PRODUCT_SHORTCUT_NAME,
+        Path.home() / "Desktop" / LEGACY_PRODUCT_URL_SHORTCUT_NAME,
         Path.home() / "Desktop" / OLD_APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / PREVIOUS_APP_SHORTCUT_NAME,
         Path.home() / "Desktop" / LEGACY_SHORTCUT_NAME,
@@ -277,3 +293,4 @@ def _guid_to_struct(value: uuid.UUID) -> GUID:
     fields = value.fields
     data4 = (ctypes.c_ubyte * 8)(*value.bytes[8:])
     return GUID(fields[0], fields[1], fields[2], data4)
+

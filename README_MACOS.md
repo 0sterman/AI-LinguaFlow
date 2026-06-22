@@ -1,22 +1,22 @@
-# LinguaFlow AI for macOS
+# LinguaPopUp AI for macOS
 
-This is the macOS packaging path for LinguaFlow AI.
+This is the macOS packaging path for LinguaPopUp AI.
 
 Quick popup shortcut with selected text translation on macOS: `Cmd (Ctrl)+C+C`.
 
-LinguaFlow AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
+LinguaPopUp AI does not include a shared translation API key. Each user must enter their own API key for the selected provider in `Settings -> API` after installation.
 
 ## Download
 
 The current macOS test build is attached to the GitHub `v1.0.9` release:
 
 ```text
-LinguaFlow-AI-v1.0.9-macOS-x86_64.dmg
+LinguaPopUp-AI-v1.0.9-macOS-x86_64.dmg
 ```
 
-Open the DMG, drag `LinguaFlow AI.app` to `Applications`, then launch it from `Applications`.
+Open the DMG, drag `LinguaPopUp AI.app` to `Applications`, then launch it from `Applications`.
 
-LinguaFlow AI supports OpenAI, Google Gemini, and Anthropic Claude. API keys and translation history are stored locally on the user's Mac.
+LinguaPopUp AI supports OpenAI, Google Gemini, and Anthropic Claude. API keys and translation history are stored locally on the user's Mac.
 
 ## Supported macOS Versions
 
@@ -32,7 +32,7 @@ Important limits:
 - The package targets Intel Macs (`x86_64`) and sets `MACOSX_DEPLOYMENT_TARGET=12.0` by default to match the supported macOS range of the bundled Qt/PySide runtime.
 - Older or patched systems still need real-device testing.
 - A signed/notarized public build requires an Apple Developer ID certificate and notarization credentials. Without them, macOS Gatekeeper can show warnings.
-- `Cmd+C+C` global capture requires Accessibility permission: System Settings -> Privacy & Security -> Accessibility -> LinguaFlow AI.
+- `Cmd+C+C` global capture requires Accessibility permission: System Settings -> Privacy & Security -> Accessibility -> LinguaPopUp AI.
 
 Build on a Mac:
 
@@ -45,7 +45,7 @@ source .venv/bin/activate
 The resulting installer image is created in `dist/`:
 
 ```text
-dist/LinguaFlow AI-<version>-macOS-x86_64.dmg
+dist/LinguaPopUp AI-<version>-macOS-x86_64.dmg
 ```
 
 Runtime shortcuts on macOS:
@@ -54,4 +54,5 @@ Runtime shortcuts on macOS:
 - `Cmd (Ctrl)+Enter` - translate in the main window.
 - `Esc` - clear the source text.
 
-If `Cmd+C+C` does not work, grant Accessibility and Input Monitoring permission, then restart LinguaFlow AI.
+If `Cmd+C+C` does not work, grant Accessibility and Input Monitoring permission, then restart LinguaPopUp AI.
+

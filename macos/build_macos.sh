@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-APP_NAME="LinguaFlow AI"
+APP_NAME="LinguaPopUp AI"
 BUNDLE_ID="com.oster.linguaflow"
 PYTHON_BIN="${PYTHON:-python3}"
 VERSION="$("$PYTHON_BIN" - <<'PY'
@@ -60,7 +60,7 @@ INFO_PLIST="$APP_PATH/Contents/Info.plist"
 set_plist_value "CFBundleShortVersionString" "string" "$VERSION" "$INFO_PLIST"
 set_plist_value "CFBundleVersion" "string" "$VERSION" "$INFO_PLIST"
 set_plist_value "LSMinimumSystemVersion" "string" "$MACOSX_DEPLOYMENT_TARGET" "$INFO_PLIST"
-/usr/libexec/PlistBuddy -c "Add :NSAppleEventsUsageDescription string LinguaFlow AI uses macOS automation only to bring the translator window to the front after Cmd+C+C." "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :NSAppleEventsUsageDescription string LinguaPopUp AI uses macOS automation only to bring the translator window to the front after Cmd+C+C." "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
   codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$APP_PATH"
@@ -75,16 +75,16 @@ rm -rf "$DMG_DIR"
 mkdir -p "$DMG_DIR"
 cp -R "$APP_PATH" "$DMG_DIR/"
 ln -s /Applications "$DMG_DIR/Applications"
-cat > "$DMG_DIR/Open LinguaFlow AI with log.command" <<'SH'
+cat > "$DMG_DIR/Open LinguaPopUp AI with log.command" <<'SH'
 #!/usr/bin/env bash
 set +e
 
-LOG="$HOME/Desktop/LinguaFlow-AI-startup.log"
-APP_PATH="$(cd "$(dirname "$0")" && pwd)/LinguaFlow AI.app"
-EXE_PATH="$APP_PATH/Contents/MacOS/LinguaFlow AI"
+LOG="$HOME/Desktop/LinguaPopUp-AI-startup.log"
+APP_PATH="$(cd "$(dirname "$0")" && pwd)/LinguaPopUp AI.app"
+EXE_PATH="$APP_PATH/Contents/MacOS/LinguaPopUp AI"
 
 {
-  echo "LinguaFlow AI macOS startup diagnostics"
+  echo "LinguaPopUp AI macOS startup diagnostics"
   echo "Date: $(date)"
   echo
   echo "macOS:"
@@ -128,7 +128,7 @@ echo
 echo "Send this log text back to Roman/Codex."
 read -r -p "Press Enter to close this window..."
 SH
-chmod +x "$DMG_DIR/Open LinguaFlow AI with log.command"
+chmod +x "$DMG_DIR/Open LinguaPopUp AI with log.command"
 hdiutil create \
   -volname "$APP_NAME $VERSION" \
   -srcfolder "$DMG_DIR" \
@@ -137,3 +137,4 @@ hdiutil create \
   "$ROOT_DIR/dist/$APP_NAME-$VERSION-macOS-x86_64.dmg"
 
 echo "Built: $ROOT_DIR/dist/$APP_NAME-$VERSION-macOS-x86_64.dmg"
+

@@ -43,8 +43,8 @@ from translator_app.ui import (
 from translator_app.update_checker import UpdateInfo, create_windows_update_helper, download_installer, fetch_required_update
 from translator_app import __version__
 
-SINGLE_INSTANCE_NAME = "OsterLinguaFlowAITranslator"
-WINDOWS_APP_USER_MODEL_ID = "Oster.LinguaFlowAI.PopupTranslator"
+SINGLE_INSTANCE_NAME = "OsterLinguaPopUpAITranslator"
+WINDOWS_APP_USER_MODEL_ID = "Oster.LinguaPopUpAI.PopupTranslator"
 
 
 class AppSignals(QObject):
@@ -117,7 +117,7 @@ class TranslatorApplication(QObject):
         if sys.platform == "darwin":
             return (
                 "Не удалось включить macOS hotkey listener. "
-                "Разрешите LinguaFlow AI доступ в System Settings -> Privacy & Security -> Accessibility."
+                "Разрешите LinguaPopUp AI доступ в System Settings -> Privacy & Security -> Accessibility."
             )
         return "Не удалось включить Windows hotkey listener."
 
@@ -802,9 +802,9 @@ def resolve_theme(config: AppConfig) -> str:
 def show_required_update(app: QApplication, update: UpdateInfo) -> int:
     answer = QMessageBox.warning(
         None,
-        "LinguaFlow AI update required",
+        "LinguaPopUp AI update required",
         (
-            f"This LinguaFlow AI version is outdated.\n\n"
+            f"This LinguaPopUp AI version is outdated.\n\n"
             f"Installed version: {__version__}\n"
             f"Required version: {update.version}\n\n"
             "The app will download the newest installer and open the release page."
@@ -816,13 +816,15 @@ def show_required_update(app: QApplication, update: UpdateInfo) -> int:
         try:
             QMessageBox.information(
                 None,
-                "LinguaFlow AI update",
+                "LinguaPopUp AI update",
                 "The release page has been opened. The installer download will start now.",
             )
             installer_path = download_installer(update)
             if sys.platform == "win32" and getattr(sys, "frozen", False):
                 install_root = Path(sys.executable).resolve().parent
-                uninstaller_path = install_root / "LinguaFlow AI Uninstall.exe"
+                uninstaller_path = install_root / "LinguaPopUp AI Uninstall.exe"
+                if not uninstaller_path.exists():
+                    uninstaller_path = install_root / "LinguaFlow AI Uninstall.exe"
                 helper_path = create_windows_update_helper(installer_path, uninstaller_path, install_root)
                 QProcess.startDetached(
                     "powershell.exe",
@@ -841,7 +843,7 @@ def show_required_update(app: QApplication, update: UpdateInfo) -> int:
         except Exception:
             QMessageBox.warning(
                 None,
-                "LinguaFlow AI update",
+                "LinguaPopUp AI update",
                 "Could not download the installer automatically. Please use the opened GitHub release page.",
             )
     return 0
@@ -854,3 +856,4 @@ def set_windows_app_user_model_id() -> None:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(WINDOWS_APP_USER_MODEL_ID)
     except Exception:
         pass
+

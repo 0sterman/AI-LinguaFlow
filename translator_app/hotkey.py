@@ -134,7 +134,7 @@ class WindowsCtrlCHook:
                 return
             self._ready.clear()
             self._last_error = 0
-            self._thread = threading.Thread(target=self._run, name="LinguaFlow AI hotkey", daemon=True)
+            self._thread = threading.Thread(target=self._run, name="LinguaPopUp AI hotkey", daemon=True)
             self._thread.start()
         self._ready.wait(timeout=1.5)
 
@@ -196,3 +196,4 @@ class WindowsCtrlCHook:
 
     def _ctrl_down(self) -> bool:
         return any(self._user32.GetAsyncKeyState(key) & 0x8000 for key in (VK_CONTROL, VK_LCONTROL, VK_RCONTROL))
+

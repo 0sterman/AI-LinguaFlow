@@ -1,18 +1,20 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$distApp = Join-Path $root "dist\LinguaFlow AI"
-$workRoot = Join-Path ([System.IO.Path]::GetTempPath()) "LinguaFlowAIInstallerBuild"
+$distApp = Join-Path $root "dist\LinguaPopUp AI"
+$workRoot = Join-Path ([System.IO.Path]::GetTempPath()) "LinguaPopUpAIInstallerBuild"
 $payloadRoot = Join-Path $workRoot "payload"
 $payloadAppRoot = Join-Path $payloadRoot "app"
-$zipPath = Join-Path $payloadRoot "LinguaFlowAI_payload.zip"
+$zipPath = Join-Path $payloadRoot "LinguaPopUpAI_payload.zip"
 $installerWork = Join-Path $workRoot "pyinstaller"
 $installerDist = Join-Path $workRoot "dist"
 $installerSpec = Join-Path $workRoot "spec"
-$tempInstaller = Join-Path $installerDist "LinguaFlow AI Setup.exe"
-$tempUninstaller = Join-Path $installerDist "LinguaFlow AI Uninstall.exe"
-$targetInstaller = Join-Path $root "dist\LinguaFlow AI Setup.exe"
+$tempInstaller = Join-Path $installerDist "LinguaPopUp AI Setup.exe"
+$tempUninstaller = Join-Path $installerDist "LinguaPopUp AI Uninstall.exe"
+$targetInstaller = Join-Path $root "dist\LinguaPopUp AI Setup.exe"
 
+Get-Process -Name "LinguaPopUp AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name "LinguaPopUp AI Uninstall" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Get-Process -Name "LinguaFlow AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Get-Process -Name "LinguaFlow AI Uninstall" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
@@ -21,7 +23,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Build failed with exit code $LASTEXITCODE"
 }
 
-if (-not (Test-Path -LiteralPath (Join-Path $distApp "LinguaFlow AI.exe"))) {
+if (-not (Test-Path -LiteralPath (Join-Path $distApp "LinguaPopUp AI.exe"))) {
     throw "Build output is missing: $distApp"
 }
 
@@ -35,7 +37,7 @@ python -m PyInstaller `
     --onefile `
     --windowed `
     --uac-admin `
-    --name "LinguaFlow AI Uninstall" `
+    --name "LinguaPopUp AI Uninstall" `
     --icon (Join-Path $root "assets\app_icon.ico") `
     --version-file (Join-Path $root "version_info_setup.txt") `
     --add-data "$(Join-Path $root "assets\app_icon.ico");assets" `
@@ -52,8 +54,8 @@ if (-not (Test-Path -LiteralPath $tempUninstaller)) {
     throw "Uninstaller was not created: $tempUninstaller"
 }
 
-Copy-Item -LiteralPath $tempUninstaller -Destination (Join-Path $distApp "LinguaFlow AI Uninstall.exe") -Force
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "code_sign.ps1") -Path (Join-Path $distApp "LinguaFlow AI Uninstall.exe")
+Copy-Item -LiteralPath $tempUninstaller -Destination (Join-Path $distApp "LinguaPopUp AI Uninstall.exe") -Force
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "code_sign.ps1") -Path (Join-Path $distApp "LinguaPopUp AI Uninstall.exe")
 
 if (Test-Path -LiteralPath $workRoot) {
     Remove-Item -LiteralPath $workRoot -Recurse -Force
@@ -61,7 +63,7 @@ if (Test-Path -LiteralPath $workRoot) {
 New-Item -ItemType Directory -Force -Path $payloadAppRoot | Out-Null
 
 Copy-Item -LiteralPath $distApp -Destination $payloadAppRoot -Recurse -Force
-Compress-Archive -LiteralPath (Join-Path $payloadAppRoot "LinguaFlow AI") -DestinationPath $zipPath -Force
+Compress-Archive -LiteralPath (Join-Path $payloadAppRoot "LinguaPopUp AI") -DestinationPath $zipPath -Force
 
 python -m PyInstaller `
     --noconfirm `
@@ -69,7 +71,7 @@ python -m PyInstaller `
     --onefile `
     --windowed `
     --uac-admin `
-    --name "LinguaFlow AI Setup" `
+    --name "LinguaPopUp AI Setup" `
     --icon (Join-Path $root "assets\app_icon.ico") `
     --version-file (Join-Path $root "version_info_setup.txt") `
     --add-data "$zipPath;." `
@@ -89,7 +91,9 @@ if (-not (Test-Path -LiteralPath $tempInstaller)) {
     throw "Installer was not created: $tempInstaller"
 }
 
+Get-Process -Name "LinguaPopUp AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Get-Process -Name "LinguaFlow AI Setup" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Copy-Item -LiteralPath $tempInstaller -Destination $targetInstaller -Force
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "code_sign.ps1") -Path $targetInstaller
 Write-Host "Built $targetInstaller"
+

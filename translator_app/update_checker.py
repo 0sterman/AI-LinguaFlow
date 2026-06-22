@@ -27,7 +27,7 @@ def fetch_required_update(current_version: str, timeout_seconds: int = 5) -> Upd
         RELEASES_API_URL,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": "LinguaFlowAI-UpdateChecker",
+            "User-Agent": "LinguaPopUpAI-UpdateChecker",
         },
     )
     try:
@@ -48,20 +48,20 @@ def fetch_required_update(current_version: str, timeout_seconds: int = 5) -> Upd
         version=latest_version,
         release_url=str(payload.get("html_url") or ""),
         installer_url=str(installer.get("browser_download_url") or ""),
-        installer_name=str(installer.get("name") or f"LinguaFlow.AI.Setup.v{latest_version}.exe"),
+        installer_name=str(installer.get("name") or f"LinguaPopUp.AI.Setup.v{latest_version}.exe"),
     )
 
 
 def download_installer(update: UpdateInfo, timeout_seconds: int = DOWNLOAD_TIMEOUT_SECONDS) -> Path:
     target = Path(tempfile.gettempdir()) / safe_filename(update.installer_name)
-    request = urllib.request.Request(update.installer_url, headers={"User-Agent": "LinguaFlowAI-UpdateDownloader"})
+    request = urllib.request.Request(update.installer_url, headers={"User-Agent": "LinguaPopUpAI-UpdateDownloader"})
     with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
         target.write_bytes(response.read())
     return target
 
 
 def create_windows_update_helper(installer_path: Path, uninstaller_path: Path, install_root: Path) -> Path:
-    script_path = Path(tempfile.gettempdir()) / "LinguaFlowAI_update_helper.ps1"
+    script_path = Path(tempfile.gettempdir()) / "LinguaPopUpAI_update_helper.ps1"
     script_path.write_text(
         "\n".join(
             [
@@ -115,7 +115,7 @@ def compare_versions(left: str, right: str) -> int:
 
 def safe_filename(value: str) -> str:
     cleaned = re.sub(r"[^A-Za-z0-9._ -]+", ".", value).strip(" .")
-    return cleaned or "LinguaFlow.AI.Setup.exe"
+    return cleaned or "LinguaPopUp.AI.Setup.exe"
 
 
 def _version_parts(value: str) -> list[int]:
@@ -143,3 +143,4 @@ def _find_installer_asset(payload: dict, platform: str | None = None) -> dict | 
         if name.endswith(".exe") and "setup" in name and url:
             return asset
     return None
+
