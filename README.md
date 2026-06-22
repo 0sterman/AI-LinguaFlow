@@ -1,19 +1,19 @@
-# LinguaFlow AI
+# LinguaPopUp AI
 
 Fast popup translation for selected text on Windows and macOS.
 
-LinguaFlow AI helps you translate text without breaking your workflow: select text anywhere, press the shortcut, and get a quick translation popup. It automatically translates selected text into your chosen target language, including mixed-language text, while preserving the meaning as clearly as possible. You can also open the main translator window for normal manual translation, choose your preferred target language, and keep local translation history on your computer.
+LinguaPopUp AI helps you translate text without breaking your workflow: select text anywhere, press the shortcut, and get a quick translation popup. It automatically translates selected text into your chosen target language, including mixed-language text, while preserving the meaning as clearly as possible. You can also open the main translator window for normal manual translation, choose your preferred target language, and keep local translation history on your computer.
 
 <p align="center">
-  <img src="assets/linguaflow-ai-main-window.png" alt="LinguaFlow AI main translator window" width="900">
+  <img src="assets/linguapopup-ai-main-window.png" alt="LinguaPopUp AI main translator window" width="900">
 </p>
 
 ## Download
 
 Choose the installer for your system:
 
-- **Windows:** [LinguaFlow AI v1.0.15](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.15)
-- **macOS Intel:** [LinguaFlow AI v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
+- **Windows:** [LinguaPopUp AI v2.0.1](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.0.1)
+- **macOS Intel:** current macOS build remains v1.0.9 while the Windows v2 line is being updated.
 
 ## Shortcuts
 
@@ -34,7 +34,7 @@ Choose the installer for your system:
 
 ## API Key Required
 
-LinguaFlow AI does not include a shared translation API key.
+LinguaPopUp AI does not include a shared translation API key.
 
 After installation, enter your own API key for the selected provider in:
 
@@ -42,14 +42,14 @@ After installation, enter your own API key for the selected provider in:
 
 ## API Key Storage
 
-Your API key is stored locally on your computer. LinguaFlow AI uses the system key storage through `keyring`:
+Your API key is stored locally on your computer. LinguaPopUp AI uses the system key storage through `keyring`:
 
 - **Windows:** Windows Credential Manager
 - **macOS:** the system keychain/keyring available to the app
 
-The key is saved under the LinguaFlow AI service entry used by the app and is not included in the installer, not published in this repository, and not shared with other users.
+The key is saved under the local service entry used by the app and is not included in the installer, not published in this repository, and not shared with other users.
 
-If no saved key is found, LinguaFlow AI can also read provider keys from environment variables:
+If no saved key is found, LinguaPopUp AI can also read provider keys from environment variables:
 
 - `OPENAI_API_KEY`
 - `GEMINI_API_KEY` or `GOOGLE_API_KEY`
@@ -65,6 +65,6 @@ Your settings and translation history are stored locally on your computer. Text 
 
 ## Source Code
 
-This public repository is only for downloads and product information. The LinguaFlow AI source code is private and proprietary.
+This public repository is only for downloads and product information. The LinguaPopUp AI source code is private and proprietary.
 
 Copyright (c) Roman Ostroumov / Oster. Copying, redistribution, reverse engineering, or modification is not permitted without written permission from Roman Ostroumov / Oster.
