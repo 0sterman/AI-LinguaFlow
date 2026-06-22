@@ -644,6 +644,8 @@ class TranslatorApplication(QObject):
         self.config.openai_model = dialog.models["openai"]
         self.config.google_model = dialog.models["google"]
         self.config.anthropic_model = dialog.models["anthropic"]
+        previous_enabled = self.config.enabled
+        self.config.enabled = dialog.global_hotkey_enabled
         self.config.autostart = dialog.autostart
         self.config.desktop_shortcut = dialog.desktop_shortcut
         self.config.theme = dialog.theme
@@ -662,6 +664,10 @@ class TranslatorApplication(QObject):
         self.popup.apply_locale(self.config.primary_language)
         self.tray.setContextMenu(self._build_menu())
         self.apply_visual_theme()
+        if self.config.enabled and not previous_enabled:
+            self.start_hotkey_listener()
+        elif not self.config.enabled and previous_enabled:
+            self.stop_hotkey_listener()
         if close_dialog:
             return
 

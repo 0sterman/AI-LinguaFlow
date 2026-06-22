@@ -1611,6 +1611,9 @@ class SettingsDialog(WindowsTitleBarMixin, QDialog):
         theme_index = max(0, self.theme_input.findData(config.theme))
         self.theme_input.setCurrentIndex(theme_index)
 
+        self.hotkey_enabled_checkbox = QCheckBox()
+        self.hotkey_enabled_checkbox.setChecked(config.enabled)
+
         self.about_browser = QTextBrowser()
         self.about_browser.setOpenExternalLinks(False)
 
@@ -1663,6 +1666,7 @@ class SettingsDialog(WindowsTitleBarMixin, QDialog):
         self.theme_label = QLabel()
         form.addRow(self.provider_label, self.provider_input)
         form.addRow(self.primary_language_label, self.primary_language_input)
+        form.addRow("", self.hotkey_enabled_checkbox)
         form.addRow(self.theme_label, self.theme_input)
         form.addRow("", self.autostart_checkbox)
         form.addRow("", self.desktop_shortcut_checkbox)
@@ -1927,6 +1931,7 @@ class SettingsDialog(WindowsTitleBarMixin, QDialog):
         self.tabs.setTabText(2, t(language_code, "about"))
         self.provider_label.setText(t(language_code, "provider"))
         self.primary_language_label.setText(t(language_code, "primary_language"))
+        self.hotkey_enabled_checkbox.setText(t(language_code, "hotkey_enabled"))
         self.theme_label.setText(t(language_code, "theme"))
         self.theme_input.setItemText(0, t(language_code, "theme_system"))
         self.theme_input.setItemText(1, t(language_code, "theme_dark"))
@@ -2050,3 +2055,7 @@ class SettingsDialog(WindowsTitleBarMixin, QDialog):
     @property
     def desktop_shortcut(self) -> bool:
         return self.desktop_shortcut_checkbox.isChecked()
+
+    @property
+    def global_hotkey_enabled(self) -> bool:
+        return self.hotkey_enabled_checkbox.isChecked()
