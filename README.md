@@ -13,7 +13,7 @@ LinguaPopUp AI helps you translate text without breaking your workflow: select t
 Choose the installer for your system:
 
 - **Windows:** [LinguaPopUp AI v2.0.1](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.0.1)
-- **macOS Intel:** current macOS build remains v1.0.9 while the Windows v2 line is being updated.
+- **macOS Intel:** [LinguaPopUp AI / legacy macOS build v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
 
 ## Shortcuts
 
