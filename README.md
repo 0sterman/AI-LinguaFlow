@@ -7,7 +7,9 @@ LinguaPopUp AI helps you translate text without breaking your workflow: select t
 Official landing page: [LinguaPopUp AI](https://0sterman.github.io/AI-LinguaFlow/)
 
 <p align="center">
-  <img src="assets/linguapopup-ai-main-window.png" alt="LinguaPopUp AI main translator window" width="900">
+  <a href="assets/linguapopup-ai-main-window.png">
+    <img src="assets/linguapopup-ai-main-window.png" alt="LinguaPopUp AI main translator window — click to open full size" width="900">
+  </a>
 </p>
 
 ## Download
