@@ -2,15 +2,15 @@
 
 Fast popup translation for selected text on Windows and macOS.
 
-**Current Windows release: 2.1.0.** The macOS Intel build remains at **1.0.9**.
+**Current Windows release: 2.1.1.** The macOS Intel build remains at **1.0.9**.
 
 LinguaPopUp AI helps you translate text without breaking your workflow: select text anywhere, press the shortcut, and get a quick translation popup. It automatically translates selected text into your chosen target language, including mixed-language text, while preserving the meaning as clearly as possible. You can also open the main translator window for normal manual translation, choose your preferred target language, and keep local translation history on your computer.
 
 Official landing page: [LinguaPopUp AI](https://0sterman.github.io/AI-LinguaFlow/)
 
 <p align="center">
-  <a href="https://0sterman.github.io/AI-LinguaFlow/assets/linguapopup-ai-main-window.png?v=2.1.0">
-    <img src="https://0sterman.github.io/AI-LinguaFlow/assets/linguapopup-ai-main-window.png?v=2.1.0" alt="LinguaPopUp AI main translator window — click to open full size" width="900">
+  <a href="https://0sterman.github.io/AI-LinguaFlow/assets/linguapopup-ai-main-window.png?v=2.1.1">
+    <img src="https://0sterman.github.io/AI-LinguaFlow/assets/linguapopup-ai-main-window.png?v=2.1.1" alt="LinguaPopUp AI main translator window — click to open full size" width="900">
   </a>
 </p>
 
@@ -18,10 +18,10 @@ Official landing page: [LinguaPopUp AI](https://0sterman.github.io/AI-LinguaFlow
 
 Choose the installer for your system:
 
-- **Windows:** [LinguaPopUp AI v2.1.0](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.1.0)
+- **Windows:** [LinguaPopUp AI v2.1.1](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.1.1)
 - **macOS Intel:** [LinguaPopUp AI / legacy macOS build v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
 
-Windows 2.1.0 adds synchronized selection and scrolling between the original and translation panes, plus language-direction switching.
+Windows 2.1.1 removes the trailing punctuation from the quick-translation instruction in every supported UI language. Windows 2.1.0 introduced synchronized selection and scrolling between the original and translation panes, plus language-direction switching.
 
 ## Shortcuts
 
