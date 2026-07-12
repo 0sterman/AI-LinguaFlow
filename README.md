@@ -2,6 +2,8 @@
 
 Fast popup translation for selected text on Windows and macOS.
 
+**Current Windows release: 2.1.0.** The macOS Intel build remains at **1.0.9**.
+
 LinguaPopUp AI helps you translate text without breaking your workflow: select text anywhere, press the shortcut, and get a quick translation popup. It automatically translates selected text into your chosen target language, including mixed-language text, while preserving the meaning as clearly as possible. You can also open the main translator window for normal manual translation, choose your preferred target language, and keep local translation history on your computer.
 
 Official landing page: [LinguaPopUp AI](https://0sterman.github.io/AI-LinguaFlow/)
@@ -16,8 +18,10 @@ Official landing page: [LinguaPopUp AI](https://0sterman.github.io/AI-LinguaFlow
 
 Choose the installer for your system:
 
-- **Windows:** [LinguaPopUp AI v2.0.1](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.0.1)
+- **Windows:** [LinguaPopUp AI v2.1.0](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.1.0)
 - **macOS Intel:** [LinguaPopUp AI / legacy macOS build v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
+
+Windows 2.1.0 adds synchronized selection and scrolling between the original and translation panes, plus language-direction switching.
 
 ## Shortcuts
 
@@ -32,6 +36,9 @@ Choose the installer for your system:
 - Automatic translation into the selected target language
 - Mixed-language text translation with meaning preservation
 - Manual translation in the main app window
+- Synchronized selection between the original and translation panes on Windows 2.1.0
+- Synchronized scrolling between the original and translation panes on Windows 2.1.0
+- Language-direction switching in the main window on Windows 2.1.0
 - Local translation history
 - Configurable primary language
 - OpenAI, Google Gemini, and Anthropic Claude providers
