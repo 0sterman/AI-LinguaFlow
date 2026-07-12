@@ -14,7 +14,7 @@ Official landing page: [LinguaPopUp AI](https://0sterman.github.io/AI-LinguaFlow
 
 Choose the installer for your system:
 
-- **Windows:** [LinguaPopUp AI v2.0.1](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.0.1)
+- **Windows:** [LinguaPopUp AI v2.1.0](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v2.1.0)
 - **macOS Intel:** [LinguaPopUp AI / legacy macOS build v1.0.9](https://github.com/0sterman/AI-LinguaFlow/releases/tag/v1.0.9)
 
 ## Shortcuts
@@ -30,6 +30,7 @@ Choose the installer for your system:
 - Automatic translation into the selected target language
 - Mixed-language text translation with meaning preservation
 - Manual translation in the main app window
+- Synchronized selection and scrolling between original and translation panes
 - Local translation history
 - Configurable primary language
 - OpenAI, Google Gemini, and Anthropic Claude providers
