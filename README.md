@@ -10,7 +10,7 @@ LinguaPopUp AI does not include a shared translation API key. Each user must ent
 
 Download installers from the GitHub Releases page:
 
-- Windows: `LinguaPopUp-AI-Setup-v2.0.1.exe`
+- Windows: `LinguaPopUp-AI-Setup-v2.1.0.exe`
 - macOS Intel: `LinguaPopUp-AI-v1.0.9-macOS-x86_64.dmg`
 
 Supported and tested status:

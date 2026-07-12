@@ -7,7 +7,7 @@ SUPPORTED_UI_LANGUAGES = {"ru", "en", "de", "es", "zh"}
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "ru": {
-        "main_subtitle": "Быстрый перевод через Ctrl+C+C или обычный перевод с выбранного языка на выбранный.",
+        "main_subtitle": "Быстрый перевод: выделите текст и нажмите Ctrl+C+C.",
         "main_shortcuts": "Esc - Удаление всего текста\nCtrl+Enter - перевод",
         "from": "С",
         "to": "На",
@@ -17,6 +17,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "translation_placeholder": "Перевод появится здесь",
         "translate": "Перевести",
         "copy": "Копировать",
+        "reverse_translation_direction": "Изменить направление перевода",
         "history": "История",
         "settings": "Настройки",
         "close": "Закрыть",
@@ -83,7 +84,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Выход",
     },
     "en": {
-        "main_subtitle": "Fast Ctrl+C+C popup translation or normal translation between selected languages.",
+        "main_subtitle": "Quick translation: select text and press Ctrl+C+C.",
         "main_shortcuts": "Esc - clear all text\nCtrl+Enter - translate",
         "from": "From",
         "to": "To",
@@ -93,6 +94,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "translation_placeholder": "Translation will appear here",
         "translate": "Translate",
         "copy": "Copy",
+        "reverse_translation_direction": "Reverse translation direction",
         "history": "History",
         "settings": "Settings",
         "close": "Close",
@@ -159,7 +161,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Quit",
     },
     "de": {
-        "main_subtitle": "Schnelle Ctrl+C+C-Popup-Übersetzung oder normale Übersetzung zwischen ausgewählten Sprachen.",
+        "main_subtitle": "Schnellübersetzung: Text markieren und Ctrl+C+C drücken.",
         "main_shortcuts": "Esc - gesamten Text löschen\nCtrl+Enter - übersetzen",
         "from": "Von",
         "to": "Nach",
@@ -169,6 +171,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "translation_placeholder": "Die Übersetzung erscheint hier",
         "translate": "Übersetzen",
         "copy": "Kopieren",
+        "reverse_translation_direction": "Übersetzungsrichtung umkehren",
         "history": "Verlauf",
         "settings": "Einstellungen",
         "close": "Schließen",
@@ -235,7 +238,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Beenden",
     },
     "es": {
-        "main_subtitle": "Traducción rápida con Ctrl+C+C en ventana emergente o traducción normal entre idiomas seleccionados.",
+        "main_subtitle": "Traducción rápida: selecciona texto y pulsa Ctrl+C+C.",
         "main_shortcuts": "Esc - borrar todo el texto\nCtrl+Enter - traducir",
         "from": "De",
         "to": "A",
@@ -245,6 +248,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "translation_placeholder": "La traducción aparecerá aquí",
         "translate": "Traducir",
         "copy": "Copiar",
+        "reverse_translation_direction": "Invertir dirección de traducción",
         "history": "Historial",
         "settings": "Ajustes",
         "close": "Cerrar",
@@ -311,7 +315,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "quit": "Salir",
     },
     "zh": {
-        "main_subtitle": "使用 Ctrl+C+C 弹窗快速翻译，或在所选语言之间常规翻译。",
+        "main_subtitle": "快速翻译：选中文本后按 Ctrl+C+C。",
         "main_shortcuts": "Esc - 清空全部文本\nCtrl+Enter - 翻译",
         "from": "从",
         "to": "到",
@@ -321,6 +325,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "translation_placeholder": "译文会显示在这里",
         "translate": "翻译",
         "copy": "复制",
+        "reverse_translation_direction": "切换翻译方向",
         "history": "历史",
         "settings": "设置",
         "close": "关闭",

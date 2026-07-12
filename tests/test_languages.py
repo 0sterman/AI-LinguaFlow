@@ -3,6 +3,7 @@ from translator_app.languages import (
     detect_language_code,
     is_probably_chinese,
     is_probably_russian,
+    next_manual_translation_route,
     preferred_target_language,
 )
 
@@ -41,3 +42,8 @@ def test_detects_supported_language_hints() -> None:
     assert is_probably_chinese("你好，今天怎么样？") is True
     assert detect_language_code("Das ist nicht gut") == "de"
     assert detect_language_code("Hola, ¿cómo estás?") == "es"
+
+
+def test_manual_direction_toggle_returns_to_automatic_source() -> None:
+    assert next_manual_translation_route("auto", "ru", "en") == ("ru", "en")
+    assert next_manual_translation_route("ru", "ru", "en") == ("auto", "ru")

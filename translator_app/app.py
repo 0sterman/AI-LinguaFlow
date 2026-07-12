@@ -21,7 +21,13 @@ from translator_app.hotkey import (
     WindowsKeyStateReader,
 )
 from translator_app.i18n import t
-from translator_app.languages import Language, detect_language_code, get_language, preferred_target_language
+from translator_app.languages import (
+    Language,
+    detect_language_code,
+    get_language,
+    next_manual_translation_route,
+    preferred_target_language,
+)
 from translator_app.openai_client import MissingApiKeyError, ProviderTranslator, TextTooLongError, TranslationError, provider_label
 from translator_app.platform_text import popup_shortcut
 from translator_app.secure_store import ApiKeyStore
@@ -87,6 +93,7 @@ class TranslatorApplication(QObject):
         self.main_window.historyRequested.connect(self.open_history)
         self.main_window.settingsRequested.connect(self.open_settings)
         self.main_window.targetLanguageChanged.connect(self.save_target_language)
+        self.main_window.reverseLanguageRequested.connect(self.reverse_manual_translation_direction)
         self.apply_visual_theme()
 
         self.popup = TranslationPopup(self.config.popup_width, self.config.popup_height, self.config.primary_language)
@@ -247,6 +254,18 @@ class TranslatorApplication(QObject):
             return
         self.config.target_language = language_code
         save_config(self.config)
+
+    def reverse_manual_translation_direction(self) -> None:
+        """Toggle between automatic input and the reverse manual route."""
+        current_source_language = self.main_window.current_source_language_code()
+        primary_language = self.config.primary_language
+        preferred_target = self.history_store.most_frequent_target_for_source(primary_language, fallback="en")
+        source_language, target_language = next_manual_translation_route(
+            current_source_language,
+            primary_language,
+            preferred_target,
+        )
+        self.main_window.set_reverse_language_route(source_language, target_language)
 
     def start_hotkey_listener(self) -> None:
         if sys.platform.startswith("win"):

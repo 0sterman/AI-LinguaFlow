@@ -96,3 +96,14 @@ def test_history_store_search_filters_by_date_range(tmp_path) -> None:
 
     records = store.search(date_from="2026-01-01", date_to="2026-12-31")
     assert [record.source_text for record in records] == ["new"]
+
+
+def test_history_store_returns_most_used_target_for_source(tmp_path) -> None:
+    store = HistoryStore(tmp_path / "history.sqlite3", max_records=10)
+    store.add("Привет", "Hello", "en", "openai", "gpt-5-mini", source_language="ru")
+    store.add("Как дела?", "How are you?", "en", "openai", "gpt-5-mini", source_language="ru")
+    store.add("Спасибо", "Danke", "de", "openai", "gpt-5-mini", source_language="ru")
+    store.add("Это не должно учитываться", "То же", "ru", "openai", "gpt-5-mini", source_language="ru")
+
+    assert store.most_frequent_target_for_source("ru") == "en"
+    assert store.most_frequent_target_for_source("zh") == "en"

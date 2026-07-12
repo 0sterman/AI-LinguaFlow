@@ -5,8 +5,8 @@ from html import escape
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QSize, QTimer, Qt, Signal
-from PySide6.QtGui import QGuiApplication, QIcon, QKeyEvent, QKeySequence, QPixmap, QTextCursor
+from PySide6.QtCore import QDate, QPoint, QRectF, QSize, QTimer, Qt, Signal
+from PySide6.QtGui import QGuiApplication, QIcon, QKeyEvent, QKeySequence, QPainter, QPalette, QPen, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -38,6 +38,7 @@ from translator_app.history import HistoryRecord
 from translator_app.i18n import t
 from translator_app.languages import LANGUAGES, Language
 from translator_app.platform_text import is_macos, platform_text
+from translator_app.text_alignment import map_position, map_selection
 
 
 PROVIDERS = (
@@ -827,6 +828,50 @@ QPushButton#HistoryButton {
 QPushButton#HistoryButton:hover {
     background: #183247;
 }
+QPushButton#DirectionButton {
+    background: #1d2632;
+    border: 1px solid #344154;
+    border-radius: 8px;
+    color: #d7dee8;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0;
+}
+QPushButton#DirectionButton:hover {
+    background: #183247;
+    border-color: #4bb8ed;
+    color: #dff6ff;
+}
+QPushButton#DirectionButton:pressed {
+    background: #10202e;
+}
+QPushButton#UtilityButton,
+QPushButton#ClearButton {
+    background: #1d2632;
+    border: 1px solid #344154;
+    border-radius: 8px;
+    color: #d7dee8;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 0;
+    min-width: 32px;
+    max-width: 32px;
+    min-height: 32px;
+    max-height: 32px;
+}
+QPushButton#UtilityButton:hover,
+QPushButton#ClearButton:hover {
+    background: #183247;
+    border-color: #4bb8ed;
+    color: #dff6ff;
+}
+QPushButton#UtilityButton:pressed,
+QPushButton#ClearButton:pressed {
+    background: #10202e;
+}
+QPushButton#ClearButton {
+    font-size: 20px;
+}
 QPushButton#InfoButton {
     border-radius: 17px;
     border: 1px solid #74d2ff;
@@ -975,6 +1020,62 @@ class SubmitTextEdit(CleanTextEdit):
         super().keyPressEvent(event)
 
 
+class DirectionButton(QPushButton):
+    """A compact, precisely spaced visual for reversing translation direction."""
+
+    def __init__(self) -> None:
+        super().__init__("")
+        self.setAccessibleName("Reverse translation direction")
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(self.palette().color(QPalette.ColorRole.ButtonText))
+        pen.setWidthF(1.45)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        painter.setPen(pen)
+
+        center_y = self.height() // 2
+        left = max(8, round(self.width() * 0.30))
+        right = self.width() - left
+        head = max(3, round(self.width() * 0.12))
+        top_y = center_y - 4
+        bottom_y = center_y + 4
+
+        painter.drawLine(left, top_y, right, top_y)
+        painter.drawLine(right, top_y, right - head, top_y - head)
+        painter.drawLine(right, top_y, right - head, top_y + head)
+        painter.drawLine(right, bottom_y, left, bottom_y)
+        painter.drawLine(left, bottom_y, left + head, bottom_y - head)
+        painter.drawLine(left, bottom_y, left + head, bottom_y + head)
+
+
+class CopyIconButton(QPushButton):
+    """Centered copy icon with softly rounded overlapping cards."""
+
+    def __init__(self) -> None:
+        super().__init__("")
+        self.setAccessibleName("Copy translation")
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(self.palette().color(QPalette.ColorRole.ButtonText))
+        pen.setWidthF(1.5)
+        painter.setPen(pen)
+
+        side = 11
+        offset = 4.5
+        origin_x = (self.width() - side - offset) / 2
+        origin_y = (self.height() - side - offset) / 2
+        radius = 1.4
+        painter.drawRoundedRect(QRectF(origin_x, origin_y, side, side), radius, radius)
+        painter.drawRoundedRect(QRectF(origin_x + offset, origin_y + offset, side, side), radius, radius)
+
+
 class TranslationPopup(QWidget):
     languageSelected = Signal(str)
     copyRequested = Signal()
@@ -1111,6 +1212,7 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
     historyRequested = Signal()
     settingsRequested = Signal()
     targetLanguageChanged = Signal(str)
+    reverseLanguageRequested = Signal()
 
     def __init__(self, primary_language_code: str, target_language_code: str | None = None) -> None:
         super().__init__()
@@ -1159,18 +1261,30 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
         self.translation_text = CleanTextEdit()
         self.translation_text.setReadOnly(True)
         self.translation_text.setAcceptRichText(False)
+        self._syncing_selection = False
+        self._syncing_scroll = False
+        self.source_text.selectionChanged.connect(lambda: self._sync_selection(self.source_text, self.translation_text))
+        self.translation_text.selectionChanged.connect(lambda: self._sync_selection(self.translation_text, self.source_text))
+        self.source_text.verticalScrollBar().valueChanged.connect(
+            lambda _value: self._sync_scroll_position(self.source_text, self.translation_text)
+        )
+        self.translation_text.verticalScrollBar().valueChanged.connect(
+            lambda _value: self._sync_scroll_position(self.translation_text, self.source_text)
+        )
 
         self.translate_button = QPushButton()
         self.translate_button.setObjectName("PrimaryButton")
         self.translate_button.clicked.connect(self.emit_translate_requested)
 
-        self.copy_button = QPushButton("⧉")
-        self.copy_button.setFixedSize(34, 30)
+        self.copy_button = CopyIconButton()
+        self.copy_button.setObjectName("UtilityButton")
+        self.copy_button.setFixedSize(32, 32)
         self.copy_button.setToolTip("Copy translation")
         self.copy_button.clicked.connect(self.copyRequested.emit)
 
         self.clear_source_button = QPushButton("×")
-        self.clear_source_button.setFixedSize(30, 28)
+        self.clear_source_button.setObjectName("ClearButton")
+        self.clear_source_button.setFixedSize(32, 32)
         self.clear_source_button.setToolTip("Clear")
         self.clear_source_button.clicked.connect(self.clear_source_text)
 
@@ -1183,26 +1297,32 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
 
         self.from_label = QLabel()
         self.to_label = QLabel()
-        source_language_group = QWidget()
-        source_language_layout = QHBoxLayout(source_language_group)
+        self.reverse_languages_button = DirectionButton()
+        self.reverse_languages_button.setObjectName("DirectionButton")
+        initial_direction_size = self.target_language_input.sizeHint().height()
+        self.reverse_languages_button.setFixedSize(initial_direction_size, initial_direction_size)
+        self.reverse_languages_button.clicked.connect(self.reverseLanguageRequested.emit)
+        self.source_language_group = QWidget()
+        source_language_layout = QHBoxLayout(self.source_language_group)
         source_language_layout.setContentsMargins(0, 0, 0, 0)
         source_language_layout.setSpacing(10)
         source_language_layout.addWidget(self.from_label)
         source_language_layout.addWidget(self.source_language_input, 0)
         source_language_layout.addStretch(1)
 
-        target_language_group = QWidget()
-        target_language_layout = QHBoxLayout(target_language_group)
+        self.target_language_group = QWidget()
+        target_language_layout = QHBoxLayout(self.target_language_group)
         target_language_layout.setContentsMargins(0, 0, 0, 0)
         target_language_layout.setSpacing(10)
+        target_language_layout.addWidget(self.reverse_languages_button, 0, Qt.AlignmentFlag.AlignVCenter)
         target_language_layout.addWidget(self.to_label)
         target_language_layout.addWidget(self.target_language_input, 0)
         target_language_layout.addStretch(1)
 
         language_row = QHBoxLayout()
-        language_row.setSpacing(18)
-        language_row.addWidget(source_language_group, 1)
-        language_row.addWidget(target_language_group, 1)
+        language_row.setSpacing(0)
+        language_row.addWidget(self.source_language_group, 0)
+        language_row.addWidget(self.target_language_group, 1)
 
         action_row = QHBoxLayout()
         action_row.setContentsMargins(0, 0, 0, 0)
@@ -1212,14 +1332,15 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
         action_row.addWidget(self.history_button)
         action_row.addWidget(self.settings_button)
 
-        text_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.text_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.source_section_label = QLabel()
         self.source_section_label.setObjectName("SectionLabel")
         self.translation_section_label = QLabel()
         self.translation_section_label.setObjectName("SectionLabel")
-        text_splitter.addWidget(self._labeled_text(self.source_section_label, self.source_text, self.clear_source_button))
-        text_splitter.addWidget(self._labeled_text(self.translation_section_label, self.translation_text, self.copy_button))
-        text_splitter.setSizes([430, 430])
+        self.text_splitter.addWidget(self._labeled_text(self.source_section_label, self.source_text, self.clear_source_button))
+        self.text_splitter.addWidget(self._labeled_text(self.translation_section_label, self.translation_text, self.copy_button))
+        self.text_splitter.setSizes([430, 430])
+        self.text_splitter.splitterMoved.connect(lambda _position, _index: self._sync_language_column_width())
 
         header_text_layout = QVBoxLayout()
         header_text_layout.setContentsMargins(0, 0, 0, 0)
@@ -1239,15 +1360,40 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
         root.setSpacing(8)
         root.addLayout(header_layout)
         root.addLayout(language_row)
-        root.addWidget(text_splitter, 1)
+        root.addWidget(self.text_splitter, 1)
         root.addLayout(action_row)
         self.set_logo_path("assets/app_icon.png")
         self.apply_locale(primary_language_code)
+        QTimer.singleShot(0, self._sync_language_controls)
 
     def set_logo_path(self, path: str) -> None:
         pixmap = QPixmap(path)
         if not pixmap.isNull():
             self.logo_label.setPixmap(pixmap)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        QTimer.singleShot(0, self._sync_language_controls)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        QTimer.singleShot(0, self._sync_language_column_width)
+
+    def _sync_language_controls(self) -> None:
+        self._sync_direction_button_size()
+        self._sync_language_column_width()
+
+    def _sync_direction_button_size(self) -> None:
+        side = self.target_language_input.height()
+        if side > 0:
+            self.reverse_languages_button.setFixedSize(side, side)
+
+    def _sync_language_column_width(self) -> None:
+        if self.text_splitter.count() < 2:
+            return
+        source_width = self.text_splitter.widget(0).width() + self.text_splitter.handleWidth()
+        if self.source_language_group.width() != source_width:
+            self.source_language_group.setFixedWidth(source_width)
 
     def apply_locale(self, language_code: str) -> None:
         self.ui_language = language_code
@@ -1261,6 +1407,7 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
         self.translation_text.setPlaceholderText(t(language_code, "translation_placeholder"))
         self.translate_button.setText(t(language_code, "translate"))
         self.copy_button.setToolTip(t(language_code, "copy"))
+        self.reverse_languages_button.setToolTip(t(language_code, "reverse_translation_direction"))
         self.history_button.setText(t(language_code, "history"))
         self.settings_button.setText(t(language_code, "settings"))
 
@@ -1285,6 +1432,18 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
         self.source_text.setPlainText(text)
         self.source_text.moveCursor(QTextCursor.MoveOperation.End)
         self.source_text.setFocus()
+
+    def set_reverse_language_route(self, source_language_code: str, target_language_code: str) -> None:
+        """Set the manual route after the user reverses the normal direction."""
+        source_index = self.source_language_input.findData(source_language_code)
+        if source_index >= 0:
+            self.source_language_input.setCurrentIndex(source_index)
+        target_index = self.target_language_input.findData(target_language_code)
+        if target_index >= 0:
+            self.target_language_input.setCurrentIndex(target_index)
+
+    def current_source_language_code(self) -> str:
+        return str(self.source_language_input.currentData())
 
     def emit_target_language_changed(self) -> None:
         self.targetLanguageChanged.emit(str(self.target_language_input.currentData()))
@@ -1325,6 +1484,90 @@ class MainTranslatorWindow(WindowsTitleBarMixin, QWidget):
 
     def current_translation(self) -> str:
         return self.translation_text.toPlainText()
+
+    def _sync_selection(self, source: QTextEdit, target: QTextEdit) -> None:
+        if self._syncing_selection:
+            return
+        cursor = source.textCursor()
+        if not target.toPlainText():
+            return
+
+        self._syncing_selection = True
+        try:
+            if not cursor.hasSelection():
+                # A click or an arrow-key movement that removes the selection
+                # must also remove the mirrored highlight.
+                target_cursor = target.textCursor()
+                target_cursor.setPosition(
+                    map_position(
+                        source.toPlainText(), target.toPlainText(), cursor.position()
+                    )
+                )
+                target.setTextCursor(target_cursor)
+                return
+
+            start, end = map_selection(
+                source.toPlainText(),
+                target.toPlainText(),
+                cursor.selectionStart(),
+                cursor.selectionEnd(),
+            )
+            target_cursor = target.textCursor()
+            target_cursor.setPosition(start)
+            target_cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            target.setTextCursor(target_cursor)
+            self._align_selected_rows(source, target, cursor.selectionStart(), start)
+        finally:
+            self._syncing_selection = False
+
+    def _align_selected_rows(
+        self, source: QTextEdit, target: QTextEdit, source_position: int, target_position: int
+    ) -> None:
+        """Place the matching selection start on the same visible text row."""
+        source_cursor = source.textCursor()
+        source_cursor.setPosition(source_position)
+        target_cursor = target.textCursor()
+        target_cursor.setPosition(target_position)
+        source_y = source.cursorRect(source_cursor).top()
+        target_y = target.cursorRect(target_cursor).top()
+
+        self._syncing_scroll = True
+        try:
+            scrollbar = target.verticalScrollBar()
+            scrollbar.setValue(scrollbar.value() + target_y - source_y)
+        finally:
+            self._syncing_scroll = False
+
+    def _sync_scroll_position(self, source: QTextEdit, target: QTextEdit) -> None:
+        if self._syncing_scroll or not source.toPlainText() or not target.toPlainText():
+            return
+
+        source_scrollbar = source.verticalScrollBar()
+        target_scrollbar = target.verticalScrollBar()
+        source_cursor = source.cursorForPosition(QPoint(2, 2))
+
+        self._syncing_scroll = True
+        try:
+            # Paragraph matching is intentionally approximate, but the two
+            # document ends are unambiguous and must always meet exactly.
+            if source_scrollbar.value() <= source_scrollbar.minimum():
+                target_scrollbar.setValue(target_scrollbar.minimum())
+                return
+            if source_scrollbar.value() >= source_scrollbar.maximum():
+                target_scrollbar.setValue(target_scrollbar.maximum())
+                return
+
+            target_position = map_position(
+                source.toPlainText(), target.toPlainText(), source_cursor.position()
+            )
+            target_cursor = target.textCursor()
+            target_cursor.setPosition(target_position)
+            # QTextDocument keeps a small top document margin.  Removing it avoids
+            # a visible scroll drift when the matching position is the first line.
+            target_y = target.cursorRect(target_cursor).top() - round(target.document().documentMargin())
+            target_scrollbar.setValue(target_scrollbar.value() + target_y)
+        finally:
+            self._syncing_scroll = False
 
     def _labeled_text(self, label: QLabel, text_edit: QTextEdit, action_button: QPushButton | None = None) -> QWidget:
         widget = QWidget()

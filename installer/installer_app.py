@@ -16,7 +16,7 @@ from tkinter import BooleanVar, DoubleVar, PhotoImage, StringVar, Tk, filedialog
 
 
 APP_NAME = "LinguaPopUp AI"
-APP_VERSION = "2.0.1"
+APP_VERSION = "2.1.0"
 APP_PUBLISHER = "Roman Ostroumov / Oster"
 APP_EXE = "LinguaPopUp AI.exe"
 UNINSTALL_EXE = "LinguaPopUp AI Uninstall.exe"

@@ -2,7 +2,7 @@
 
 ## Project
 
-LinguaFlow AI is a Windows translator whose main workflow is fast selected-text translation through a `Ctrl+C+C` popup. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
+LinguaFlow AI is a Windows-first translator with a macOS packaging path. Its main workflow is fast selected-text translation through a `Ctrl+C+C` popup on Windows and `Cmd (Ctrl)+C+C` on macOS. It also includes a normal manual translator window for chosen source/target languages, translates through the selected AI provider, and keeps local translation history.
 
 Repository: `0sterman/AI-LinguaFlow`
 
@@ -23,10 +23,36 @@ Install dependencies:
 python -m pip install -r requirements.txt
 ```
 
+Optional virtual environment setup:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
 Run locally:
 
 ```powershell
 python -m translator_app
+```
+
+Quick launcher (repo root):
+
+```powershell
+.\run_translator.bat
+```
+
+Build the Windows installer:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
+```
+
+macOS local run/build commands must be executed on macOS:
+
+```bash
+./run_macos.sh
+./macos/build_macos.sh
 ```
 
 Run tests:
@@ -57,7 +83,11 @@ dist\LinguaFlow AI\LinguaFlow AI.exe
 - `translator_app/secure_store.py`: API key storage through Windows Credential Manager/keyring with environment fallback.
 - `translator_app/config.py`: user config under `%APPDATA%\WindowsTranslator`.
 - `translator_app/hotkey.py`: isolated `Ctrl+C+C` detection logic and Windows native key-state polling.
-- `translator_app/startup.py`: Windows startup and desktop shortcut integration.
+- `translator_app/hotkey_macos.py`: macOS `Cmd+C+C` listener path using `pynput`.
+- `translator_app/startup.py`: Windows shortcut/startup integration plus macOS LaunchAgent and desktop-link handling.
+- `translator_app/update_checker.py`: required-release check against GitHub Releases plus installer download helper.
+- `installer/installer_app.py`: Windows setup wizard that installs the built app, writes shortcuts, and registers uninstall metadata.
+- `installer/uninstaller_app.py`: Windows uninstall flow that removes installed files and stale shortcuts.
 - `assets/app_icon.ico`: executable, tray, and shortcut icon based on the repository/avatar style.
 
 Keep business logic testable outside the GUI. Put reusable logic in small modules and test it directly.
@@ -137,7 +167,19 @@ For UI or packaging changes, also rebuild:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
+If the change touches the installer or uninstall flow, also rebuild:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build_installer.ps1
+```
+
 After rebuilding, briefly launch the executable and confirm it starts without immediately exiting.
+
+## Windows Automation
+
+- Before using Windows UI automation on the installer, check whether it is running with elevated administrator rights.
+- If Windows blocks automation because the installer has higher integrity, state that blocker immediately and hand the visible installer back to the user. Do not wait, retry blind clicks, or imply that installation is progressing.
+- Do not remove the installer elevation solely to make automation work: the normal installer writes to the protected installation folder and Windows uninstall registry.
 
 ## Git and Generated Files
 

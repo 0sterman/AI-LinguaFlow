@@ -136,6 +136,26 @@ class HistoryStore:
         with self._connect() as connection:
             connection.execute("DELETE FROM translations")
 
+    def most_frequent_target_for_source(self, source_language: str, fallback: str = "en") -> str:
+        """Return the user's usual target for a known source language.
+
+        A route into the same language is ignored.  When history has no usable
+        answer, English is deliberately used as the safe, predictable default.
+        """
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT target_language
+                FROM translations
+                WHERE source_language = ? AND target_language != ?
+                GROUP BY target_language
+                ORDER BY COUNT(*) DESC, MAX(id) DESC
+                LIMIT 1
+                """,
+                (source_language, source_language),
+            ).fetchone()
+        return str(row[0]) if row else fallback
+
     def _connect(self) -> sqlite3.Connection:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         return sqlite3.connect(self.path)

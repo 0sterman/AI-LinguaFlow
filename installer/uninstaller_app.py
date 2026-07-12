@@ -12,7 +12,7 @@ from tkinter import DoubleVar, StringVar, Tk, messagebox, ttk
 
 
 APP_NAME = "LinguaPopUp AI"
-APP_VERSION = "2.0.1"
+APP_VERSION = "2.1.0"
 APP_EXE = "LinguaPopUp AI.exe"
 WINDOW_TITLE = "LinguaPopUp AI Uninstall"
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\LinguaPopUp AI"

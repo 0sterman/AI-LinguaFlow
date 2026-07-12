@@ -145,6 +145,23 @@ def preferred_target_language(
     return default_target_language(text, primary_language_code)
 
 
+def next_manual_translation_route(
+    current_source_language_code: str,
+    primary_language_code: str,
+    preferred_target_language_code: str,
+) -> tuple[str, str]:
+    """Return the next route for the manual direction-toggle control.
+
+    The normal route starts with automatic detection on the left.  Its first
+    toggle puts the primary language on the left and uses the preferred target
+    on the right.  The next toggle restores automatic detection and returns
+    the language currently on the left to the right-hand target.
+    """
+    if current_source_language_code == "auto":
+        return primary_language_code, preferred_target_language_code
+    return "auto", current_source_language_code
+
+
 def get_language(code: str) -> Language:
     try:
         return LANGUAGE_BY_CODE[code]

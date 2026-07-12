@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(2, 0, 1, 0),
-    prodvers=(2, 0, 1, 0),
+    filevers=(2, 1, 0, 0),
+    prodvers=(2, 1, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Roman Ostroumov / Oster'),
           StringStruct('FileDescription', 'LinguaPopUp AI Setup'),
-          StringStruct('FileVersion', '2.0.1'),
+          StringStruct('FileVersion', '2.1.0'),
           StringStruct('InternalName', 'LinguaPopUp AI Setup'),
           StringStruct('LegalCopyright', 'Copyright (c) Roman Ostroumov / Oster'),
           StringStruct('OriginalFilename', 'LinguaPopUp AI Setup.exe'),
           StringStruct('ProductName', 'LinguaPopUp AI'),
-          StringStruct('ProductVersion', '2.0.1')
+          StringStruct('ProductVersion', '2.1.0')
         ]
       )
     ]),
